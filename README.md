@@ -65,5 +65,5 @@ bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install
 ```
 ## Scaffold
 
-It is easy to test your own messaging platform, just  implement the interface in driver-api.
+It is easy to test your own messaging platform, just implement the interface in driver-api.
 

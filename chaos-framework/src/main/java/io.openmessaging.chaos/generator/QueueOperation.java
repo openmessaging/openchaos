@@ -24,12 +24,12 @@ public class QueueOperation {
     private String invokeOperation;
     private String value;
 
-    public QueueOperation(String invokeOperation){
-        this.invokeOperation=invokeOperation;
+    public QueueOperation(String invokeOperation) {
+        this.invokeOperation = invokeOperation;
     }
 
-    public QueueOperation(String invokeOperation,String value){
-        this.invokeOperation=invokeOperation;
+    public QueueOperation(String invokeOperation, String value) {
+        this.invokeOperation = invokeOperation;
         this.value = value;
     }
 

@@ -94,8 +94,7 @@ public class NetFaultGenerator implements FaultGenerator {
     private FaultOperation getPartitionOperation(String node, Set<String> partitionNodes) {
         List<String> invokeArgs = new ArrayList<>(partitionNodes);
         List<String> recoverArgs = new ArrayList<>(partitionNodes);
-        FaultOperation operation = new FaultOperation(mode, node, invokeArgs, recoverArgs);
-        return operation;
+        return new FaultOperation(mode, node, invokeArgs, recoverArgs);
     }
 
 }

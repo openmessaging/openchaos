@@ -20,8 +20,10 @@
 package io.openmessaging.chaos.common.utils;
 
 public class Utils {
+
+    private static final String regex = "([1-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])(\\.(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])){3}";
+
     public static boolean isIp(String ip) {
-        boolean res = ip.matches("([1-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])(\\.(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])){3}");
-        return res;
+        return ip.matches(regex);
     }
 }

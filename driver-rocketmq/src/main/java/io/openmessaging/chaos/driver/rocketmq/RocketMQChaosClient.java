@@ -58,17 +58,17 @@ public class RocketMQChaosClient implements MQChaosClient {
             defaultMQProducer.send(message);
         } catch (RemotingException e) {
             if (e instanceof RemotingConnectException || e instanceof RemotingSendRequestException) {
-                logger.warn("enqueue fail", e);
-                return InvokeResult.FAIL;
+                logger.warn("Enqueue fail", e);
+                return InvokeResult.FAILURE;
             } else {
-                logger.warn("enqueue unknown", e);
+                logger.warn("Enqueue unknown", e);
                 return InvokeResult.UNKNOWN;
             }
         } catch (IllegalStateException | MQClientException | InterruptedException | MQBrokerException e) {
-            logger.warn("enqueue fail", e);
-            return InvokeResult.FAIL;
+            logger.warn("Enqueue fail", e);
+            return InvokeResult.FAILURE;
         } catch (Exception e) {
-            logger.warn("enqueue unknown", e);
+            logger.warn("Enqueue unknown", e);
             return InvokeResult.UNKNOWN;
         }
         return InvokeResult.SUCCESS;

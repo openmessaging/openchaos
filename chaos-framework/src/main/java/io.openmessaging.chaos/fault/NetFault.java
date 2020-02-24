@@ -50,10 +50,10 @@ public class NetFault implements Fault {
     }
 
     @Override public synchronized void invoke() {
-        logger.info("invoke {} fault", mode);
+        logger.info("Invoke {} fault", mode);
         faultOperations = netFaultGenerator.generate();
         for (FaultOperation operation : faultOperations) {
-            logger.info("invoke node {} fault, fault is {}, invoke args is {}",
+            logger.info("Invoke node {} fault, fault is {}, invoke args is {}",
                 operation.getNode(), operation.getName(), operation.getInvokeArgs());
             try {
                 switch (operation.getName()) {
@@ -70,11 +70,11 @@ public class NetFault implements Fault {
                         NetUtil.loss(operation.getNode(), targetNodes);
                         break;
                     default:
-                        logger.error("no such fault");
+                        logger.error("No such fault");
                         break;
                 }
             } catch (Exception e) {
-                logger.error("invoke fault {} failed", operation.getName());
+                logger.error("Invoke fault {} failed", operation.getName());
             }
         }
     }
@@ -82,10 +82,10 @@ public class NetFault implements Fault {
     @Override public synchronized void recover() {
         if (faultOperations == null)
             return;
-        logger.info("recover {} fault", mode);
+        logger.info("Recover {} fault", mode);
         for (FaultOperation operation : faultOperations) {
             try {
-                logger.info("recover node {} fault, fault is {}, recover args is {}",
+                logger.info("Recover node {} fault, fault is {}, recover args is {}",
                     operation.getNode(), operation.getName(), operation.getRecoverArgs());
                 switch (operation.getName()) {
                     case "random-partition":
@@ -98,11 +98,11 @@ public class NetFault implements Fault {
                         NetUtil.healLoss(operation.getNode());
                         break;
                     default:
-                        logger.error("no such fault");
+                        logger.error("No such fault");
                         break;
                 }
             } catch (Exception e) {
-                logger.error("recover fault {} failed", operation.getName());
+                logger.error("Recover fault {} failed", operation.getName());
             }
         }
         faultOperations = null;

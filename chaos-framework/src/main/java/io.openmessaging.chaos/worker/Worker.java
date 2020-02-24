@@ -34,7 +34,7 @@ public abstract class Worker extends Thread {
 
     public abstract void loop() throws Exception;
 
-    public void await(long interval) throws InterruptedException {
+    protected void await(long interval) throws InterruptedException {
         sleep(interval);
     }
 

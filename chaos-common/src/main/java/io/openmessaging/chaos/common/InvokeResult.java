@@ -21,6 +21,6 @@ package io.openmessaging.chaos.common;
 
 public enum InvokeResult {
     SUCCESS,
-    FAIL,
+    FAILURE,
     UNKNOWN
 }

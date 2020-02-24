@@ -19,12 +19,12 @@
 
 package io.openmessaging.chaos.client;
 
+import io.openmessaging.chaos.Recorder;
 import io.openmessaging.chaos.common.InvokeResult;
 import io.openmessaging.chaos.driver.MQChaosClient;
 import io.openmessaging.chaos.driver.MQChaosDriver;
 import io.openmessaging.chaos.generator.QueueGenerator;
 import io.openmessaging.chaos.generator.QueueOperation;
-import io.openmessaging.chaos.Recorder;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
@@ -72,7 +72,7 @@ public class QueueClient implements Client {
         } else {
             List<String> dequeueList = mqChaosClient.dequeue();
             if (dequeueList == null || dequeueList.isEmpty()) {
-                recorder.recordResponse(clientId, op.getInvokeOperation(), InvokeResult.FAIL, null);
+                recorder.recordResponse(clientId, op.getInvokeOperation(), InvokeResult.FAILURE, null);
             } else {
                 recorder.recordResponse(clientId, op.getInvokeOperation(), InvokeResult.SUCCESS, dequeueList.toString());
             }
@@ -80,7 +80,7 @@ public class QueueClient implements Client {
     }
 
     public void lastInvoke() {
-        logger.info("client {} invoke drain",clientId);
+        logger.info("Client {} invoke drain", clientId);
         //Drain
         recorder.recordRequest(clientId, "dequeue", null);
         List<String> dequeueList = mqChaosClient.dequeue();
@@ -89,6 +89,6 @@ public class QueueClient implements Client {
             recorder.recordRequest(clientId, "dequeue", null);
             dequeueList = mqChaosClient.dequeue();
         }
-        recorder.recordResponse(clientId, "dequeue", InvokeResult.FAIL, null);
+        recorder.recordResponse(clientId, "dequeue", InvokeResult.FAILURE, null);
     }
 }

@@ -28,10 +28,10 @@ public class QueueGenerator {
 
     private static final Random random = new Random();
 
-    public static QueueOperation generate(){
-        if(random.nextDouble()<0.5){
-            return new QueueOperation("enqueue",String.valueOf(stagger.getAndIncrement()));
-        }else {
+    public static QueueOperation generate() {
+        if (random.nextDouble() < 0.5) {
+            return new QueueOperation("enqueue", String.valueOf(stagger.getAndIncrement()));
+        } else {
             return new QueueOperation("dequeue");
         }
     }

@@ -68,7 +68,7 @@ public class Recorder {
         try {
             bufferedWriter.write(recordLine);
         } catch (IOException e) {
-            logger.error("record to history file fail", e);
+            logger.error("Record to history file fail", e);
         }
     }
 
@@ -76,7 +76,7 @@ public class Recorder {
         try {
             bufferedWriter.flush();
         } catch (IOException e) {
-            logger.error("recorder close fail", e);
+            logger.error("Recorder close fail", e);
         }
     }
 
@@ -85,7 +85,7 @@ public class Recorder {
             bufferedWriter.flush();
             bufferedWriter.close();
         } catch (IOException e) {
-            logger.error("recorder close fail", e);
+            logger.error("Recorder close fail", e);
         }
     }
 
@@ -111,7 +111,7 @@ public class Recorder {
         try {
             bufferedWriter = new BufferedWriter(new FileWriter(historyFileName));
         } catch (IOException e) {
-            logger.error("new {} writer failed", historyFileName, e);
+            logger.error("New {} writer failed", historyFileName, e);
         }
 
         if (bufferedWriter != null) {

@@ -21,8 +21,8 @@ package io.openmessaging.chaos.fault;
 
 import io.openmessaging.chaos.ChaosControl;
 import io.openmessaging.chaos.driver.MQChaosNode;
-import io.openmessaging.chaos.generator.KillFaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
+import io.openmessaging.chaos.generator.KillFaultGenerator;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -50,10 +50,10 @@ public class KillFault implements Fault {
     }
 
     @Override public synchronized void invoke() {
-        logger.info("invoke {} fault....", mode);
+        logger.info("Invoke {} fault....", mode);
         faultOperations = killFaultGenerator.generate();
         for (FaultOperation operation : faultOperations) {
-            logger.info("kill node {} processes...", operation.getNode());
+            logger.info("Kill node {} processes...", operation.getNode());
             MQChaosNode mqChaosNode = nodesMap.get(operation.getNode());
             mqChaosNode.kill();
         }
@@ -62,9 +62,9 @@ public class KillFault implements Fault {
     @Override public synchronized void recover() {
         if (faultOperations == null)
             return;
-        logger.info("recover {} fault....", mode);
+        logger.info("Recover {} fault....", mode);
         for (FaultOperation operation : faultOperations) {
-            logger.info("restart node {} processes...", operation.getNode());
+            logger.info("Restart node {} processes...", operation.getNode());
             MQChaosNode mqChaosNode = nodesMap.get(operation.getNode());
             mqChaosNode.start();
         }

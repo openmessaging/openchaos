@@ -31,12 +31,12 @@ import io.openmessaging.chaos.checker.Checker;
 import io.openmessaging.chaos.checker.MQChecker;
 import io.openmessaging.chaos.common.utils.SshUtil;
 import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.fault.Fault;
+import io.openmessaging.chaos.fault.KillFault;
 import io.openmessaging.chaos.fault.NetFault;
+import io.openmessaging.chaos.fault.NoopFault;
 import io.openmessaging.chaos.model.Model;
 import io.openmessaging.chaos.model.QueueModel;
-import io.openmessaging.chaos.fault.KillFault;
-import io.openmessaging.chaos.fault.Fault;
-import io.openmessaging.chaos.fault.NoopFault;
 import io.openmessaging.chaos.worker.FaultWorker;
 import java.io.File;
 import java.text.DateFormat;
@@ -168,24 +168,28 @@ public class ChaosControl {
                 model.setupClient();
 
                 //Initial fault
-                Fault fault = null;
-
-                switch (arguments.fault) {
-                    case "noop":
-                        fault = new NoopFault();
-                        break;
-                    case "minor-kill":
-                    case "major-kill":
-                    case "random-kill":
-                        fault = new KillFault(map, arguments.fault);
-                        break;
-                    case "random-partition":
-                    case "random-delay":
-                    case "random-loss":
-                        fault = new NetFault(driverConfiguration.nodes, arguments.fault);
-                        break;
-                    default:
-                        throw new RuntimeException("no such fault");
+                Fault fault;
+                if (map == null || map.isEmpty()) {
+                    logger.warn("Configure file does not contain nodes, use noop fault");
+                    fault = new NoopFault();
+                } else {
+                    switch (arguments.fault) {
+                        case "noop":
+                            fault = new NoopFault();
+                            break;
+                        case "minor-kill":
+                        case "major-kill":
+                        case "random-kill":
+                            fault = new KillFault(map, arguments.fault);
+                            break;
+                        case "random-partition":
+                        case "random-delay":
+                        case "random-loss":
+                            fault = new NetFault(driverConfiguration.nodes, arguments.fault);
+                            break;
+                        default:
+                            throw new RuntimeException("no such fault");
+                    }
                 }
 
                 //Start fault worker
@@ -208,7 +212,7 @@ public class ChaosControl {
                 //Recovery fault
                 fault.recover();
 
-                logger.info("wait for recovery some time");
+                logger.info("Wait for recovery some time");
 
                 //Wait for recovery, sleep 20 s
                 Thread.sleep(TimeUnit.SECONDS.toMillis(20));
@@ -218,13 +222,13 @@ public class ChaosControl {
 
                 recorder.flush();
 
-                logger.info("start check...");
+                logger.info("Start check...");
 
                 Checker checker = new MQChecker(historyFile);
 
                 result = checker.check();
 
-                logger.info("check complete.");
+                logger.info("Check complete.");
 
                 mapper.writeValue(new File(historyFile.replace("history", "result")), result);
 

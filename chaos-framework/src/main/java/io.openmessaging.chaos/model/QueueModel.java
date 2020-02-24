@@ -112,18 +112,18 @@ public class QueueModel implements Model {
                 futures.forEach(CompletableFuture::join);
             }
 
-            logger.info("cluster shutdown");
+            logger.info("Cluster shutdown");
             cluster.values().forEach(MQChaosNode::teardown);
-            logger.info("wait for all nodes to shutdown...");
+            logger.info("Wait for all nodes to shutdown...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(10));
             }catch (InterruptedException e){
                 logger.error("",e);
             }
 
-            logger.info("cluster start...");
+            logger.info("Cluster start...");
             cluster.values().forEach(MQChaosNode::start);
-            logger.info("wait for all nodes to start...");
+            logger.info("Wait for all nodes to start...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(20));
             }catch (InterruptedException e){
@@ -143,10 +143,10 @@ public class QueueModel implements Model {
                 mqChaosDriver = createChaosMQDriver(driverConfigFile);
             }
 
-            logger.info("create chaos topic : {}", chaosTopic);
+            logger.info("Create chaos topic : {}", chaosTopic);
             mqChaosDriver.createTopic(chaosTopic, 8);
 
-            logger.info("mq clients setup..");
+            logger.info("MQ clients setup..");
             for (int i = 0; i < concurrency; i++) {
                 Client client = new QueueClient(mqChaosDriver, chaosTopic, recorder);
                 client.setup();
@@ -163,24 +163,24 @@ public class QueueModel implements Model {
     }
 
     @Override public void start() {
-        logger.info("start all clients...");
+        logger.info("Start all clients...");
         workers.forEach(Thread::start);
     }
 
     @Override public void stop() {
-        logger.info("mq chaos test stop");
+        logger.info("MQ chaos test stop");
         workers.forEach(Worker::breakLoop);
     }
 
     @Override public void afterStop() {
-        logger.info("invoke drain");
+        logger.info("Invoke drain");
         clients.forEach(Client::lastInvoke);
     }
 
     @Override public void shutdown() {
-        logger.info("close mq client");
+        logger.info("Close mq client");
         clients.forEach(Client::teardown);
-        logger.info("teardown mq cluster");
+        logger.info("Teardown mq cluster");
         cluster.values().forEach(MQChaosNode::teardown);
         mqChaosDriver.close();
     }

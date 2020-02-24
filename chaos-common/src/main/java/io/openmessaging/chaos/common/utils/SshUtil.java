@@ -58,7 +58,7 @@ public class SshUtil {
     public static void execCommand(String node, String cmd) throws Exception {
         ClientSession session = getSession(node);
         if (session != null) {
-            logger.debug("exec command : {}", cmd);
+            logger.debug("Exec command : {}", cmd);
             session.executeRemoteCommand(cmd, System.out, System.err, Charset.defaultCharset());
         } else {
             throw new RuntimeException("node is not in current config file, ssh execCommand command failed");
@@ -73,7 +73,7 @@ public class SshUtil {
                 builder.append(" ").append(args[i]);
             }
             cmd = builder.toString();
-            logger.debug("exec command : {}", cmd);
+            logger.debug("Exec command : {}", cmd);
             session.executeRemoteCommand(cmd, System.out, System.err, Charset.defaultCharset());
         } else {
             throw new RuntimeException("node is not in current config file, ssh execCommand command failed");
@@ -88,10 +88,10 @@ public class SshUtil {
                 builder.append(" ").append(args[i]);
             }
             cmd = builder.toString();
-            logger.debug("exec command : {}", cmd);
+            logger.debug("Exec command : {}", cmd);
             return session.executeRemoteCommand(cmd);
         } else {
-            throw new RuntimeException("node is not in current config file, ssh execCommand command failed");
+            throw new RuntimeException("Node is not in current config file, ssh execCommand command failed");
         }
     }
 
@@ -100,10 +100,10 @@ public class SshUtil {
         StringBuilder command = new StringBuilder("cd " + dir);
         Arrays.stream(cmd).forEach(x -> command.append(";").append(x));
         if (session != null) {
-            logger.debug("exec command : {}", command.toString());
+            logger.debug("Exec command : {}", command.toString());
             session.executeRemoteCommand(command.toString(), System.out, System.err, Charset.defaultCharset());
         } else {
-            throw new RuntimeException("node is not in current config file, ssh execCommand command failed");
+            throw new RuntimeException("Node is not in current config file, ssh execCommand command failed");
         }
     }
 
@@ -112,7 +112,7 @@ public class SshUtil {
             try {
                 session.close();
             } catch (Exception e) {
-                logger.error("config session close failed", e);
+                logger.error("Config session close failed", e);
             }
         });
         sessionMap.clear();

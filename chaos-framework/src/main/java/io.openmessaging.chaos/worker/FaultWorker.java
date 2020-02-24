@@ -30,19 +30,19 @@ public class FaultWorker extends Worker {
     private int interval;
 
     public FaultWorker(Logger logger, Fault fault, int interval) {
-        super("fault worker", logger);
+        super("Fault worker", logger);
         this.fault = fault;
         this.interval = interval;
     }
 
     @Override public void loop() {
         try {
-            Thread.sleep(TimeUnit.SECONDS.toMillis(interval));
+            await(TimeUnit.SECONDS.toMillis(interval));
             fault.invoke();
-            Thread.sleep(TimeUnit.SECONDS.toMillis(interval));
+            await(TimeUnit.SECONDS.toMillis(interval));
             fault.recover();
         } catch (InterruptedException e) {
-            logger.info("fault loop interrupted");
+            logger.info("Fault loop interrupted");
         }
     }
 

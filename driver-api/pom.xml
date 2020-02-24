@@ -37,7 +37,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>chaos-common</artifactId>
-            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
