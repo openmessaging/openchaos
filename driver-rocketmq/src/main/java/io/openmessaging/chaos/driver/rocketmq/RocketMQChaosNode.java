@@ -1,0 +1,145 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package io.openmessaging.chaos.driver.rocketmq;
+
+import io.openmessaging.chaos.common.utils.SshUtil;
+import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.driver.rocketmq.config.RocketMQBrokerConfig;
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class RocketMQChaosNode implements MQChaosNode {
+
+    private String node;
+
+    private List<String> nodes;
+
+    private RocketMQBrokerConfig rmqBrokerConfig;
+
+    private static final String installDir = "rocketmq-chaos-test";
+
+    private static final String rocketmqVersion = "4.6.0";
+
+    private static final Logger logger = LoggerFactory.getLogger(RocketMQChaosNode.class);
+
+    public RocketMQChaosNode(String node, List<String> nodes, RocketMQBrokerConfig rmqBrokerConfig) {
+        this.node = node;
+        this.nodes = nodes;
+        this.rmqBrokerConfig = rmqBrokerConfig;
+    }
+
+    @Override public CompletableFuture<Void> setup() {
+        try {
+            //download rocketmq package
+            logger.info("Node {} download rocketmq...", node);
+            SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", installDir, installDir));
+            SshUtil.execCommandInDir(node, installDir,
+                String.format("curl https://archive.apache.org/dist/rocketmq/%s/rocketmq-all-%s-bin-release.zip -o rocketmq.zip", rocketmqVersion, rocketmqVersion),
+                "unzip rocketmq.zip", "rm -f rocketmq.zip", "mv rocketmq-all*/* .", "rmdir rocketmq-all*");
+            logger.info("Node {} download rocketmq success", node);
+
+            //For docker test, because the memory of local computer is too small
+            SshUtil.execCommandInDir(node, installDir, "sed -i 's/-Xms8g -Xmx8g -Xmn4g/-Xms2g -Xmx2g -Xmn1g/g' bin/runbroker.sh");
+            SshUtil.execCommandInDir(node, installDir, "sed -i  's/-Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m/-Xms500m -Xmx500m -Xmn250m -XX:MetaspaceSize=16m -XX:MaxMetaspaceSize=40m/g' bin/runserver.sh");
+
+            SshUtil.execCommandInDir(node, installDir, "sed -i 's/exit -1/exit 0/g' bin/mqshutdown");
+
+            //Prepare broker conf
+            Field[] fields = rmqBrokerConfig.getClass().getDeclaredFields();
+            for (int i = 0; i < fields.length; i++) {
+                String name = fields[i].getName();
+                String value = (String) fields[i].get(rmqBrokerConfig);
+                if (value != null && !value.isEmpty()) {
+                    SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> broker-chaos-test.conf", name + "=" + value));
+                }
+            }
+
+            String dledgerPeers = getDledgerPeers(nodes);
+
+            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerPeers=" + dledgerPeers));
+
+            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerSelfId=n" + nodes.indexOf(node)));
+
+        } catch (Exception e) {
+            logger.error("Node {} setup rocketmq node failed", node, e);
+            throw new RuntimeException(e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Override public void teardown() {
+        kill();
+    }
+
+    @Override public void start() {
+        try {
+            //Start nameserver
+            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+                logger.info("Node {} start nameserver...", node);
+                SshUtil.execCommandInDir(node, installDir, "nohup sh bin/mqnamesrv >/dev/null 2>&1 &");
+            }
+            //Start broker
+            logger.info("Node {} start broker...", node);
+            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/mqbroker -n '%s' -c broker-chaos-test.conf >/dev/null 2>&1 &"
+                , getNameserver(nodes)));
+        } catch (Exception e) {
+            logger.error("Node {} start rocketmq node failed", node, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override public void kill() {
+        try {
+            //Kill nameserver
+            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+                logger.info("Node {} nameserver killed...", node);
+                SshUtil.execCommandInDir(node, installDir, "sh bin/mqshutdown namesrv");
+            }
+            //Kill broker
+            logger.info("Node {} broker killed...", node);
+            SshUtil.execCommandInDir(node, installDir, "sh bin/mqshutdown broker");
+        } catch (Exception e) {
+            logger.error("Node {} kill rocketmq node failed", node, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getDledgerPeers(List<String> nodes) {
+        StringBuilder res = new StringBuilder();
+        for (int i = 0; i < nodes.size(); i++) {
+            res.append("n" + i + "-" + nodes.get(i) + ":20911;");
+        }
+        return res.toString();
+    }
+
+    private String getNameserver(List<String> nodes) {
+        if (rmqBrokerConfig.namesrvAddr != null && !rmqBrokerConfig.namesrvAddr.isEmpty()) {
+            return rmqBrokerConfig.namesrvAddr;
+        } else {
+            StringBuilder res = new StringBuilder();
+            nodes.forEach(node -> res.append(node + ":9876;"));
+
+            return res.toString();
+        }
+    }
+}

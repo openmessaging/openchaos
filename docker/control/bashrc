@@ -1,0 +1,14 @@
+cat <<EOF
+Welcome to Chaos on Docker
+===========================
+
+This container runs the Chaos tests in sub-containers.
+
+You are currently in the base dir of the git repo for Chaos.
+
+To run a test:
+   mvn clean install
+   bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install
+EOF
+
+cd openmessaging-chaos
