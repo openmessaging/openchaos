@@ -174,11 +174,11 @@ public class ChaosControl {
                 Fault fault;
                 if (map == null || map.isEmpty()) {
                     logger.warn("Configure file does not contain nodes, use noop fault");
-                    fault = new NoopFault(recorder);
+                    fault = new NoopFault();
                 } else {
                     switch (arguments.fault) {
                         case "noop":
-                            fault = new NoopFault(recorder);
+                            fault = new NoopFault();
                             break;
                         case "minor-kill":
                         case "major-kill":

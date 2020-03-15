@@ -19,24 +19,20 @@
 
 package io.openmessaging.chaos.fault;
 
-import io.openmessaging.chaos.recorder.Recorder;
-
 /**
  * The fault which do nothing
  */
 public class NoopFault implements Fault {
 
-    private Recorder recorder;
+    public NoopFault() {
 
-    public NoopFault(Recorder recorder){
-        this.recorder=recorder;
     }
 
     @Override public void invoke() {
-        recorder.recordFaultStart("noop",System.currentTimeMillis());
+
     }
 
     @Override public void recover() {
-        recorder.recordFaultEnd("noop",System.currentTimeMillis());
+
     }
 }

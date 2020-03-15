@@ -50,6 +50,7 @@ public class MQTestResult extends TestResult {
             "\n\tatMostOnce=" + atMostOnce +
             "\n\tatLeastOnce=" + atLeastOnce +
             "\n\texactlyOnce=" + exactlyOnce +
+            "\n\tisValid=" + isValid +
             "\n }";
     }
 }
