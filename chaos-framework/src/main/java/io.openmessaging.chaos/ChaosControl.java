@@ -29,6 +29,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.checker.Checker;
 import io.openmessaging.chaos.checker.MQChecker;
+import io.openmessaging.chaos.checker.PerfChecker;
 import io.openmessaging.chaos.common.utils.SshUtil;
 import io.openmessaging.chaos.driver.MQChaosNode;
 import io.openmessaging.chaos.fault.Fault;
@@ -37,10 +38,12 @@ import io.openmessaging.chaos.fault.NetFault;
 import io.openmessaging.chaos.fault.NoopFault;
 import io.openmessaging.chaos.model.Model;
 import io.openmessaging.chaos.model.QueueModel;
+import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.worker.FaultWorker;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -133,7 +136,7 @@ public class ChaosControl {
 
             Model model = null;
             Recorder recorder = null;
-            TestResult result = null;
+            List<TestResult> resultList = new ArrayList<>();
 
             try {
 
@@ -152,7 +155,7 @@ public class ChaosControl {
                 recorder = Recorder.newRecorder(historyFile);
 
                 if (recorder == null) {
-                    System.err.printf("create %s failed", historyFile);
+                    System.err.printf("Create %s failed", historyFile);
                     System.exit(-1);
                 }
 
@@ -171,21 +174,21 @@ public class ChaosControl {
                 Fault fault;
                 if (map == null || map.isEmpty()) {
                     logger.warn("Configure file does not contain nodes, use noop fault");
-                    fault = new NoopFault();
+                    fault = new NoopFault(recorder);
                 } else {
                     switch (arguments.fault) {
                         case "noop":
-                            fault = new NoopFault();
+                            fault = new NoopFault(recorder);
                             break;
                         case "minor-kill":
                         case "major-kill":
                         case "random-kill":
-                            fault = new KillFault(map, arguments.fault);
+                            fault = new KillFault(map, arguments.fault, recorder);
                             break;
                         case "random-partition":
                         case "random-delay":
                         case "random-loss":
-                            fault = new NetFault(driverConfiguration.nodes, arguments.fault);
+                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
                             break;
                         default:
                             throw new RuntimeException("no such fault");
@@ -196,6 +199,8 @@ public class ChaosControl {
                 FaultWorker faultWorker = new FaultWorker(logger, fault, arguments.interval);
 
                 faultWorker.start();
+
+                long testStartTimeStamp = System.currentTimeMillis();
 
                 //Start model
                 model.start();
@@ -222,15 +227,17 @@ public class ChaosControl {
 
                 recorder.flush();
 
+                long testEndTimestamp = System.currentTimeMillis();
+
                 logger.info("Start check...");
 
-                Checker checker = new MQChecker(historyFile);
+                List<Checker> checkerList = new ArrayList<>();
 
-                result = checker.check();
+                checkerList.add(new MQChecker(historyFile));
+                checkerList.add(new PerfChecker(historyFile, testStartTimeStamp, testEndTimestamp));
+                checkerList.forEach(checker -> resultList.add(checker.check()));
 
                 logger.info("Check complete.");
-
-                mapper.writeValue(new File(historyFile.replace("history", "result")), result);
 
             } catch (Exception e) {
                 logger.error("Failed to run chaos test.", e);
@@ -250,15 +257,14 @@ public class ChaosControl {
             }
 
             try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(5));
+                Thread.sleep(TimeUnit.SECONDS.toMillis(3));
             } catch (InterruptedException e) {
                 logger.error("", e);
             }
 
-
-            if (result != null) {
+            if (resultList.size() != 0) {
                 logger.info("----CHAOS TEST RESULT----");
-                logger.info("{}", result.toString());
+                resultList.forEach(testResult -> logger.info(testResult.toString()));
                 logger.info("----CHAOS TEST RESULT----");
             }
         });

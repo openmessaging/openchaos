@@ -21,4 +21,16 @@ package io.openmessaging.chaos;
 
 public class TestResult {
     public boolean isValid;
+
+    public String name;
+
+    public TestResult(String name) {
+        this.name = name;
+    }
+
+    @Override public String toString() {
+        return "\n" + name + "{" +
+            "\n\tisValid=" + isValid +
+            "\n }";
+    }
 }

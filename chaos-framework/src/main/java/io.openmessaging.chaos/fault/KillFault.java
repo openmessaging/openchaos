@@ -23,6 +23,7 @@ import io.openmessaging.chaos.ChaosControl;
 import io.openmessaging.chaos.driver.MQChaosNode;
 import io.openmessaging.chaos.generator.FaultOperation;
 import io.openmessaging.chaos.generator.KillFaultGenerator;
+import io.openmessaging.chaos.recorder.Recorder;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -41,16 +42,20 @@ public class KillFault implements Fault {
 
     private String mode;
 
+    private Recorder recorder;
+
     private static final Logger logger = LoggerFactory.getLogger(ChaosControl.class);
 
-    public KillFault(Map<String, MQChaosNode> nodesMap, String mode) {
+    public KillFault(Map<String, MQChaosNode> nodesMap, String mode, Recorder recorder) {
         this.nodesMap = nodesMap;
         this.mode = mode;
+        this.recorder = recorder;
         this.killFaultGenerator = new KillFaultGenerator(nodesMap.keySet(), mode);
     }
 
     @Override public synchronized void invoke() {
         logger.info("Invoke {} fault....", mode);
+        recorder.recordFaultStart(mode, System.currentTimeMillis());
         faultOperations = killFaultGenerator.generate();
         for (FaultOperation operation : faultOperations) {
             logger.info("Kill node {} processes...", operation.getNode());
@@ -63,6 +68,7 @@ public class KillFault implements Fault {
         if (faultOperations == null)
             return;
         logger.info("Recover {} fault....", mode);
+        recorder.recordFaultEnd(mode, System.currentTimeMillis());
         for (FaultOperation operation : faultOperations) {
             logger.info("Restart node {} processes...", operation.getNode());
             MQChaosNode mqChaosNode = nodesMap.get(operation.getNode());

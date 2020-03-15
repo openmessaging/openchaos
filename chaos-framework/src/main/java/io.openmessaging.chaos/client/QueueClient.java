@@ -19,12 +19,14 @@
 
 package io.openmessaging.chaos.client;
 
-import io.openmessaging.chaos.Recorder;
 import io.openmessaging.chaos.common.InvokeResult;
 import io.openmessaging.chaos.driver.MQChaosClient;
 import io.openmessaging.chaos.driver.MQChaosDriver;
 import io.openmessaging.chaos.generator.QueueGenerator;
 import io.openmessaging.chaos.generator.QueueOperation;
+import io.openmessaging.chaos.recorder.Recorder;
+import io.openmessaging.chaos.recorder.RequestLogEntry;
+import io.openmessaging.chaos.recorder.ResponseLogEntry;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
@@ -62,33 +64,43 @@ public class QueueClient implements Client {
     }
 
     public void nextInvoke() {
-
         QueueOperation op = QueueGenerator.generate();
-
-        recorder.recordRequest(clientId, op.getInvokeOperation(), op.getValue());
+        RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, op.getInvokeOperation(), op.getValue(), System.currentTimeMillis());
+        recorder.recordRequest(requestLogEntry);
+        ResponseLogEntry responseLogEntry;
         if (op.getInvokeOperation().equals("enqueue")) {
             InvokeResult invokeResult = mqChaosClient.enqueue(op.getValue());
-            recorder.recordResponse(clientId, op.getInvokeOperation(), invokeResult, op.getValue());
+            responseLogEntry = new ResponseLogEntry(clientId, op.getInvokeOperation(),
+                invokeResult, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
         } else {
             List<String> dequeueList = mqChaosClient.dequeue();
             if (dequeueList == null || dequeueList.isEmpty()) {
-                recorder.recordResponse(clientId, op.getInvokeOperation(), InvokeResult.FAILURE, null);
+                responseLogEntry = new ResponseLogEntry(clientId, op.getInvokeOperation(),
+                    InvokeResult.FAILURE, null, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
             } else {
-                recorder.recordResponse(clientId, op.getInvokeOperation(), InvokeResult.SUCCESS, dequeueList.toString());
+                responseLogEntry = new ResponseLogEntry(clientId, op.getInvokeOperation(),
+                    InvokeResult.SUCCESS, dequeueList.toString(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
+
             }
         }
+        recorder.recordResponse(responseLogEntry);
     }
 
     public void lastInvoke() {
         logger.info("Client {} invoke drain", clientId);
         //Drain
-        recorder.recordRequest(clientId, "dequeue", null);
+        RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, "dequeue", null, System.currentTimeMillis());
+        ResponseLogEntry responseLogEntry;
+        recorder.recordRequest(requestLogEntry);
         List<String> dequeueList = mqChaosClient.dequeue();
         while (dequeueList != null && !dequeueList.isEmpty()) {
-            recorder.recordResponse(clientId, "dequeue", InvokeResult.SUCCESS, dequeueList.toString());
-            recorder.recordRequest(clientId, "dequeue", null);
+            responseLogEntry = new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, dequeueList.toString(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
+            recorder.recordResponse(responseLogEntry);
+            requestLogEntry = new RequestLogEntry(clientId, "dequeue", null, System.currentTimeMillis());
+            recorder.recordRequest(requestLogEntry);
             dequeueList = mqChaosClient.dequeue();
         }
-        recorder.recordResponse(clientId, "dequeue", InvokeResult.FAILURE, null);
+        responseLogEntry = new ResponseLogEntry(clientId, "dequeue", InvokeResult.FAILURE, null, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
+        recorder.recordResponse(responseLogEntry);
     }
 }

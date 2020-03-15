@@ -25,11 +25,12 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.DriverConfiguration;
-import io.openmessaging.chaos.Recorder;
+import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.client.Client;
 import io.openmessaging.chaos.client.QueueClient;
 import io.openmessaging.chaos.driver.MQChaosDriver;
 import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.recorder.RequestLogEntry;
 import io.openmessaging.chaos.worker.ClientWorker;
 import io.openmessaging.chaos.worker.Worker;
 import java.io.File;
@@ -200,5 +201,9 @@ public class QueueModel implements Model {
         }
 
         return mqChaosDriver;
+    }
+
+    public static void main(String[] args) throws Exception{
+        System.out.println(writer.writeValueAsString(new RequestLogEntry(1,"123","123",123)));
     }
 }

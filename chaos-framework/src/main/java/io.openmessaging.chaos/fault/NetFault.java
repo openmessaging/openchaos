@@ -22,6 +22,7 @@ package io.openmessaging.chaos.fault;
 import io.openmessaging.chaos.ChaosControl;
 import io.openmessaging.chaos.generator.FaultOperation;
 import io.openmessaging.chaos.generator.NetFaultGenerator;
+import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.utils.NetUtil;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,14 +44,18 @@ public class NetFault implements Fault {
 
     private List<String> nodes;
 
-    public NetFault(List<String> nodes, String mode) {
+    private Recorder recorder;
+
+    public NetFault(List<String> nodes, String mode, Recorder recorder) {
         this.mode = mode;
         this.nodes = nodes;
+        this.recorder = recorder;
         this.netFaultGenerator = new NetFaultGenerator(nodes, mode);
     }
 
     @Override public synchronized void invoke() {
         logger.info("Invoke {} fault", mode);
+        recorder.recordFaultStart(mode, System.currentTimeMillis());
         faultOperations = netFaultGenerator.generate();
         for (FaultOperation operation : faultOperations) {
             logger.info("Invoke node {} fault, fault is {}, invoke args is {}",
@@ -83,6 +88,7 @@ public class NetFault implements Fault {
         if (faultOperations == null)
             return;
         logger.info("Recover {} fault", mode);
+        recorder.recordFaultStart(mode,System.currentTimeMillis());
         for (FaultOperation operation : faultOperations) {
             try {
                 logger.info("Recover node {} fault, fault is {}, recover args is {}",

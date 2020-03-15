@@ -34,8 +34,12 @@ public class MQTestResult extends TestResult {
     public boolean atLeastOnce;
     public boolean exactlyOnce;
 
+    public MQTestResult(String name){
+        super(name);
+    }
+
     @Override public String toString() {
-        return "\nMQTestResult{ " +
+        return "\n" + name + "{" +
             "\n\tenqueueInvokeCount=" + enqueueInvokeCount +
             "\n\tenqueueSuccessCount=" + enqueueSuccessCount +
             "\n\tenqueueActualCount=" + enqueueActualCount +
