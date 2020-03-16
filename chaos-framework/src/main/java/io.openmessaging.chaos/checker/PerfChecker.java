@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import org.slf4j.Logger;
@@ -82,8 +83,15 @@ public class PerfChecker implements Checker {
 
         p.setTitle("OpenMessaging-Chaos Latency Point Graph");
 
+        int yAxisMaxVaule = 1000;
+        Optional<Integer> maxLatency = Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> !x[0].equals("fault")).filter(x -> x[2].equals("RESPONSE")).map(x -> Integer.parseInt(x[7])).reduce(Integer::max);
+        if (maxLatency.isPresent()) {
+            yAxisMaxVaule = maxLatency.get() + 1000;
+            p.getAxis("y").setBoundaries(0, yAxisMaxVaule);
+        }
+
         p.getAxis("x").setLabel("time(s)");
-        p.getAxis("x").setBoundaries(0, (testEndTimestamp - testStartTimestamp) / 1000 + 5);
+        p.getAxis("x").setBoundaries(0, (testEndTimestamp - testStartTimestamp) / 1000 + 10);
         p.getAxis("y").setLabel("latency(ms)");
         p.getAxis("y").setLogScale(true);
         p.setKey(JavaPlot.Key.TOP_RIGHT);
@@ -112,9 +120,9 @@ public class PerfChecker implements Checker {
                 long x1 = (startTimestamp - testStartTimestamp) / 1000;
                 long x2 = (endTimestamp - testStartTimestamp) / 1000;
                 faultIntervalList.add(new Point(x1, 0));
+                faultIntervalList.add(new Point(x1, yAxisMaxVaule));
+                faultIntervalList.add(new Point(x2, yAxisMaxVaule));
                 faultIntervalList.add(new Point(x2, 0));
-                faultIntervalList.add(new Point(x2, 1000));
-                faultIntervalList.add(new Point(x1, 1000));
             } else {
                 i++;
             }
@@ -168,7 +176,7 @@ public class PerfChecker implements Checker {
         }
 
         if (enqueueUnknownList.size() != 0) {
-            renderPoint(p, enqueueUnknownList, "enqueue unknown", 6, NamedPlotColor.YELLOW);
+            renderPoint(p, enqueueUnknownList, "enqueue unknown", 6, NamedPlotColor.BLUE);
         }
 
         if (dequeueSuccessList.size() != 0) {
