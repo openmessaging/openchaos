@@ -83,16 +83,12 @@ public class PerfChecker implements Checker {
 
         p.setTitle("OpenMessaging-Chaos Latency Point Graph");
 
-        int yAxisMaxVaule = 1000;
-        Optional<Integer> maxLatency = Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> !x[0].equals("fault")).filter(x -> x[2].equals("RESPONSE")).map(x -> Integer.parseInt(x[7])).reduce(Integer::max);
-        if (maxLatency.isPresent()) {
-            yAxisMaxVaule = maxLatency.get() + 1000;
-            p.getAxis("y").setBoundaries(0, yAxisMaxVaule);
-        }
+        int yAxisMaxVaule = 10000;
 
         p.getAxis("x").setLabel("time(s)");
         p.getAxis("x").setBoundaries(0, (testEndTimestamp - testStartTimestamp) / 1000 + 10);
         p.getAxis("y").setLabel("latency(ms)");
+        p.getAxis("y").setBoundaries(0, yAxisMaxVaule);
         p.getAxis("y").setLogScale(true);
         p.setKey(JavaPlot.Key.TOP_RIGHT);
 
