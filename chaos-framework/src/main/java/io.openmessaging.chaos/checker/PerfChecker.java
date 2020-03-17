@@ -33,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import org.slf4j.Logger;
@@ -83,12 +82,10 @@ public class PerfChecker implements Checker {
 
         p.setTitle("OpenMessaging-Chaos Latency Point Graph");
 
-        int yAxisMaxVaule = 10000;
-
         p.getAxis("x").setLabel("time(s)");
-        p.getAxis("x").setBoundaries(0, (testEndTimestamp - testStartTimestamp) / 1000 + 10);
+        p.getAxis("x").setBoundaries(0, (testEndTimestamp - testStartTimestamp) / 1000 + 20);
         p.getAxis("y").setLabel("latency(ms)");
-        p.getAxis("y").setBoundaries(0, yAxisMaxVaule);
+        p.getAxis("y").setBoundaries(0, 10 * 1000);
         p.getAxis("y").setLogScale(true);
         p.setKey(JavaPlot.Key.TOP_RIGHT);
 
@@ -116,8 +113,8 @@ public class PerfChecker implements Checker {
                 long x1 = (startTimestamp - testStartTimestamp) / 1000;
                 long x2 = (endTimestamp - testStartTimestamp) / 1000;
                 faultIntervalList.add(new Point(x1, 0));
-                faultIntervalList.add(new Point(x1, yAxisMaxVaule));
-                faultIntervalList.add(new Point(x2, yAxisMaxVaule));
+                faultIntervalList.add(new Point(x1, 10 * 1000));
+                faultIntervalList.add(new Point(x2, 10 * 1000));
                 faultIntervalList.add(new Point(x2, 0));
             } else {
                 i++;
@@ -134,7 +131,7 @@ public class PerfChecker implements Checker {
             p.addPlot(faultSet);
         }
 
-        Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> !x[0].equals("fault")).filter(x -> x[2].equals("RESPONSE")).forEach(line -> {
+        Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> !x[0].equals("fault")).filter(x -> x[2].equals("RESPONSE")).filter(x -> Long.parseLong(x[7]) >= 0).forEach(line -> {
             if (line[1].equals("enqueue")) {
                 switch (line[3]) {
                     case "SUCCESS":
@@ -182,6 +179,8 @@ public class PerfChecker implements Checker {
         if (dequeueFailureList.size() != 0) {
             renderPoint(p, dequeueFailureList, "dequeue failure", 4, NamedPlotColor.RED);
         }
+
+        p.setKey(JavaPlot.Key.OUTSIDE);
 
         p.plot();
 

@@ -12,6 +12,7 @@ Take rocketmq for example:
 2. Edit driver-rocketmq/rocketmq.yaml to set the host name of cluster nodes, client config, broker config.
 3. Install openmessaging-chaos in control node:  `mvn clean install`
 4. Run the test in the control node: `bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install` 
+5. After the test, you will get yyyy-MM-dd-HH-mm-ss-driver-chaos-result-file and yyyy-MM-dd-HH-mm-ss-driver-latency-point-graph.png.
 
 ## Quick Start（Docker）
 
