@@ -73,7 +73,6 @@
         <dependency>
             <groupId>com.panayotis</groupId>
             <artifactId>javaplot</artifactId>
-            <version>0.5.0</version>
         </dependency>
     </dependencies>
 
