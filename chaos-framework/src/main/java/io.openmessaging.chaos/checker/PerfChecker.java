@@ -85,7 +85,7 @@ public class PerfChecker implements Checker {
         p.getAxis("x").setLabel("time(s)");
         p.getAxis("x").setBoundaries(0, (testEndTimestamp - testStartTimestamp) / 1000 + 20);
         p.getAxis("y").setLabel("latency(ms)");
-        p.getAxis("y").setBoundaries(0, 10 * 1000);
+        p.getAxis("y").setBoundaries(0.1, 10 * 1000);
         p.getAxis("y").setLogScale(true);
         p.setKey(JavaPlot.Key.TOP_RIGHT);
 
@@ -180,7 +180,7 @@ public class PerfChecker implements Checker {
             renderPoint(p, dequeueFailureList, "dequeue failure", 4, NamedPlotColor.RED);
         }
 
-        p.setKey(JavaPlot.Key.OUTSIDE);
+        p.setKey(JavaPlot.Key.BELOW);
 
         p.plot();
 
