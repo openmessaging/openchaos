@@ -90,7 +90,7 @@ public class ChaosControl {
             "-f",
             "--fault"
         }, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, random-partition, " +
-            "partition-majorities-ring, bridge, random-delay, random-loss, minor-suspend, major-suspend, random-suspend"
+            "partition-majorities-ring, bridge, random-loss, minor-suspend, major-suspend, random-suspend"
             , validateWith = FaultValidator.class)
         String fault = "noop";
 

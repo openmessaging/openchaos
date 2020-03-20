@@ -32,7 +32,7 @@ public class NetUtil {
 
     private static final String delayVariance = "50ms";
 
-    private static final String lossRate = "0.5";
+    private static final String lossRate = "0.8";
 
     public static void partition(String node, String targetNode) throws Exception {
         if (!Utils.isIp(targetNode)) {
