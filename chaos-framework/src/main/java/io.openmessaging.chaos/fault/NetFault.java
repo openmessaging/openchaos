@@ -102,13 +102,23 @@ public class NetFault implements Fault {
         if (faultOperations == null)
             return;
         logger.info("Recover {} fault", mode);
-        recorder.recordFaultStart(mode,System.currentTimeMillis());
+        recorder.recordFaultEnd(mode,System.currentTimeMillis());
         for (FaultOperation operation : faultOperations) {
             try {
                 logger.info("Recover node {} fault, fault is {}, recover args is {}",
                     operation.getNode(), operation.getName(), operation.getRecoverArgs());
                 switch (operation.getName()) {
                     case "random-partition":
+                        NetUtil.healPartition(operation.getNode());
+                        break;
+                    case "partition-majorities-ring":
+                        if (nodes.size() <= 3)
+                            throw new IllegalArgumentException("Number of nodes less than or equal to 3, unable to form partition-majorities-ring");
+                        NetUtil.healPartition(operation.getNode());
+                        break;
+                    case "bridge":
+                        if (nodes.size() != 5)
+                            throw new IllegalArgumentException("Number of nodes is not equal to 5, unable to form bridge");
                         NetUtil.healPartition(operation.getNode());
                         break;
                     case "random-delay":
