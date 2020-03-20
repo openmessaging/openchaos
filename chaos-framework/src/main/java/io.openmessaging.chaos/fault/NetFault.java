@@ -67,6 +67,20 @@ public class NetFault implements Fault {
                             NetUtil.partition(operation.getNode(), partitionNode);
                         }
                         break;
+                    case "partition-majorities-ring":
+                        if (nodes.size() <= 3)
+                            throw new IllegalArgumentException("Number of nodes less than or equal to 3, unable to form partition-majorities-ring");
+                        for (String partitionNode : operation.getInvokeArgs()) {
+                            NetUtil.partition(operation.getNode(), partitionNode);
+                        }
+                        break;
+                    case "bridge":
+                        if (nodes.size() != 5)
+                            throw new IllegalArgumentException("Number of nodes is not equal to 5, unable to form bridge");
+                        for (String partitionNode : operation.getInvokeArgs()) {
+                            NetUtil.partition(operation.getNode(), partitionNode);
+                        }
+                        break;
                     case "random-delay":
                         NetUtil.delay(operation.getNode());
                         break;
@@ -79,7 +93,7 @@ public class NetFault implements Fault {
                         break;
                 }
             } catch (Exception e) {
-                logger.error("Invoke fault {} failed", operation.getName());
+                logger.error("Invoke fault {} failed", operation.getName(), e);
             }
         }
     }
@@ -108,7 +122,7 @@ public class NetFault implements Fault {
                         break;
                 }
             } catch (Exception e) {
-                logger.error("Recover fault {} failed", operation.getName());
+                logger.error("Recover fault {} failed", operation.getName(), e);
             }
         }
         faultOperations = null;

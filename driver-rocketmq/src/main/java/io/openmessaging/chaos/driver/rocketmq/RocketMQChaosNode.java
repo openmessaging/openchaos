@@ -23,6 +23,7 @@ import io.openmessaging.chaos.common.utils.SshUtil;
 import io.openmessaging.chaos.driver.MQChaosNode;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQBrokerConfig;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
@@ -124,6 +125,15 @@ public class RocketMQChaosNode implements MQChaosNode {
         }
     }
 
+    @Override public List<String> getSuspendProcessName() {
+        List<String> names = new ArrayList<>();
+        names.add("org.apache.rocketmq.broker.BrokerStartup");
+        if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+            names.add("org.apache.rocketmq.namesrv.NamesrvStartup");
+        }
+        return names;
+    }
+
     private String getDledgerPeers(List<String> nodes) {
         StringBuilder res = new StringBuilder();
         for (int i = 0; i < nodes.size(); i++) {
@@ -142,4 +152,5 @@ public class RocketMQChaosNode implements MQChaosNode {
             return res.toString();
         }
     }
+
 }

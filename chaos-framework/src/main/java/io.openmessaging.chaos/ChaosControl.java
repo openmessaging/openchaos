@@ -36,6 +36,7 @@ import io.openmessaging.chaos.fault.Fault;
 import io.openmessaging.chaos.fault.KillFault;
 import io.openmessaging.chaos.fault.NetFault;
 import io.openmessaging.chaos.fault.NoopFault;
+import io.openmessaging.chaos.fault.SuspendFault;
 import io.openmessaging.chaos.model.Model;
 import io.openmessaging.chaos.model.QueueModel;
 import io.openmessaging.chaos.recorder.Recorder;
@@ -88,7 +89,8 @@ public class ChaosControl {
         @Parameter(names = {
             "-f",
             "--fault"
-        }, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, random-partition, random-delay, random-loss"
+        }, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, random-partition, " +
+            "partition-majorities-ring, bridge, random-delay, random-loss, minor-suspend, major-suspend, random-suspend"
             , validateWith = FaultValidator.class)
         String fault = "noop";
 
@@ -189,6 +191,21 @@ public class ChaosControl {
                         case "random-delay":
                         case "random-loss":
                             fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                            break;
+                        case "partition-majorities-ring":
+                            if (driverConfiguration.nodes.size() <= 3)
+                                throw new IllegalArgumentException("Number of nodes less than or equal to 3, unable to form partition-majorities-ring");
+                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                            break;
+                        case "bridge":
+                            if (driverConfiguration.nodes.size() != 5)
+                                throw new IllegalArgumentException("Number of nodes is not equal to 5, unable to form bridge");
+                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                            break;
+                        case "minor-suspend":
+                        case "major-suspend":
+                        case "random-suspend":
+                            fault = new SuspendFault(map, arguments.fault, recorder);
                             break;
                         default:
                             throw new RuntimeException("no such fault");
