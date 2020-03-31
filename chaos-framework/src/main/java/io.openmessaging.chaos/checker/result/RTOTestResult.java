@@ -34,8 +34,17 @@ public class RTOTestResult extends TestResult {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("\n" + name + "{ ");
         int i = 1;
+        int count = 0;
+        long sum = 0;
         for (RTORecord record : results) {
             stringBuilder.append("\n\tfault interval ").append(i++).append(" : ").append(record);
+            if (record.isUnavailable && record.isRecoveryInFaultInterval) {
+                sum += record.RTOTime;
+                count++;
+            }
+        }
+        if (count != 0) {
+            stringBuilder.append("\n\taverage failure recovery time = " + sum / count);
         }
         stringBuilder.append("\n}");
         return stringBuilder.toString();

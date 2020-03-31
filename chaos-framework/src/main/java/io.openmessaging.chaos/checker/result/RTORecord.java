@@ -28,7 +28,7 @@ public class RTORecord {
         } else if (!isRecoveryInFaultInterval) {
             stringBuilder.append("no recovery during fault interval");
         } else {
-            stringBuilder.append("RTOTime = ").append(RTOTime);
+            stringBuilder.append("failure recovery time = ").append(RTOTime).append("ms");
         }
         stringBuilder.append(" }");
         return stringBuilder.toString();

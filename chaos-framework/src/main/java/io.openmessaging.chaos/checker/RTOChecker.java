@@ -19,11 +19,11 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.openmessaging.chaos.checker.result.RTORecord;
 import io.openmessaging.chaos.checker.result.RTOTestResult;
 import io.openmessaging.chaos.checker.result.TestResult;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +63,7 @@ public class RTOChecker implements Checker {
 
         List<String[]> allRecords = Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).collect(Collectors.toList());
         boolean isInFault = false;
+        boolean unavailableFlag = false;
         RTORecord rtoRecord = null;
 
         for (String[] x : allRecords) {
@@ -72,17 +73,19 @@ public class RTOChecker implements Checker {
                 rtoTestResult.getResults().add(rtoRecord);
             }
 
-            if (isInFault && !rtoRecord.isUnavailable && x[3].equals("FAILURE")) {
+            if (isInFault && !unavailableFlag && x[3].equals("FAILURE")) {
                 rtoRecord.isUnavailable = true;
                 rtoRecord.startTimestamp = Long.parseLong(x[6]) - Long.parseLong(x[7]);
+                unavailableFlag = true;
             }
 
-            if (isInFault && rtoRecord.isUnavailable && x[3].equals("SUCCESS")) {
+            if (isInFault && unavailableFlag && x[3].equals("SUCCESS")) {
                 rtoRecord.endTimestamp = Long.parseLong(x[6]);
                 rtoRecord.RTOTime = rtoRecord.endTimestamp - rtoRecord.startTimestamp;
                 rtoRecord.isRecoveryInFaultInterval = true;
-
+                unavailableFlag = false;
             }
+            
             if (isInFault && x[0].equals("fault") && x[2].equals("end")) {
                 isInFault = false;
             }
