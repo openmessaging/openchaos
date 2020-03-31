@@ -30,6 +30,7 @@ import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.checker.Checker;
 import io.openmessaging.chaos.checker.MQChecker;
 import io.openmessaging.chaos.checker.PerfChecker;
+import io.openmessaging.chaos.checker.RTOChecker;
 import io.openmessaging.chaos.checker.result.TestResult;
 import io.openmessaging.chaos.common.utils.SshUtil;
 import io.openmessaging.chaos.driver.MQChaosNode;
@@ -99,6 +100,10 @@ public class ChaosControl {
             "-i",
             "--fault-interval"}, description = "Fault execution interval. eg: 30", validateWith = PositiveInteger.class)
         int interval = 30;
+
+        @Parameter(names = {
+            "--rto"}, description = "Calculate failure recovery time.")
+        boolean rto = false;
 
         @Parameter(names = {
             "--install"}, description = "Whether to install program. It will download the installation package on each cluster node. " +
@@ -253,6 +258,9 @@ public class ChaosControl {
 
                 checkerList.add(new MQChecker(historyFile));
                 checkerList.add(new PerfChecker(historyFile, testStartTimeStamp, testEndTimestamp));
+                if(arguments.rto){
+                    checkerList.add(new RTOChecker(historyFile));
+                }
                 checkerList.forEach(checker -> resultList.add(checker.check()));
 
                 logger.info("Check complete.");

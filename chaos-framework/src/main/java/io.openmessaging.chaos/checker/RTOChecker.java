@@ -13,6 +13,9 @@
 
 package io.openmessaging.chaos.checker;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.openmessaging.chaos.checker.result.RTORecord;
 import io.openmessaging.chaos.checker.result.RTOTestResult;
 import io.openmessaging.chaos.checker.result.TestResult;
@@ -20,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +31,12 @@ public class RTOChecker implements Checker {
 
     private String fileName;
     private static final Logger logger = LoggerFactory.getLogger(RTOChecker.class);
+    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    static {
+        mapper.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
+    }
 
     public RTOChecker(String fileName) {
         this.fileName = fileName;
@@ -40,6 +50,12 @@ public class RTOChecker implements Checker {
             logger.error("", e);
             rtoTestResult.isValid = false;
         }
+        try{
+            mapper.writeValue(new File(fileName.replace("history", "rto-result")), rtoTestResult);
+        } catch (Exception e){
+            logger.error("", e);
+        }
+
         return rtoTestResult;
     }
 
@@ -71,6 +87,8 @@ public class RTOChecker implements Checker {
                 isInFault = false;
             }
         }
+
+        rtoTestResult.isValid=true;
 
     }
 
