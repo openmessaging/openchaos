@@ -21,11 +21,8 @@ package io.openmessaging.chaos.checker;
 
 import io.openmessaging.chaos.checker.result.TestResult;
 
-public interface Checker {
-
-    /**
-     * Check the history file to get test result
-     * @return
-     */
-    TestResult check();
+public class OrderChecker implements Checker {
+    @Override public TestResult check() {
+        return null;
+    }
 }

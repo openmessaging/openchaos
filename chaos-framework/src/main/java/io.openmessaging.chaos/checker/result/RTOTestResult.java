@@ -17,15 +17,31 @@
  * under the License.
  */
 
-package io.openmessaging.chaos.checker;
+package io.openmessaging.chaos.checker.result;
 
-import io.openmessaging.chaos.checker.result.TestResult;
+import java.util.ArrayList;
+import java.util.List;
 
-public interface Checker {
+public class RTOTestResult extends TestResult {
+    private List<RTORecord> results = new ArrayList<>();
 
-    /**
-     * Check the history file to get test result
-     * @return
-     */
-    TestResult check();
+    public RTOTestResult() {
+        super("RTOTestResult");
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("\n" + name + "{ ");
+        int i = 1;
+        for (RTORecord record : results) {
+            stringBuilder.append("\n\tfault interval ").append(i++).append(" : ").append(record);
+        }
+        stringBuilder.append("\n}");
+        return stringBuilder.toString();
+    }
+
+    public List<RTORecord> getResults() {
+        return results;
+    }
 }

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.checker.result;
 
 import com.google.common.collect.Multiset;
 import java.util.Set;
@@ -34,8 +34,8 @@ public class MQTestResult extends TestResult {
     public boolean atLeastOnce;
     public boolean exactlyOnce;
 
-    public MQTestResult(String name){
-        super(name);
+    public MQTestResult(){
+        super("MQTestResult");
     }
 
     @Override public String toString() {

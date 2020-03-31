@@ -30,6 +30,7 @@ import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.checker.Checker;
 import io.openmessaging.chaos.checker.MQChecker;
 import io.openmessaging.chaos.checker.PerfChecker;
+import io.openmessaging.chaos.checker.result.TestResult;
 import io.openmessaging.chaos.common.utils.SshUtil;
 import io.openmessaging.chaos.driver.MQChaosNode;
 import io.openmessaging.chaos.fault.Fault;

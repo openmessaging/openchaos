@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
-import io.openmessaging.chaos.MQTestResult;
+import io.openmessaging.chaos.checker.result.MQTestResult;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -114,7 +114,7 @@ public class MQChecker implements Checker {
     }
 
     private MQTestResult generateResult() {
-        MQTestResult MQTestResult = new MQTestResult("MQTestResult");
+        MQTestResult MQTestResult = new MQTestResult();
         MQTestResult.enqueueInvokeCount = enqueueInvokeCount.get();
         MQTestResult.enqueueSuccessCount = enqueueSuccessCount.get();
         MQTestResult.enqueueActualCount = dequeueSuccessCount.get();

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.checker.result;
 
 public class TestResult {
     public boolean isValid;

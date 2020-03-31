@@ -25,7 +25,7 @@ import com.panayotis.gnuplot.style.NamedPlotColor;
 import com.panayotis.gnuplot.style.PlotStyle;
 import com.panayotis.gnuplot.style.Style;
 import com.panayotis.gnuplot.terminal.ImageTerminal;
-import io.openmessaging.chaos.TestResult;
+import io.openmessaging.chaos.checker.result.TestResult;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -93,8 +93,8 @@ public class PerfChecker implements Checker {
         List<Point> enqueueSuccessList = new ArrayList<>();
         List<Point> enqueueFailureList = new ArrayList<>();
         List<Point> enqueueUnknownList = new ArrayList<>();
-        List<Point> dequeueSuccessList = new ArrayList<>();
-        List<Point> dequeueFailureList = new ArrayList<>();
+//        List<Point> dequeueSuccessList = new ArrayList<>();
+//        List<Point> dequeueFailureList = new ArrayList<>();
 
         //Fault interval
         List<String[]> faultLines = Files.lines(Paths.get(fileName)).
@@ -146,39 +146,40 @@ public class PerfChecker implements Checker {
                     default:
                         logger.error("Error data in enqueue");
                 }
-            } else if (line[1].equals("dequeue")) {
-                switch (line[3]) {
-                    case "SUCCESS":
-                        dequeueSuccessList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
-                        break;
-                    case "FAILURE":
-                        dequeueFailureList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
-                        break;
-                    default:
-                        logger.error("Error data in dequeue");
-                }
             }
+//            else if (line[1].equals("dequeue")) {
+//                switch (line[3]) {
+//                    case "SUCCESS":
+//                        dequeueSuccessList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
+//                        break;
+//                    case "FAILURE":
+//                        dequeueFailureList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
+//                        break;
+//                    default:
+//                        logger.error("Error data in dequeue");
+//                }
+//            }
         });
 
         if (enqueueSuccessList.size() != 0) {
-            renderPoint(p, enqueueSuccessList, "enqueue success", 6, NamedPlotColor.GREEN);
+            renderPoint(p, enqueueSuccessList, "enqueue success", 4, NamedPlotColor.GREEN);
         }
 
         if (enqueueFailureList.size() != 0) {
-            renderPoint(p, enqueueFailureList, "enqueue failure", 6, NamedPlotColor.RED);
+            renderPoint(p, enqueueFailureList, "enqueue failure", 4, NamedPlotColor.RED);
         }
 
         if (enqueueUnknownList.size() != 0) {
-            renderPoint(p, enqueueUnknownList, "enqueue unknown", 6, NamedPlotColor.BLUE);
+            renderPoint(p, enqueueUnknownList, "enqueue unknown", 4, NamedPlotColor.BLUE);
         }
 
-        if (dequeueSuccessList.size() != 0) {
-            renderPoint(p, dequeueSuccessList, "dequeue success", 4, NamedPlotColor.GREEN);
-        }
-
-        if (dequeueFailureList.size() != 0) {
-            renderPoint(p, dequeueFailureList, "dequeue failure", 4, NamedPlotColor.RED);
-        }
+//        if (dequeueSuccessList.size() != 0) {
+//            renderPoint(p, dequeueSuccessList, "dequeue success", 4, NamedPlotColor.GREEN);
+//        }
+//
+//        if (dequeueFailureList.size() != 0) {
+//            renderPoint(p, dequeueFailureList, "dequeue failure", 4, NamedPlotColor.RED);
+//        }
 
         p.setKey(JavaPlot.Key.BELOW);
 
