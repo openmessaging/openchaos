@@ -25,6 +25,8 @@ import java.util.List;
 public class RTOTestResult extends TestResult {
     private List<RTORecord> results = new ArrayList<>();
 
+    private boolean unexpectedUnavailableInNormalInterval = false;
+
     public RTOTestResult() {
         super("RTOTestResult");
     }
@@ -36,15 +38,25 @@ public class RTOTestResult extends TestResult {
         int i = 1;
         int count = 0;
         long sum = 0;
+        boolean allRecoveryInFaultInterval = true;
         for (RTORecord record : results) {
             stringBuilder.append("\n\tfault interval ").append(i++).append(" : ").append(record);
-            if (record.isUnavailable && record.isRecoveryInFaultInterval) {
+            if (record.isUnavailableInFaultInterval && record.isRecoveryInFaultInterval) {
                 sum += record.RTOTime;
                 count++;
             }
+            if (record.isUnavailableInFaultInterval && !record.isRecoveryInFaultInterval) {
+                allRecoveryInFaultInterval = false;
+            }
         }
-        if (count != 0) {
-            stringBuilder.append("\n\taverage failure recovery time = " + sum / count);
+        if (allRecoveryInFaultInterval && count != 0) {
+            stringBuilder.append("\n\taverage failure recovery time = ").append(sum / count).append("ms");
+        }
+        if (!allRecoveryInFaultInterval) {
+            stringBuilder.append("\n\tnote: the system can not be recovered during some fault periods!!!");
+        }
+        if (unexpectedUnavailableInNormalInterval) {
+            stringBuilder.append("\n\tnote: unexpected unavailable time in normal interval!!!");
         }
         stringBuilder.append("\n}");
         return stringBuilder.toString();
@@ -52,5 +64,13 @@ public class RTOTestResult extends TestResult {
 
     public List<RTORecord> getResults() {
         return results;
+    }
+
+    public boolean isUnexpectedUnavailableInNormalInterval() {
+        return unexpectedUnavailableInNormalInterval;
+    }
+
+    public void setUnexpectedUnavailableInNormalInterval(boolean unexpectedUnavailableInNormalInterval) {
+        this.unexpectedUnavailableInNormalInterval = unexpectedUnavailableInNormalInterval;
     }
 }
