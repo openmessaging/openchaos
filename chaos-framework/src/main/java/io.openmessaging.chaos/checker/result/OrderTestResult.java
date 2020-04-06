@@ -62,7 +62,7 @@ public class OrderTestResult extends TestResult {
             stringBuilder.append("\n\twrong start value = ").append(wrongStartValue);
         }
         stringBuilder.append("\n\t").append("isValid=").append(isValid);
-        stringBuilder.append("\n\t}");
+        stringBuilder.append("\n}");
         return stringBuilder.toString();
     }
 }
