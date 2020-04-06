@@ -33,36 +33,43 @@ bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install
 
 ```
   Options:
-      -c, --concurrency
-        The number of clients. eg: 5
-        Default: 4
-    * -d, --drivers
-        Drivers list. eg.: driver-rocketmq/rocketmq.yaml
-      -f, --fault
-        Fault type to be injected. eg: noop, minor-kill, major-kill, 
-        random-kill, random-partition, partition-majorities-ring, bridge, 
-        random-loss, minor-suspend, major-suspend, random-suspend
-        Default: noop
-      -i, --fault-interval
-        Fault execution interval. eg: 30
-        Default: 30
-      -h, --help
-        Help message
-      --install
-        Whether to install program. It will download the installation package on 
-        each cluster node. When you first use openmessaging-chaos to test a 
-        distributed system, it should be true.
-        Default: false
-      -t, --limit-time
-        Chaos execution time in seconds (excluding check time and recovery 
-        time). eg: 60
-        Default: 60
-      -r, --rate
-        Approximate number of requests per second. eg: 20
-        Default: 20
-      -u, --username
-        User name for ssh remote login. eg: admin
-        Default: root
+    -c, --concurrency
+      The number of clients. eg: 5
+      Default: 4
+  * -d, --drivers
+      Drivers list. eg.: driver-rocketmq/rocketmq.yaml
+    -f, --fault
+      Fault type to be injected. eg: noop, minor-kill, major-kill, 
+      random-kill, random-partition, partition-majorities-ring, bridge, 
+      random-loss, minor-suspend, major-suspend, random-suspend
+      Default: noop
+    -i, --fault-interval
+      Fault execution interval. eg: 30
+      Default: 30
+    -h, --help
+      Help message
+    --install
+      Whether to install program. It will download the installation package on 
+      each cluster node. When you first use openmessaging-chaos to test a 
+      distributed system, it should be true.
+      Default: false
+    -t, --limit-time
+      Chaos execution time in seconds (excluding check time and recovery 
+      time). eg: 60
+      Default: 60
+    --order-test
+      Turn on order test.
+      Default: false
+    -r, --rate
+      Approximate number of requests per second. eg: 20
+      Default: 20
+    --rto
+      Calculate failure recovery time.
+      Default: false
+    -u, --username
+      User name for ssh remote login. eg: admin
+      Default: root
+
 ```
 
 ## Fault type

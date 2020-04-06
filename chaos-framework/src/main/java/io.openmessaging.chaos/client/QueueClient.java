@@ -20,6 +20,7 @@
 package io.openmessaging.chaos.client;
 
 import io.openmessaging.chaos.common.InvokeResult;
+import io.openmessaging.chaos.common.Message;
 import io.openmessaging.chaos.driver.MQChaosClient;
 import io.openmessaging.chaos.driver.MQChaosDriver;
 import io.openmessaging.chaos.generator.QueueGenerator;
@@ -28,6 +29,7 @@ import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.recorder.RequestLogEntry;
 import io.openmessaging.chaos.recorder.ResponseLogEntry;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,13 +48,22 @@ public class QueueClient implements Client {
 
     private int clientId;
 
+    private boolean isOrderTest;
+
+    private List<String> shardingKeys;
+
+    private Random random = new Random();
+
     private static final Logger logger = LoggerFactory.getLogger(QueueClient.class);
 
-    public QueueClient(MQChaosDriver mqChaosDriver, String chaosTopic, Recorder recorder) {
+    public QueueClient(MQChaosDriver mqChaosDriver, String chaosTopic, Recorder recorder, boolean isOrderTest,
+        List<String> shardingKeys) {
         this.mqChaosDriver = mqChaosDriver;
         this.chaosTopic = chaosTopic;
         this.recorder = recorder;
         clientId = clientIdGenerator.getAndIncrement();
+        this.isOrderTest = isOrderTest;
+        this.shardingKeys = shardingKeys;
     }
 
     public void setup() {
@@ -66,41 +77,51 @@ public class QueueClient implements Client {
     public void nextInvoke() {
         QueueOperation op = QueueGenerator.generate();
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, op.getInvokeOperation(), op.getValue(), System.currentTimeMillis());
-        recorder.recordRequest(requestLogEntry);
-        ResponseLogEntry responseLogEntry;
-        if (op.getInvokeOperation().equals("enqueue")) {
-            InvokeResult invokeResult = mqChaosClient.enqueue(op.getValue());
-            responseLogEntry = new ResponseLogEntry(clientId, op.getInvokeOperation(),
-                invokeResult, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
-        } else {
-            List<String> dequeueList = mqChaosClient.dequeue();
-            if (dequeueList == null || dequeueList.isEmpty()) {
-                responseLogEntry = new ResponseLogEntry(clientId, op.getInvokeOperation(),
-                    InvokeResult.FAILURE, null, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
-            } else {
-                responseLogEntry = new ResponseLogEntry(clientId, op.getInvokeOperation(),
-                    InvokeResult.SUCCESS, dequeueList.toString(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
 
+        if (op.getInvokeOperation().equals("enqueue")) {
+            InvokeResult invokeResult;
+            if (isOrderTest) {
+                String shardingKey = shardingKeys.get(random.nextInt(shardingKeys.size()));
+                requestLogEntry.shardingKey = shardingKey;
+                recorder.recordRequest(requestLogEntry);
+                invokeResult = mqChaosClient.enqueue(shardingKey, op.getValue());
+                recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
+                    invokeResult, shardingKey, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
+            } else {
+                recorder.recordRequest(requestLogEntry);
+                invokeResult = mqChaosClient.enqueue(op.getValue());
+                recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
+                    invokeResult, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
+            }
+        } else {
+            recorder.recordRequest(requestLogEntry);
+            List<Message> dequeueList = mqChaosClient.dequeue();
+            if (dequeueList == null || dequeueList.isEmpty()) {
+                recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
+                    InvokeResult.FAILURE, null, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
+            } else {
+                for (Message msg : dequeueList) {
+                    recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
+                        InvokeResult.SUCCESS, msg.shardingKey, msg.payload, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
+                }
             }
         }
-        recorder.recordResponse(responseLogEntry);
     }
 
     public void lastInvoke() {
         logger.info("Client {} invoke drain", clientId);
         //Drain
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, "dequeue", null, System.currentTimeMillis());
-        ResponseLogEntry responseLogEntry;
         recorder.recordRequest(requestLogEntry);
-        List<String> dequeueList = mqChaosClient.dequeue();
+        List<Message> dequeueList = mqChaosClient.dequeue();
         while (dequeueList != null && !dequeueList.isEmpty()) {
-            responseLogEntry = new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, dequeueList.toString(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
-            recorder.recordResponse(responseLogEntry);
+            for (Message msg : dequeueList) {
+                recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, msg.shardingKey, msg.payload, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
+            }
             requestLogEntry = new RequestLogEntry(clientId, "dequeue", null, System.currentTimeMillis());
             recorder.recordRequest(requestLogEntry);
             dequeueList = mqChaosClient.dequeue();
         }
-        responseLogEntry = new ResponseLogEntry(clientId, "dequeue", InvokeResult.FAILURE, null, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp);
-        recorder.recordResponse(responseLogEntry);
+        recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.FAILURE, null, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
     }
 }

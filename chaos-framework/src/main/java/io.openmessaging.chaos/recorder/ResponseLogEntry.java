@@ -22,8 +22,8 @@ public class ResponseLogEntry {
         this.latency = latency;
     }
 
-    public ResponseLogEntry(int clientId, String operation, InvokeResult result, String value,
-        String shardingKey, long timestamp, long latency) {
+    public ResponseLogEntry(int clientId, String operation, InvokeResult result, String shardingKey, String value,
+        long timestamp, long latency) {
         this.clientId = clientId;
         this.operation = operation;
         this.result = result;

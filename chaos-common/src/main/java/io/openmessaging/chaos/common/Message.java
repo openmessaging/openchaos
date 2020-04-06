@@ -17,35 +17,18 @@
  * under the License.
  */
 
-package io.openmessaging.chaos.driver;
+package io.openmessaging.chaos.common;
 
-import io.openmessaging.chaos.common.InvokeResult;
-import io.openmessaging.chaos.common.Message;
-import java.util.List;
+public class Message {
+    public String shardingKey;
+    public String payload;
 
-public interface MQChaosClient {
+    public Message(String shardingKey, String payload) {
+        this.shardingKey = shardingKey;
+        this.payload = payload;
+    }
 
-    /**
-     * Enqueue a value to mq cluster
-     * @param value
-     * @return result of enqueue
-     */
-    InvokeResult enqueue(String value);
-
-    /**
-     * Enqueue a value with sharding key to mq cluster
-     * @param value
-     * @return result of enqueue
-     */
-    InvokeResult enqueue(String shardingKey, String value);
-
-    /**
-     * Dequeue from mq cluster
-     */
-    List<Message> dequeue();
-
-    /**
-     * Close the MQChaosClient
-     */
-    void close();
+    public Message(String payload) {
+        this.payload = payload;
+    }
 }

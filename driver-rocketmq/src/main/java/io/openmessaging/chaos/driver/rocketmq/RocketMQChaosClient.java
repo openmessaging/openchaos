@@ -27,8 +27,10 @@ import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.exception.RemotingConnectException;
 import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.remoting.exception.RemotingSendRequestException;
@@ -52,7 +54,7 @@ public class RocketMQChaosClient implements MQChaosClient {
         this.chaosTopic = chaosTopic;
     }
 
-    public InvokeResult enqueue(String value) {
+    @Override public InvokeResult enqueue(String value) {
         Message message = new Message(chaosTopic, value.getBytes());
         try {
             defaultMQProducer.send(message);
@@ -74,11 +76,41 @@ public class RocketMQChaosClient implements MQChaosClient {
         return InvokeResult.SUCCESS;
     }
 
-    public List<String> dequeue() {
+    @Override public InvokeResult enqueue(String shardingKey, String value) {
+        Message message = new Message(chaosTopic, value.getBytes());
+        message.setKeys(shardingKey);
+        try {
+            defaultMQProducer.send(message, new MessageQueueSelector() {
+                @Override
+                public MessageQueue select(List<MessageQueue> mqs, Message msg, Object arg) {
+                    String key = (String) arg;
+                    int index = Math.abs(key.hashCode()) % mqs.size();
+                    return mqs.get(index);
+                }
+            }, shardingKey);
+        } catch (RemotingException e) {
+            if (e instanceof RemotingConnectException || e instanceof RemotingSendRequestException) {
+                logger.warn("Enqueue fail", e);
+                return InvokeResult.FAILURE;
+            } else {
+                logger.warn("Enqueue unknown", e);
+                return InvokeResult.UNKNOWN;
+            }
+        } catch (IllegalStateException | MQClientException | InterruptedException | MQBrokerException e) {
+            logger.warn("Enqueue fail", e);
+            return InvokeResult.FAILURE;
+        } catch (Exception e) {
+            logger.warn("Enqueue unknown", e);
+            return InvokeResult.UNKNOWN;
+        }
+        return InvokeResult.SUCCESS;
+    }
+
+    @Override public List<io.openmessaging.chaos.common.Message> dequeue() {
         List<MessageExt> messages = defaultLitePullConsumer.poll();
         if (!messages.isEmpty()) {
             defaultLitePullConsumer.commitSync();
-            return Lists.transform(messages, messageExt -> new String(messageExt.getBody()));
+            return Lists.transform(messages, messageExt -> new io.openmessaging.chaos.common.Message(messageExt.getKeys(), new String(messageExt.getBody())));
         } else {
             return null;
         }

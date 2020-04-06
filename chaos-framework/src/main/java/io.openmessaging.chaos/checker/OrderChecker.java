@@ -19,10 +19,78 @@
 
 package io.openmessaging.chaos.checker;
 
+import io.openmessaging.chaos.checker.result.OrderTestResult;
 import io.openmessaging.chaos.checker.result.TestResult;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OrderChecker implements Checker {
-    @Override public TestResult check() {
-        return null;
+
+    private String fileName;
+
+    private List<String> shardingKeys;
+    private static final Logger logger = LoggerFactory.getLogger(OrderTestResult.class);
+
+    public OrderChecker(String fileName, List<String> shardingKeys) {
+        this.fileName = fileName;
+        this.shardingKeys = shardingKeys;
     }
+
+    @Override public TestResult check() {
+        OrderTestResult orderTestResult = new OrderTestResult();
+        try {
+            checkInner(orderTestResult);
+        } catch (Exception e) {
+            logger.error("", e);
+            orderTestResult.isValid = false;
+        }
+        return orderTestResult;
+    }
+
+    public void checkInner(OrderTestResult orderTestResult) throws Exception {
+
+        List<String[]> allRecords = Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> x[2].equals("RESPONSE") && x[3].equals("SUCCESS")).collect(Collectors.toList());
+        orderTestResult.setOrder(true);
+        for (String shardingKey : shardingKeys) {
+            List<String> enqueueRecords = allRecords.stream().filter(x -> x[1].equals("enqueue") && x[5].equals(shardingKey)).map(x -> x[4]).collect(Collectors.toList());
+            List<String> dequeueRecords = allRecords.stream().filter(x -> x[1].equals("dequeue") && x[5].equals(shardingKey)).map(x -> x[4]).collect(Collectors.toList());
+            int dequeueIndex = 0;
+            int enqueueIndex = 0;
+            while (enqueueIndex < enqueueRecords.size() && dequeueIndex < dequeueRecords.size()) {
+                if (enqueueRecords.get(enqueueIndex).equals(dequeueRecords.get(dequeueIndex))) {
+                    enqueueIndex++;
+                    dequeueIndex++;
+                } else {
+                    dequeueIndex++;
+                }
+            }
+            if (enqueueIndex < enqueueRecords.size()) {
+                orderTestResult.setOrder(false);
+                orderTestResult.setWrongShardingKey(shardingKey);
+                orderTestResult.setWrongStartValue(enqueueRecords.get(enqueueIndex));
+                break;
+            }
+        }
+        orderTestResult.isValid = true;
+    }
+
+    public static void main(String[] args) {
+
+        int concurrency = 4;
+
+        List<String> shardingKeys = new ArrayList<>();
+        for (int i = 0; i < 2 * concurrency; i++) {
+            shardingKeys.add("shardingKey" + i);
+        }
+
+        OrderChecker orderChecker = new OrderChecker("2020-04-05-22-26-11-RocketMQ-chaos-history-file", shardingKeys);
+
+        System.out.println(orderChecker.check());
+    }
+
 }

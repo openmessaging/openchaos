@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -89,14 +88,12 @@ public class MQChecker implements Checker {
                         enqueueSuccessCount.incrementAndGet();
                         lostSet.add(line[4]);
                     } else if (line[1].equals("dequeue")) {
-                        Arrays.stream(line[4].substring(1, line[4].length() - 1).split(",")).map(String::trim).forEach(v -> {
-                            dequeueSuccessCount.getAndIncrement();
-                            if (lostSet.contains(v)) {
-                                lostSet.remove(v);
-                            } else {
-                                duplicateSet.add(v);
-                            }
-                        });
+                        dequeueSuccessCount.getAndIncrement();
+                        if (lostSet.contains(line[4])) {
+                            lostSet.remove(line[4]);
+                        } else {
+                            duplicateSet.add(line[4]);
+                        }
                     }
                 }
             });

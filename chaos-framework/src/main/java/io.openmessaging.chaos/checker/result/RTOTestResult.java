@@ -58,7 +58,8 @@ public class RTOTestResult extends TestResult {
         if (unexpectedUnavailableInNormalInterval) {
             stringBuilder.append("\n\tnote: unexpected unavailable time in normal interval!!!");
         }
-        stringBuilder.append("\n}");
+        stringBuilder.append("\n\t").append("isValid=").append(isValid);
+        stringBuilder.append("\n\t}");
         return stringBuilder.toString();
     }
 

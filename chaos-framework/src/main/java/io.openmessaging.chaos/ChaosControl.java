@@ -29,6 +29,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.checker.Checker;
 import io.openmessaging.chaos.checker.MQChecker;
+import io.openmessaging.chaos.checker.OrderChecker;
 import io.openmessaging.chaos.checker.PerfChecker;
 import io.openmessaging.chaos.checker.RTOChecker;
 import io.openmessaging.chaos.checker.result.TestResult;
@@ -106,6 +107,10 @@ public class ChaosControl {
         boolean rto = false;
 
         @Parameter(names = {
+            "--order-test"}, description = "Turn on order test.")
+        boolean isOrderTest = false;
+
+        @Parameter(names = {
             "--install"}, description = "Whether to install program. It will download the installation package on each cluster node. " +
             "When you first use openmessaging-chaos to test a distributed system, it should be true.")
         boolean install = false;
@@ -166,6 +171,10 @@ public class ChaosControl {
                     System.err.printf("Create %s failed", historyFile);
                     System.exit(-1);
                 }
+                List<String> shardingKeys = new ArrayList<>();
+                for (int i = 0; i < 2 * arguments.concurrency; i++) {
+                    shardingKeys.add("shardingKey" + i);
+                }
 
                 //Currently only queue model is supported
                 model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
@@ -176,7 +185,7 @@ public class ChaosControl {
                     map = model.setupCluster(driverConfiguration.nodes, arguments.install);
                 }
 
-                model.setupClient();
+                model.setupClient(arguments.isOrderTest, shardingKeys);
 
                 //Initial fault
                 Fault fault;
@@ -260,6 +269,9 @@ public class ChaosControl {
                 checkerList.add(new PerfChecker(historyFile, testStartTimeStamp, testEndTimestamp));
                 if(arguments.rto){
                     checkerList.add(new RTOChecker(historyFile));
+                }
+                if (arguments.isOrderTest) {
+                    checkerList.add(new OrderChecker(historyFile, shardingKeys));
                 }
                 checkerList.forEach(checker -> resultList.add(checker.check()));
 

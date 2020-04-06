@@ -18,7 +18,7 @@ public class RequestLogEntry {
         this.timestamp = timestamp;
     }
 
-    public RequestLogEntry(int clientId, String operation, String value, String shardingKey,
+    public RequestLogEntry(int clientId, String operation, String shardingKey, String value,
         long timestamp) {
         this.clientId = clientId;
         this.operation = operation;

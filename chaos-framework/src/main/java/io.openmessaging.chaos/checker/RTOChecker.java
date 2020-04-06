@@ -51,21 +51,21 @@ public class RTOChecker implements Checker {
     @Override public TestResult check() {
         RTOTestResult rtoTestResult = new RTOTestResult();
         try {
-            generateRTOTestResult(rtoTestResult);
+            checkInner(rtoTestResult);
         } catch (Exception e) {
             logger.error("", e);
             rtoTestResult.isValid = false;
         }
-        try{
+        try {
             mapper.writeValue(new File(fileName.replace("history", "rto-result")), rtoTestResult);
-        } catch (Exception e){
+        } catch (Exception e) {
             logger.error("", e);
         }
 
         return rtoTestResult;
     }
 
-    private void generateRTOTestResult(RTOTestResult rtoTestResult) throws Exception {
+    private void checkInner(RTOTestResult rtoTestResult) throws Exception {
 
         List<String[]> allRecords = Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).collect(Collectors.toList());
         boolean isInFault = false;
@@ -101,11 +101,6 @@ public class RTOChecker implements Checker {
             }
         }
 
-        rtoTestResult.isValid=true;
-    }
-
-    public static void main(String[] args) {
-        RTOChecker rtoChecker = new RTOChecker("2020-04-01-13-53-56-RocketMQ-chaos-history-file");
-        System.out.println(rtoChecker.check());
+        rtoTestResult.isValid = true;
     }
 }

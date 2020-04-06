@@ -51,7 +51,7 @@ public class RocketMQChaosNode implements MQChaosNode {
 
     @Override public CompletableFuture<Void> setup() {
         try {
-            //download rocketmq package
+            //Download rocketmq package
             logger.info("Node {} download rocketmq...", node);
             SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", installDir, installDir));
             SshUtil.execCommandInDir(node, installDir,
