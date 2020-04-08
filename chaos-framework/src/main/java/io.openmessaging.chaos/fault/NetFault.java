@@ -20,7 +20,9 @@
 package io.openmessaging.chaos.fault;
 
 import io.openmessaging.chaos.ChaosControl;
+import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
+import io.openmessaging.chaos.generator.FixedFaultGenerator;
 import io.openmessaging.chaos.generator.NetFaultGenerator;
 import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.utils.NetUtil;
@@ -36,7 +38,7 @@ public class NetFault implements Fault {
 
     private volatile List<FaultOperation> faultOperations;
 
-    private NetFaultGenerator netFaultGenerator;
+    private FaultGenerator faultGenerator;
 
     private static final Logger logger = LoggerFactory.getLogger(ChaosControl.class);
 
@@ -50,19 +52,27 @@ public class NetFault implements Fault {
         this.mode = mode;
         this.nodes = nodes;
         this.recorder = recorder;
-        this.netFaultGenerator = new NetFaultGenerator(nodes, mode);
+        this.faultGenerator = new NetFaultGenerator(nodes, mode);
+    }
+
+    public NetFault(List<String> nodes, String mode, Recorder recorder, List<String> faultNodes) {
+        this.mode = mode;
+        this.nodes = nodes;
+        this.recorder = recorder;
+        this.faultGenerator = new FixedFaultGenerator(nodes, faultNodes, mode);
     }
 
     @Override public synchronized void invoke() {
         logger.info("Invoke {} fault", mode);
         recorder.recordFaultStart(mode, System.currentTimeMillis());
-        faultOperations = netFaultGenerator.generate();
+        faultOperations = faultGenerator.generate();
         for (FaultOperation operation : faultOperations) {
             logger.info("Invoke node {} fault, fault is {}, invoke args is {}",
                 operation.getNode(), operation.getName(), operation.getInvokeArgs());
             try {
                 switch (operation.getName()) {
                     case "random-partition":
+                    case "fixed-partition":
                         for (String partitionNode : operation.getInvokeArgs()) {
                             NetUtil.partition(operation.getNode(), partitionNode);
                         }

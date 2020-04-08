@@ -32,6 +32,7 @@ bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install
 ## Option
 
 ```
+Usage: messaging-chaos [options]
   Options:
     -c, --concurrency
       The number of clients. eg: 5
@@ -40,17 +41,22 @@ bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install
       Drivers list. eg.: driver-rocketmq/rocketmq.yaml
     -f, --fault
       Fault type to be injected. eg: noop, minor-kill, major-kill, 
-      random-kill, random-partition, partition-majorities-ring, bridge, 
-      random-loss, minor-suspend, major-suspend, random-suspend
+      random-kill, fixed-kill, random-partition, fixed-partition, 
+      partition-majorities-ring, bridge, random-loss, minor-suspend, 
+      major-suspend, random-suspend, fixed-suspend
       Default: noop
     -i, --fault-interval
-      Fault execution interval. eg: 30
+      Fault injection interval. eg: 30
       Default: 30
+    --fault-nodes
+      The nodes need to be fault injection. The nodes are separated by 
+      semicolons. eg: n1;n2;n3  Note: this parameter must be used with 
+      fixed-xxx faults such as fixed-kill, fixed-partition, fixed-suspend.
     -h, --help
       Help message
     --install
       Whether to install program. It will download the installation package on 
-      each cluster node. When you first use openmessaging-chaos to test a 
+      each cluster node. When you first use OpenMessaging-Chaos to test a 
       distributed system, it should be true.
       Default: false
     -t, --limit-time
@@ -58,7 +64,7 @@ bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install
       time). eg: 60
       Default: 60
     --order-test
-      Turn on order test.
+      Check the partition order of messaging platform.
       Default: false
     -r, --rate
       Approximate number of requests per second. eg: 20
@@ -75,10 +81,10 @@ bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install
 ## Fault type
 
 The following fault types are currently supported:
-- random-partition: isolates random nodes from the rest of the network.
+- random-partition (fixed-partition): isolates random(fixed) nodes from the rest of the network.
 - random-loss: randomly selected nodes lose network packets.
-- random-kill (minor-kill, major-kill): kill random(minor,major) processes and restart them.
-- random-suspend (minor-suspend,major-suspend): pause random(minor,major) nodes with SIGSTOP/SIGCONT.
+- random-kill (minor-kill, major-kill, fixed-kill): kill random(minor, major, fixed) processes and restart them.
+- random-suspend (minor-suspend, major-suspend, fixed-suspend): pause random(minor, major, fixed) nodes with SIGSTOP/SIGCONT.
 - bridge: a grudge which cuts the network in half, but preserves a node in the middle which has uninterrupted bidirectional connectivity to both components (note: number of nodes must be greater than 3).
 - partition-majorities-ring: every node can see a majority, but no node sees the same majority as any other. Randomly orders nodes into a ring (note: number of nodes must be equal to 5).
 

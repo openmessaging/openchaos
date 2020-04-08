@@ -29,8 +29,8 @@ public class FaultValidator implements IParameterValidator {
 
     @Override public void validate(String name, String value) throws ParameterException {
         Set<String> faultSet = new HashSet<>(Arrays.asList(
-            "noop", "minor-kill", "major-kill", "random-kill", "random-partition", "partition-majorities-ring",
-            "bridge", "random-loss", "minor-suspend", "major-suspend", "random-suspend"));
+            "noop", "minor-kill", "major-kill", "random-kill", "fixed-kill", "random-partition", "fixed-partition", "partition-majorities-ring",
+            "bridge", "random-loss", "minor-suspend", "major-suspend", "random-suspend", "fixed-suspend"));
         if (!faultSet.contains(value))
             throw new ParameterException("Fault must be one of " + faultSet);
     }

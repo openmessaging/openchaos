@@ -21,7 +21,9 @@ package io.openmessaging.chaos.fault;
 
 import io.openmessaging.chaos.ChaosControl;
 import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
+import io.openmessaging.chaos.generator.FixedFaultGenerator;
 import io.openmessaging.chaos.generator.SingleFaultGenerator;
 import io.openmessaging.chaos.recorder.Recorder;
 import java.util.List;
@@ -38,7 +40,7 @@ public class KillFault implements Fault {
 
     private Map<String, MQChaosNode> nodesMap;
 
-    private SingleFaultGenerator singleFaultGenerator;
+    private FaultGenerator faultGenerator;
 
     private String mode;
 
@@ -50,13 +52,20 @@ public class KillFault implements Fault {
         this.nodesMap = nodesMap;
         this.mode = mode;
         this.recorder = recorder;
-        this.singleFaultGenerator = new SingleFaultGenerator(nodesMap.keySet(), mode);
+        this.faultGenerator = new SingleFaultGenerator(nodesMap.keySet(), mode);
+    }
+
+    public KillFault(Map<String, MQChaosNode> nodesMap, String mode, Recorder recorder, List<String> faultNodes) {
+        this.nodesMap = nodesMap;
+        this.mode = mode;
+        this.recorder = recorder;
+        this.faultGenerator = new FixedFaultGenerator(nodesMap.keySet(), faultNodes, mode);
     }
 
     @Override public synchronized void invoke() {
         logger.info("Invoke {} fault....", mode);
         recorder.recordFaultStart(mode, System.currentTimeMillis());
-        faultOperations = singleFaultGenerator.generate();
+        faultOperations = faultGenerator.generate();
         for (FaultOperation operation : faultOperations) {
             logger.info("Kill node {} processes...", operation.getNode());
             MQChaosNode mqChaosNode = nodesMap.get(operation.getNode());

@@ -45,9 +45,11 @@ import io.openmessaging.chaos.model.QueueModel;
 import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.worker.FaultWorker;
 import java.io.File;
+import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -92,14 +94,20 @@ public class ChaosControl {
         @Parameter(names = {
             "-f",
             "--fault"
-        }, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, random-partition, " +
-            "partition-majorities-ring, bridge, random-loss, minor-suspend, major-suspend, random-suspend"
+        }, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, fixed-kill, random-partition, " +
+            "fixed-partition, partition-majorities-ring, bridge, random-loss, minor-suspend, major-suspend, random-suspend, fixed-suspend"
             , validateWith = FaultValidator.class)
         String fault = "noop";
 
         @Parameter(names = {
+            "--fault-nodes"
+        }, description = "The nodes need to be fault injection. The nodes are separated by semicolons. eg: n1;n2;n3 " +
+            " Note: this parameter must be used with fixed-xxx faults such as fixed-kill, fixed-partition, fixed-suspend.")
+        String faultNodes = null;
+
+        @Parameter(names = {
             "-i",
-            "--fault-interval"}, description = "Fault execution interval. eg: 30", validateWith = PositiveInteger.class)
+            "--fault-interval"}, description = "Fault injection interval. eg: 30", validateWith = PositiveInteger.class)
         int interval = 30;
 
         @Parameter(names = {
@@ -107,12 +115,12 @@ public class ChaosControl {
         boolean rto = false;
 
         @Parameter(names = {
-            "--order-test"}, description = "Turn on order test.")
+            "--order-test"}, description = "Check the partition order of messaging platform.")
         boolean isOrderTest = false;
 
         @Parameter(names = {
             "--install"}, description = "Whether to install program. It will download the installation package on each cluster node. " +
-            "When you first use openmessaging-chaos to test a distributed system, it should be true.")
+            "When you first use OpenMessaging-Chaos to test a distributed system, it should be true.")
         boolean install = false;
     }
 
@@ -187,6 +195,21 @@ public class ChaosControl {
 
                 model.setupClient(arguments.isOrderTest, shardingKeys);
 
+                List<String> faultNodeList = new ArrayList<>();
+                if (arguments.fault.startsWith("fixed-")) {
+                    if (arguments.faultNodes == null || arguments.faultNodes.isEmpty()) {
+                        throw new IllegalArgumentException("fault-nodes parameter can not be null or empty when inject fixed-xxx fault to system.");
+                    } else {
+                        String[] faultNodeArray = arguments.faultNodes.split(";");
+                        for(String faultNode: faultNodeArray){
+                            if(!driverConfiguration.nodes.contains(faultNode)){
+                                throw new IllegalArgumentException("fault-node is not in current config file.");
+                            }
+                        }
+                        faultNodeList.addAll(Arrays.asList(faultNodeArray));
+                    }
+                }
+
                 //Initial fault
                 Fault fault;
                 if (map == null || map.isEmpty()) {
@@ -202,11 +225,18 @@ public class ChaosControl {
                         case "random-kill":
                             fault = new KillFault(map, arguments.fault, recorder);
                             break;
+                        case "fixed-kill":
+                            fault = new KillFault(map, arguments.fault, recorder, faultNodeList);
+                            break;
                         case "random-partition":
                         case "random-delay":
                         case "random-loss":
                             fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
                             break;
+                        case "fixed-partition":
+                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder, faultNodeList);
+                            break;
+
                         case "partition-majorities-ring":
                             if (driverConfiguration.nodes.size() <= 3)
                                 throw new IllegalArgumentException("Number of nodes less than or equal to 3, unable to form partition-majorities-ring");
@@ -221,6 +251,9 @@ public class ChaosControl {
                         case "major-suspend":
                         case "random-suspend":
                             fault = new SuspendFault(map, arguments.fault, recorder);
+                            break;
+                        case "fixed-suspend":
+                            fault = new SuspendFault(map, arguments.fault, recorder, faultNodeList);
                             break;
                         default:
                             throw new RuntimeException("no such fault");
