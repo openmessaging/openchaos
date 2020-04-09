@@ -45,7 +45,6 @@ import io.openmessaging.chaos.model.QueueModel;
 import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.worker.FaultWorker;
 import java.io.File;
-import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -165,6 +164,21 @@ public class ChaosControl {
                 DriverConfiguration driverConfiguration = mapper.readValue(driverConfigFile,
                     DriverConfiguration.class);
 
+                List<String> faultNodeList = new ArrayList<>();
+                if (arguments.fault.startsWith("fixed-")) {
+                    if (arguments.faultNodes == null || arguments.faultNodes.isEmpty()) {
+                        throw new IllegalArgumentException("fault-nodes parameter can not be null or empty when inject fixed-xxx fault to system.");
+                    } else {
+                        String[] faultNodeArray = arguments.faultNodes.split(";");
+                        for(String faultNode: faultNodeArray){
+                            if(!driverConfiguration.nodes.contains(faultNode)){
+                                throw new IllegalArgumentException("fault-node is not in current config file.");
+                            }
+                        }
+                        faultNodeList.addAll(Arrays.asList(faultNodeArray));
+                    }
+                }
+
                 SshUtil.init(arguments.username, driverConfiguration.nodes);
 
                 logger.info("--------------- CHAOS TEST --- DRIVER : {}---------------", driverConfiguration.name);
@@ -194,21 +208,6 @@ public class ChaosControl {
                 }
 
                 model.setupClient(arguments.isOrderTest, shardingKeys);
-
-                List<String> faultNodeList = new ArrayList<>();
-                if (arguments.fault.startsWith("fixed-")) {
-                    if (arguments.faultNodes == null || arguments.faultNodes.isEmpty()) {
-                        throw new IllegalArgumentException("fault-nodes parameter can not be null or empty when inject fixed-xxx fault to system.");
-                    } else {
-                        String[] faultNodeArray = arguments.faultNodes.split(";");
-                        for(String faultNode: faultNodeArray){
-                            if(!driverConfiguration.nodes.contains(faultNode)){
-                                throw new IllegalArgumentException("fault-node is not in current config file.");
-                            }
-                        }
-                        faultNodeList.addAll(Arrays.asList(faultNodeArray));
-                    }
-                }
 
                 //Initial fault
                 Fault fault;

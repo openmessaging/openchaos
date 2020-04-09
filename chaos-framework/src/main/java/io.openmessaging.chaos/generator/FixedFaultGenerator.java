@@ -35,7 +35,7 @@ public class FixedFaultGenerator implements FaultGenerator {
 
     public FixedFaultGenerator(Collection<String> allNodes, Collection<String> faultNodes, String mode) {
         this.allNodes = allNodes;
-        this.allNodes = faultNodes;
+        this.faultNodes = faultNodes;
         this.mode = mode;
     }
 
