@@ -45,7 +45,7 @@ public class FixedFaultGenerator implements FaultGenerator {
             case "fixed-kill":
             case "fixed-suspend":
                 for (String node : faultNodes) {
-                    operations.add(new FaultOperation(node, mode));
+                    operations.add(new FaultOperation(mode, node));
                 }
                 break;
             case "fixed-partition":

@@ -99,6 +99,7 @@ public class ChaosControl {
         String fault = "noop";
 
         @Parameter(names = {
+            "-n",
             "--fault-nodes"
         }, description = "The nodes need to be fault injection. The nodes are separated by semicolons. eg: n1;n2;n3 " +
             " Note: this parameter must be used with fixed-xxx faults such as fixed-kill, fixed-partition, fixed-suspend.")
@@ -172,7 +173,7 @@ public class ChaosControl {
                         String[] faultNodeArray = arguments.faultNodes.split(";");
                         for(String faultNode: faultNodeArray){
                             if(!driverConfiguration.nodes.contains(faultNode)){
-                                throw new IllegalArgumentException("fault-node is not in current config file.");
+                                throw new IllegalArgumentException(String.format("fault-node %s is not in current config file.", faultNode));
                             }
                         }
                         faultNodeList.addAll(Arrays.asList(faultNodeArray));
