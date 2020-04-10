@@ -62,7 +62,6 @@ public class RocketMQChaosNode implements MQChaosNode {
             //For docker test, because the memory of local computer is too small
             SshUtil.execCommandInDir(node, installDir, "sed -i 's/-Xms8g -Xmx8g -Xmn4g/-Xms2g -Xmx2g -Xmn1g/g' bin/runbroker.sh");
             SshUtil.execCommandInDir(node, installDir, "sed -i  's/-Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m/-Xms500m -Xmx500m -Xmn250m -XX:MetaspaceSize=16m -XX:MaxMetaspaceSize=40m/g' bin/runserver.sh");
-
             SshUtil.execCommandInDir(node, installDir, "sed -i 's/exit -1/exit 0/g' bin/mqshutdown");
 
             //Prepare broker conf
@@ -97,11 +96,11 @@ public class RocketMQChaosNode implements MQChaosNode {
             //Start nameserver
             if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
                 logger.info("Node {} start nameserver...", node);
-                SshUtil.execCommandInDir(node, installDir, "nohup sh bin/mqnamesrv >/dev/null 2>&1 &");
+                SshUtil.execCommandInDir(node, installDir, "nohup sh bin/mqnamesrv > nameserver.log 2>&1 &");
             }
             //Start broker
             logger.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/mqbroker -n '%s' -c broker-chaos-test.conf >/dev/null 2>&1 &"
+            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/mqbroker -n '%s' -c broker-chaos-test.conf > broker.log 2>&1 &"
                 , getNameserver(nodes)));
         } catch (Exception e) {
             logger.error("Node {} start rocketmq node failed", node, e);

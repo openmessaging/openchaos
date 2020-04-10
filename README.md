@@ -48,9 +48,9 @@ Usage: messaging-chaos [options]
     -i, --fault-interval
       Fault injection interval. eg: 30
       Default: 30
-    --fault-nodes
+    -n, --fault-nodes
       The nodes need to be fault injection. The nodes are separated by 
-      semicolons. eg: n1;n2;n3  Note: this parameter must be used with 
+      semicolons. eg: 'n1;n2;n3'  Note: this parameter must be used with 
       fixed-xxx faults such as fixed-kill, fixed-partition, fixed-suspend.
     -h, --help
       Help message
@@ -75,7 +75,6 @@ Usage: messaging-chaos [options]
     -u, --username
       User name for ssh remote login. eg: admin
       Default: root
-
 ```
 
 ## Fault type

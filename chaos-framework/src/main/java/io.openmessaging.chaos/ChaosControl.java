@@ -101,7 +101,7 @@ public class ChaosControl {
         @Parameter(names = {
             "-n",
             "--fault-nodes"
-        }, description = "The nodes need to be fault injection. The nodes are separated by semicolons. eg: n1;n2;n3 " +
+        }, description = "The nodes need to be fault injection. The nodes are separated by semicolons. eg: 'n1;n2;n3' " +
             " Note: this parameter must be used with fixed-xxx faults such as fixed-kill, fixed-partition, fixed-suspend.")
         String faultNodes = null;
 

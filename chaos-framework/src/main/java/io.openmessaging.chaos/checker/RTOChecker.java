@@ -92,6 +92,10 @@ public class RTOChecker implements Checker {
                 unavailableFlag = false;
             }
 
+            if (!isInFault && unavailableFlag && x[3].equals("SUCCESS")){
+                unavailableFlag = false;
+            }
+
             if (isInFault && x[0].equals("fault") && x[2].equals("end")) {
                 isInFault = false;
             }
