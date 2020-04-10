@@ -79,18 +79,4 @@ public class OrderChecker implements Checker {
         orderTestResult.isValid = true;
     }
 
-    public static void main(String[] args) {
-
-        int concurrency = 4;
-
-        List<String> shardingKeys = new ArrayList<>();
-        for (int i = 0; i < 2 * concurrency; i++) {
-            shardingKeys.add("shardingKey" + i);
-        }
-
-        OrderChecker orderChecker = new OrderChecker("2020-04-05-22-26-11-RocketMQ-chaos-history-file", shardingKeys);
-
-        System.out.println(orderChecker.check());
-    }
-
 }
