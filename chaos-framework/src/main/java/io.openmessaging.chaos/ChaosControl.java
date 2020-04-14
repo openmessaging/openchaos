@@ -236,15 +236,14 @@ public class ChaosControl {
                         case "fixed-partition":
                             fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder, faultNodeList);
                             break;
-
                         case "partition-majorities-ring":
                             if (driverConfiguration.nodes.size() <= 3)
-                                throw new IllegalArgumentException("Number of nodes less than or equal to 3, unable to form partition-majorities-ring");
+                                throw new IllegalArgumentException("The number of nodes less than or equal to 3, unable to form partition-majorities-ring");
                             fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
                             break;
                         case "bridge":
                             if (driverConfiguration.nodes.size() != 5)
-                                throw new IllegalArgumentException("Number of nodes is not equal to 5, unable to form bridge");
+                                throw new IllegalArgumentException("The number of nodes is not equal to 5, unable to form bridge");
                             fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
                             break;
                         case "minor-suspend":

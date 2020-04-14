@@ -6,9 +6,9 @@ The OpenMessaging Chaos Framework is used to check the high availability and con
 
 ## Usage
 
-Take rocketmq for example:
+Take RocketMQ for example:
 
-1. Prepare one control node and  some cluster nodes and ensure that the control node can use SSH to log into a bunch of db nodes
+1. Prepare one control node and some cluster nodes and ensure that the control node can use SSH to log into a bunch of db nodes
 2. Edit driver-rocketmq/rocketmq.yaml to set the host name of cluster nodes, client config, broker config.
 3. Install openmessaging-chaos in control node:  `mvn clean install`
 4. Run the test in the control node: `bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install` 
@@ -16,7 +16,7 @@ Take rocketmq for example:
 
 ## Quick Start（Docker）
 
-In one shell, we start the five nodes and the controller using docker compose.
+In one shell, we start the some cluster nodes and the controller using docker compose.
 
 ```shell
 cd docker

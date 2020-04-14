@@ -73,6 +73,7 @@ public class RTOChecker implements Checker {
         RTORecord rtoRecord = null;
 
         for (String[] x : allRecords) {
+
             if (x[0].equals("fault") && x[2].equals("start")) {
                 isInFault = true;
                 rtoRecord = new RTORecord();
@@ -92,7 +93,7 @@ public class RTOChecker implements Checker {
                 unavailableFlag = false;
             }
 
-            if (!isInFault && unavailableFlag && x[3].equals("SUCCESS")){
+            if (!isInFault && unavailableFlag && x[3].equals("SUCCESS")) {
                 unavailableFlag = false;
             }
 
