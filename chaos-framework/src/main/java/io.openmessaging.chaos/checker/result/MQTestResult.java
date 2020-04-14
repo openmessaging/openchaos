@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.checker.result;
 
 import com.google.common.collect.Multiset;
 import java.util.Set;
@@ -34,8 +34,12 @@ public class MQTestResult extends TestResult {
     public boolean atLeastOnce;
     public boolean exactlyOnce;
 
+    public MQTestResult(){
+        super("MQTestResult");
+    }
+
     @Override public String toString() {
-        return "\nMQTestResult{ " +
+        return "\n" + name + "{" +
             "\n\tenqueueInvokeCount=" + enqueueInvokeCount +
             "\n\tenqueueSuccessCount=" + enqueueSuccessCount +
             "\n\tenqueueActualCount=" + enqueueActualCount +
@@ -46,6 +50,7 @@ public class MQTestResult extends TestResult {
             "\n\tatMostOnce=" + atMostOnce +
             "\n\tatLeastOnce=" + atLeastOnce +
             "\n\texactlyOnce=" + exactlyOnce +
+            "\n\tisValid=" + isValid +
             "\n }";
     }
 }

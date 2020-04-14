@@ -19,6 +19,7 @@
 
 package io.openmessaging.chaos.driver;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface MQChaosNode {
@@ -42,4 +43,9 @@ public interface MQChaosNode {
      * Kill the distributed system process to be tested on this particular node
      */
     void kill();
+
+    /**
+     * Get the name of the process to be suspended during fault injection
+     */
+    List<String> getSuspendProcessName();
 }

@@ -19,14 +19,16 @@
 
 package io.openmessaging.chaos.checker;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
-import io.openmessaging.chaos.MQTestResult;
+import io.openmessaging.chaos.checker.result.MQTestResult;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -41,6 +43,13 @@ public class MQChecker implements Checker {
     private AtomicLong enqueueSuccessCount = new AtomicLong();
     private AtomicLong dequeueSuccessCount = new AtomicLong();
     private String fileName;
+    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    static {
+        mapper.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(MQChecker.class);
 
     public MQChecker(String fileName) {
@@ -59,6 +68,7 @@ public class MQChecker implements Checker {
         try {
             checkInner();
             MQTestResult = generateResult();
+            mapper.writeValue(new File(fileName.replace("history", "result")), MQTestResult);
         } catch (Exception e) {
             logger.error("MQChecker check fail", e);
         }
@@ -67,25 +77,26 @@ public class MQChecker implements Checker {
     }
 
     private void checkInner() throws IOException {
-        Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).forEach(line -> {
-            if (line[1].equals("enqueue") && line[2].equals("invoke")) {
-                enqueueInvokeCount.incrementAndGet();
-            } else if (line[3].equals("SUCCESS")) {
-                if (line[1].equals("enqueue")) {
-                    enqueueSuccessCount.incrementAndGet();
-                    lostSet.add(line[4]);
-                } else if (line[1].equals("dequeue")) {
-                    Arrays.stream(line[4].substring(1, line[4].length() - 1).split(",")).map(String::trim).forEach(v -> {
+        Files.lines(Paths.get(fileName)).
+            map(x -> x.split("\t")).
+            filter(x -> !x[0].equals("fault")).
+            forEach(line -> {
+                if (line[1].equals("enqueue") && line[2].equals("request")) {
+                    enqueueInvokeCount.incrementAndGet();
+                } else if (line[3].equals("SUCCESS")) {
+                    if (line[1].equals("enqueue")) {
+                        enqueueSuccessCount.incrementAndGet();
+                        lostSet.add(line[4]);
+                    } else if (line[1].equals("dequeue")) {
                         dequeueSuccessCount.getAndIncrement();
-                        if (lostSet.contains(v)) {
-                            lostSet.remove(v);
+                        if (lostSet.contains(line[4])) {
+                            lostSet.remove(line[4]);
                         } else {
-                            duplicateSet.add(v);
+                            duplicateSet.add(line[4]);
                         }
-                    });
+                    }
                 }
-            }
-        });
+            });
         checkDuplicateSet(lostSet, duplicateSet);
     }
 

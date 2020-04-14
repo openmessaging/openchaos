@@ -24,7 +24,7 @@ package io.openmessaging.chaos.fault;
  */
 public class NoopFault implements Fault {
 
-    public NoopFault(){
+    public NoopFault() {
 
     }
 

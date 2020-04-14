@@ -17,15 +17,18 @@
  * under the License.
  */
 
-package io.openmessaging.chaos.checker;
+package io.openmessaging.chaos.common;
 
-import io.openmessaging.chaos.checker.result.TestResult;
+public class Message {
+    public String shardingKey;
+    public String payload;
 
-public interface Checker {
+    public Message(String shardingKey, String payload) {
+        this.shardingKey = shardingKey;
+        this.payload = payload;
+    }
 
-    /**
-     * Check the history file to get test result
-     * @return
-     */
-    TestResult check();
+    public Message(String payload) {
+        this.payload = payload;
+    }
 }

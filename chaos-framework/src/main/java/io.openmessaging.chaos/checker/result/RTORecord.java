@@ -17,21 +17,26 @@
  * under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.checker.result;
 
-import com.beust.jcommander.IParameterValidator;
-import com.beust.jcommander.ParameterException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+public class RTORecord {
+    public boolean isUnavailableInFaultInterval;
+    public boolean isRecoveryInFaultInterval;
+    public long RTOTime;
+    public long startTimestamp;
+    public long endTimestamp;
 
-public class FaultValidator implements IParameterValidator {
-
-    @Override public void validate(String name, String value) throws ParameterException {
-        Set<String> faultSet = new HashSet<>(Arrays.asList(
-            "noop", "minor-kill", "major-kill", "random-kill", "fixed-kill", "random-partition", "fixed-partition", "partition-majorities-ring",
-            "bridge", "random-loss", "minor-suspend", "major-suspend", "random-suspend", "fixed-suspend"));
-        if (!faultSet.contains(value))
-            throw new ParameterException("Fault must be one of " + faultSet);
+    @Override public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("{ ");
+        if (!isUnavailableInFaultInterval) {
+            stringBuilder.append("available all the time");
+        } else if (!isRecoveryInFaultInterval) {
+            stringBuilder.append("no recovery during fault interval");
+        } else {
+            stringBuilder.append("failure recovery time = ").append(RTOTime).append("ms");
+        }
+        stringBuilder.append(" }");
+        return stringBuilder.toString();
     }
 }

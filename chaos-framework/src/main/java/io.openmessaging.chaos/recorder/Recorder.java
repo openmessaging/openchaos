@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.recorder;
 
 import io.openmessaging.chaos.common.InvokeResult;
 import java.io.BufferedWriter;
@@ -51,7 +51,14 @@ public class Recorder {
         String recordLine = clientId + "\t" + op + "\t" + OP_INVOKE + "\t" + data + "\n";
         recordToHistoryFile(recordLine);
 
-        String logLine = "client" + clientId + " invoke " + op + ", data is " + data;
+        String logLine = "client" + clientId + " request " + op + ", data is " + data;
+        logger.info(logLine);
+    }
+
+    public void recordRequest(RequestLogEntry requestLogEntry) {
+        recordToHistoryFile(requestLogEntry.toString());
+
+        String logLine = "client" + requestLogEntry.clientId + " request " + requestLogEntry.operation + ", data is " + requestLogEntry.value;
         logger.info(logLine);
     }
 
@@ -59,9 +66,23 @@ public class Recorder {
         String recordLine = clientId + "\t" + op + "\t" + OP_RETURN + "\t" + res + "\t" + data + "\n";
         recordToHistoryFile(recordLine);
 
-        String logLine = "client" + clientId + " " + op + " return " + res + ", data is " + data;
+        String logLine = "client" + clientId + " " + op + " response " + res + ", data is " + data;
         logger.info(logLine);
+    }
 
+    public void recordResponse(ResponseLogEntry responseLogEntry) {
+        recordToHistoryFile(responseLogEntry.toString());
+
+        String logLine = "client" + responseLogEntry.clientId + " " + responseLogEntry.operation + " response " + responseLogEntry.result + ", data is " + responseLogEntry.value;
+        logger.info(logLine);
+    }
+
+    public void recordFaultStart(String faultName, long timeStamp) {
+        recordToHistoryFile(String.format("fault\t%s\tstart\t%d\n", faultName, timeStamp));
+    }
+
+    public void recordFaultEnd(String faultName, long timeStamp) {
+        recordToHistoryFile(String.format("fault\t%s\tend\t%d\n", faultName, timeStamp));
     }
 
     private synchronized void recordToHistoryFile(String recordLine) {

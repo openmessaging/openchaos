@@ -17,8 +17,20 @@
  * under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.checker.result;
 
 public class TestResult {
     public boolean isValid;
+
+    public String name;
+
+    public TestResult(String name) {
+        this.name = name;
+    }
+
+    @Override public String toString() {
+        return "\n" + name + "{" +
+            "\n\tisValid=" + isValid +
+            "\n }";
+    }
 }

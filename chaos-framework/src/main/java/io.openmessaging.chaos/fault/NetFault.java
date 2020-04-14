@@ -20,8 +20,11 @@
 package io.openmessaging.chaos.fault;
 
 import io.openmessaging.chaos.ChaosControl;
+import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
+import io.openmessaging.chaos.generator.FixedFaultGenerator;
 import io.openmessaging.chaos.generator.NetFaultGenerator;
+import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.utils.NetUtil;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,7 +38,7 @@ public class NetFault implements Fault {
 
     private volatile List<FaultOperation> faultOperations;
 
-    private NetFaultGenerator netFaultGenerator;
+    private FaultGenerator faultGenerator;
 
     private static final Logger logger = LoggerFactory.getLogger(ChaosControl.class);
 
@@ -43,21 +46,47 @@ public class NetFault implements Fault {
 
     private List<String> nodes;
 
-    public NetFault(List<String> nodes, String mode) {
+    private Recorder recorder;
+
+    public NetFault(List<String> nodes, String mode, Recorder recorder) {
         this.mode = mode;
         this.nodes = nodes;
-        this.netFaultGenerator = new NetFaultGenerator(nodes, mode);
+        this.recorder = recorder;
+        this.faultGenerator = new NetFaultGenerator(nodes, mode);
+    }
+
+    public NetFault(List<String> nodes, String mode, Recorder recorder, List<String> faultNodes) {
+        this.mode = mode;
+        this.nodes = nodes;
+        this.recorder = recorder;
+        this.faultGenerator = new FixedFaultGenerator(nodes, faultNodes, mode);
     }
 
     @Override public synchronized void invoke() {
         logger.info("Invoke {} fault", mode);
-        faultOperations = netFaultGenerator.generate();
+        recorder.recordFaultStart(mode, System.currentTimeMillis());
+        faultOperations = faultGenerator.generate();
         for (FaultOperation operation : faultOperations) {
             logger.info("Invoke node {} fault, fault is {}, invoke args is {}",
                 operation.getNode(), operation.getName(), operation.getInvokeArgs());
             try {
                 switch (operation.getName()) {
                     case "random-partition":
+                    case "fixed-partition":
+                        for (String partitionNode : operation.getInvokeArgs()) {
+                            NetUtil.partition(operation.getNode(), partitionNode);
+                        }
+                        break;
+                    case "partition-majorities-ring":
+                        if (nodes.size() <= 3)
+                            throw new IllegalArgumentException("The number of nodes less than or equal to 3, unable to form partition-majorities-ring");
+                        for (String partitionNode : operation.getInvokeArgs()) {
+                            NetUtil.partition(operation.getNode(), partitionNode);
+                        }
+                        break;
+                    case "bridge":
+                        if (nodes.size() != 5)
+                            throw new IllegalArgumentException("The number of nodes is not equal to 5, unable to form bridge");
                         for (String partitionNode : operation.getInvokeArgs()) {
                             NetUtil.partition(operation.getNode(), partitionNode);
                         }
@@ -74,7 +103,7 @@ public class NetFault implements Fault {
                         break;
                 }
             } catch (Exception e) {
-                logger.error("Invoke fault {} failed", operation.getName());
+                logger.error("Invoke fault {} failed", operation.getName(), e);
             }
         }
     }
@@ -83,12 +112,23 @@ public class NetFault implements Fault {
         if (faultOperations == null)
             return;
         logger.info("Recover {} fault", mode);
+        recorder.recordFaultEnd(mode,System.currentTimeMillis());
         for (FaultOperation operation : faultOperations) {
             try {
                 logger.info("Recover node {} fault, fault is {}, recover args is {}",
                     operation.getNode(), operation.getName(), operation.getRecoverArgs());
                 switch (operation.getName()) {
                     case "random-partition":
+                        NetUtil.healPartition(operation.getNode());
+                        break;
+                    case "partition-majorities-ring":
+                        if (nodes.size() <= 3)
+                            throw new IllegalArgumentException("Number of nodes less than or equal to 3, unable to form partition-majorities-ring");
+                        NetUtil.healPartition(operation.getNode());
+                        break;
+                    case "bridge":
+                        if (nodes.size() != 5)
+                            throw new IllegalArgumentException("Number of nodes is not equal to 5, unable to form bridge");
                         NetUtil.healPartition(operation.getNode());
                         break;
                     case "random-delay":
@@ -102,7 +142,7 @@ public class NetFault implements Fault {
                         break;
                 }
             } catch (Exception e) {
-                logger.error("Recover fault {} failed", operation.getName());
+                logger.error("Recover fault {} failed", operation.getName(), e);
             }
         }
         faultOperations = null;

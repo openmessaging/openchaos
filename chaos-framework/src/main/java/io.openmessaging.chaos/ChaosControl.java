@@ -29,18 +29,26 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.checker.Checker;
 import io.openmessaging.chaos.checker.MQChecker;
+import io.openmessaging.chaos.checker.OrderChecker;
+import io.openmessaging.chaos.checker.PerfChecker;
+import io.openmessaging.chaos.checker.RTOChecker;
+import io.openmessaging.chaos.checker.result.TestResult;
 import io.openmessaging.chaos.common.utils.SshUtil;
 import io.openmessaging.chaos.driver.MQChaosNode;
 import io.openmessaging.chaos.fault.Fault;
 import io.openmessaging.chaos.fault.KillFault;
 import io.openmessaging.chaos.fault.NetFault;
 import io.openmessaging.chaos.fault.NoopFault;
+import io.openmessaging.chaos.fault.SuspendFault;
 import io.openmessaging.chaos.model.Model;
 import io.openmessaging.chaos.model.QueueModel;
+import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.worker.FaultWorker;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -85,18 +93,34 @@ public class ChaosControl {
         @Parameter(names = {
             "-f",
             "--fault"
-        }, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, random-partition, random-delay, random-loss"
+        }, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, fixed-kill, random-partition, " +
+            "fixed-partition, partition-majorities-ring, bridge, random-loss, minor-suspend, major-suspend, random-suspend, fixed-suspend"
             , validateWith = FaultValidator.class)
         String fault = "noop";
 
         @Parameter(names = {
+            "-n",
+            "--fault-nodes"
+        }, description = "The nodes need to be fault injection. The nodes are separated by semicolons. eg: 'n1;n2;n3' " +
+            " Note: this parameter must be used with fixed-xxx faults such as fixed-kill, fixed-partition, fixed-suspend.")
+        String faultNodes = null;
+
+        @Parameter(names = {
             "-i",
-            "--fault-interval"}, description = "Fault execution interval. eg: 30", validateWith = PositiveInteger.class)
+            "--fault-interval"}, description = "Fault injection interval. eg: 30", validateWith = PositiveInteger.class)
         int interval = 30;
 
         @Parameter(names = {
+            "--rto"}, description = "Calculate failure recovery time.")
+        boolean rto = false;
+
+        @Parameter(names = {
+            "--order-test"}, description = "Check the partition order of messaging platform.")
+        boolean isOrderTest = false;
+
+        @Parameter(names = {
             "--install"}, description = "Whether to install program. It will download the installation package on each cluster node. " +
-            "When you first use openmessaging-chaos to test a distributed system, it should be true.")
+            "When you first use OpenMessaging-Chaos to test a distributed system, it should be true.")
         boolean install = false;
     }
 
@@ -133,13 +157,28 @@ public class ChaosControl {
 
             Model model = null;
             Recorder recorder = null;
-            TestResult result = null;
+            List<TestResult> resultList = new ArrayList<>();
 
             try {
 
                 File driverConfigFile = new File(driverConfig);
                 DriverConfiguration driverConfiguration = mapper.readValue(driverConfigFile,
                     DriverConfiguration.class);
+
+                List<String> faultNodeList = new ArrayList<>();
+                if (arguments.fault.startsWith("fixed-")) {
+                    if (arguments.faultNodes == null || arguments.faultNodes.isEmpty()) {
+                        throw new IllegalArgumentException("fault-nodes parameter can not be null or empty when inject fixed-xxx fault to system.");
+                    } else {
+                        String[] faultNodeArray = arguments.faultNodes.split(";");
+                        for(String faultNode: faultNodeArray){
+                            if(!driverConfiguration.nodes.contains(faultNode)){
+                                throw new IllegalArgumentException(String.format("fault-node %s is not in current config file.", faultNode));
+                            }
+                        }
+                        faultNodeList.addAll(Arrays.asList(faultNodeArray));
+                    }
+                }
 
                 SshUtil.init(arguments.username, driverConfiguration.nodes);
 
@@ -152,8 +191,12 @@ public class ChaosControl {
                 recorder = Recorder.newRecorder(historyFile);
 
                 if (recorder == null) {
-                    System.err.printf("create %s failed", historyFile);
+                    System.err.printf("Create %s failed", historyFile);
                     System.exit(-1);
+                }
+                List<String> shardingKeys = new ArrayList<>();
+                for (int i = 0; i < 2 * arguments.concurrency; i++) {
+                    shardingKeys.add("shardingKey" + i);
                 }
 
                 //Currently only queue model is supported
@@ -165,7 +208,7 @@ public class ChaosControl {
                     map = model.setupCluster(driverConfiguration.nodes, arguments.install);
                 }
 
-                model.setupClient();
+                model.setupClient(arguments.isOrderTest, shardingKeys);
 
                 //Initial fault
                 Fault fault;
@@ -180,12 +223,36 @@ public class ChaosControl {
                         case "minor-kill":
                         case "major-kill":
                         case "random-kill":
-                            fault = new KillFault(map, arguments.fault);
+                            fault = new KillFault(map, arguments.fault, recorder);
+                            break;
+                        case "fixed-kill":
+                            fault = new KillFault(map, arguments.fault, recorder, faultNodeList);
                             break;
                         case "random-partition":
                         case "random-delay":
                         case "random-loss":
-                            fault = new NetFault(driverConfiguration.nodes, arguments.fault);
+                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                            break;
+                        case "fixed-partition":
+                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder, faultNodeList);
+                            break;
+                        case "partition-majorities-ring":
+                            if (driverConfiguration.nodes.size() <= 3)
+                                throw new IllegalArgumentException("The number of nodes less than or equal to 3, unable to form partition-majorities-ring");
+                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                            break;
+                        case "bridge":
+                            if (driverConfiguration.nodes.size() != 5)
+                                throw new IllegalArgumentException("The number of nodes is not equal to 5, unable to form bridge");
+                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                            break;
+                        case "minor-suspend":
+                        case "major-suspend":
+                        case "random-suspend":
+                            fault = new SuspendFault(map, arguments.fault, recorder);
+                            break;
+                        case "fixed-suspend":
+                            fault = new SuspendFault(map, arguments.fault, recorder, faultNodeList);
                             break;
                         default:
                             throw new RuntimeException("no such fault");
@@ -196,6 +263,8 @@ public class ChaosControl {
                 FaultWorker faultWorker = new FaultWorker(logger, fault, arguments.interval);
 
                 faultWorker.start();
+
+                long testStartTimeStamp = System.currentTimeMillis();
 
                 //Start model
                 model.start();
@@ -222,15 +291,23 @@ public class ChaosControl {
 
                 recorder.flush();
 
+                long testEndTimestamp = System.currentTimeMillis();
+
                 logger.info("Start check...");
 
-                Checker checker = new MQChecker(historyFile);
+                List<Checker> checkerList = new ArrayList<>();
 
-                result = checker.check();
+                checkerList.add(new MQChecker(historyFile));
+                checkerList.add(new PerfChecker(historyFile, testStartTimeStamp, testEndTimestamp));
+                if(arguments.rto){
+                    checkerList.add(new RTOChecker(historyFile));
+                }
+                if (arguments.isOrderTest) {
+                    checkerList.add(new OrderChecker(historyFile, shardingKeys));
+                }
+                checkerList.forEach(checker -> resultList.add(checker.check()));
 
                 logger.info("Check complete.");
-
-                mapper.writeValue(new File(historyFile.replace("history", "result")), result);
 
             } catch (Exception e) {
                 logger.error("Failed to run chaos test.", e);
@@ -250,15 +327,14 @@ public class ChaosControl {
             }
 
             try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(5));
+                Thread.sleep(TimeUnit.SECONDS.toMillis(3));
             } catch (InterruptedException e) {
                 logger.error("", e);
             }
 
-
-            if (result != null) {
+            if (resultList.size() != 0) {
                 logger.info("----CHAOS TEST RESULT----");
-                logger.info("{}", result.toString());
+                resultList.forEach(testResult -> logger.info(testResult.toString()));
                 logger.info("----CHAOS TEST RESULT----");
             }
         });

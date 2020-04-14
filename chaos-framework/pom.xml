@@ -27,7 +27,7 @@
     <parent>
         <artifactId>messaging-chaos</artifactId>
         <groupId>io.openmessaging.chaos</groupId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -69,6 +69,10 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>driver-rocketmq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.panayotis</groupId>
+            <artifactId>javaplot</artifactId>
         </dependency>
     </dependencies>
 

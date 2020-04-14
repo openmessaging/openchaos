@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -43,17 +44,21 @@ public class NetFaultGenerator implements FaultGenerator {
     @Override public List<FaultOperation> generate() {
         switch (mode) {
             case "random-partition":
-                return partitionOperationsGenerate();
+                return randomPartition();
+            case "partition-majorities-ring":
+                return partitionMajoritiesRing();
+            case "bridge":
+                return bridge();
             case "random-delay":
             case "random-loss":
-                return otherOperationsGenerate();
+                return otherOperations();
             default:
                 break;
         }
         return Collections.emptyList();
     }
 
-    private List<FaultOperation> otherOperationsGenerate() {
+    private List<FaultOperation> otherOperations() {
         int num = random.nextInt(nodes.size()) + 1;
         List<FaultOperation> operations = new ArrayList<>();
         List<String> shuffleNodes = new ArrayList<>(nodes);
@@ -65,7 +70,7 @@ public class NetFaultGenerator implements FaultGenerator {
         return operations;
     }
 
-    private List<FaultOperation> partitionOperationsGenerate() {
+    private List<FaultOperation> randomPartition() {
         int num = random.nextInt(nodes.size() - 1) + 1;
         List<FaultOperation> operations = new ArrayList<>();
         List<String> shuffleNodes = new ArrayList<>(nodes);
@@ -88,6 +93,54 @@ public class NetFaultGenerator implements FaultGenerator {
             }
         });
 
+        return operations;
+    }
+
+    private List<FaultOperation> partitionMajoritiesRing() {
+        if (nodes.size() <= 3)
+            return null;
+        List<FaultOperation> operations = new ArrayList<>();
+        List<String> shuffleNodes = new LinkedList<>(nodes);
+        Collections.shuffle(shuffleNodes);
+        for (int i = 0; i < shuffleNodes.size(); i++) {
+            Set<String> partitionNodes = new HashSet<>(shuffleNodes);
+            partitionNodes.remove(shuffleNodes.get(i));
+            if (i == 0) {
+                partitionNodes.remove(shuffleNodes.get(shuffleNodes.size() - 1));
+                partitionNodes.remove(shuffleNodes.get(1));
+            } else if (i == shuffleNodes.size() - 1) {
+                partitionNodes.remove(shuffleNodes.get(shuffleNodes.size() - 2));
+                partitionNodes.remove(shuffleNodes.get(0));
+            } else {
+                partitionNodes.remove(shuffleNodes.get(i - 1));
+                partitionNodes.remove(shuffleNodes.get(i + 1));
+            }
+            operations.add(getPartitionOperation(shuffleNodes.get(i), partitionNodes));
+        }
+        return operations;
+    }
+
+    private List<FaultOperation> bridge() {
+        if (nodes.size() != 5)
+            return null;
+        List<FaultOperation> operations = new ArrayList<>();
+        List<String> shuffleNodes = new LinkedList<>(nodes);
+        Collections.shuffle(shuffleNodes);
+        Set<String> partitionSet1 = new HashSet<>();
+        partitionSet1.add(shuffleNodes.get(0));
+        partitionSet1.add(shuffleNodes.get(1));
+        Set<String> partitionSet2 = new HashSet<>();
+        partitionSet2.add(shuffleNodes.get(2));
+        partitionSet2.add(shuffleNodes.get(3));
+        for (int i = 0; i < shuffleNodes.size(); i++) {
+            if (i == 4) {
+                break;
+            } else if (i < 2) {
+                operations.add(getPartitionOperation(shuffleNodes.get(i), partitionSet2));
+            } else {
+                operations.add(getPartitionOperation(shuffleNodes.get(i), partitionSet1));
+            }
+        }
         return operations;
     }
 

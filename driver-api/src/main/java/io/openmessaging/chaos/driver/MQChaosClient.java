@@ -20,6 +20,7 @@
 package io.openmessaging.chaos.driver;
 
 import io.openmessaging.chaos.common.InvokeResult;
+import io.openmessaging.chaos.common.Message;
 import java.util.List;
 
 public interface MQChaosClient {
@@ -32,9 +33,16 @@ public interface MQChaosClient {
     InvokeResult enqueue(String value);
 
     /**
+     * Enqueue a value with sharding key to mq cluster
+     * @param value
+     * @return result of enqueue
+     */
+    InvokeResult enqueue(String shardingKey, String value);
+
+    /**
      * Dequeue from mq cluster
      */
-    List<String> dequeue();
+    List<Message> dequeue();
 
     /**
      * Close the MQChaosClient

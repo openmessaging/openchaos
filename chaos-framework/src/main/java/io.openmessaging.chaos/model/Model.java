@@ -28,15 +28,16 @@ public interface Model {
     /**
      * Set up all the clients
      */
-    void setupClient();
+    void setupClient(boolean isOrderTest, List<String> shardingKeys);
 
     /**
      * Set up cluster to be tested
+     *
      * @param nodes all the nodes of cluster to be tested
      * @param isInstall whether to reinstall the program on each node
      * @return
      */
-    Map<String,MQChaosNode> setupCluster(List<String> nodes,boolean isInstall);
+    Map<String, MQChaosNode> setupCluster(List<String> nodes, boolean isInstall);
 
     /**
      * Start the test

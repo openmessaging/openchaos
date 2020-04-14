@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class KillFaultGenerator implements FaultGenerator {
+public class SingleFaultGenerator implements FaultGenerator {
 
     private Collection<String> nodes;
 
@@ -33,7 +33,7 @@ public class KillFaultGenerator implements FaultGenerator {
 
     private Random random = new Random();
 
-    public KillFaultGenerator(Collection<String> nodes, String mode) {
+    public SingleFaultGenerator(Collection<String> nodes, String mode) {
         this.nodes = nodes;
         this.mode = mode;
     }
@@ -42,12 +42,15 @@ public class KillFaultGenerator implements FaultGenerator {
         List<FaultOperation> operations = new ArrayList<>();
         int num = 0;
         switch (mode) {
+            case "minor-suspend":
             case "minor-kill":
                 num = nodes.size() % 2 == 0 ? nodes.size() / 2 - 1 : nodes.size() / 2;
                 break;
+            case "major-suspend":
             case "major-kill":
                 num = nodes.size() % 2 == 0 ? nodes.size() / 2 : nodes.size() / 2 + 1;
                 break;
+            case "random-suspend":
             case "random-kill":
                 num = random.nextInt(nodes.size()) + 1;
                 break;
