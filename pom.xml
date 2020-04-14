@@ -7,7 +7,7 @@
     <groupId>io.openmessaging.chaos</groupId>
     <artifactId>messaging-chaos</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <modules>
         <module>chaos-framework</module>
         <module>driver-api</module>
