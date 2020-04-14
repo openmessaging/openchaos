@@ -60,7 +60,7 @@ public class RocketMQChaosNode implements MQChaosNode {
             logger.info("Node {} download rocketmq success", node);
 
             //For docker test, because the memory of local computer is too small
-            SshUtil.execCommandInDir(node, installDir, "sed -i 's/-Xms8g -Xmx8g -Xmn4g/-Xms2g -Xmx2g -Xmn1g/g' bin/runbroker.sh");
+            SshUtil.execCommandInDir(node, installDir, "sed -i 's/-Xms8g -Xmx8g -Xmn4g/-Xmx1500m/g' bin/runbroker.sh");
             SshUtil.execCommandInDir(node, installDir, "sed -i  's/-Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m/-Xms500m -Xmx500m -Xmn250m -XX:MetaspaceSize=16m -XX:MaxMetaspaceSize=40m/g' bin/runserver.sh");
             SshUtil.execCommandInDir(node, installDir, "sed -i 's/exit -1/exit 0/g' bin/mqshutdown");
 
