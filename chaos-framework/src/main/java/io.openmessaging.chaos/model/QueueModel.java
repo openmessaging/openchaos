@@ -27,11 +27,11 @@ import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.DriverConfiguration;
 import io.openmessaging.chaos.client.Client;
 import io.openmessaging.chaos.client.QueueClient;
+import io.openmessaging.chaos.common.utils.Utils;
 import io.openmessaging.chaos.driver.mq.MQChaosDriver;
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.recorder.RequestLogEntry;
-import io.openmessaging.chaos.utils.ListPartition;
 import io.openmessaging.chaos.worker.ClientWorker;
 import io.openmessaging.chaos.worker.Worker;
 import java.io.File;
@@ -43,7 +43,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,7 +144,7 @@ public class QueueModel implements Model {
 
             logger.info("MQ clients setup..");
 
-            List<List<String>> shardingKeyLists = ListPartition.partitionList(shardingKeys, concurrency);
+            List<List<String>> shardingKeyLists = Utils.partitionList(shardingKeys, concurrency);
             for (int i = 0; i < concurrency; i++) {
                 Client client = new QueueClient(mqChaosDriver, chaosTopic, recorder, isOrderTest, shardingKeyLists.get(i));
                 client.setup();
@@ -177,10 +176,10 @@ public class QueueModel implements Model {
     }
 
     @Override public void shutdown() {
-        logger.info("Close mq client");
+        logger.info("Teardown mq client");
         clients.forEach(Client::teardown);
-        logger.info("Teardown mq cluster");
-        cluster.values().forEach(MQChaosNode::teardown);
+        logger.info("Stop mq cluster");
+        cluster.values().forEach(MQChaosNode::stop);
         mqChaosDriver.shutdown();
     }
 
