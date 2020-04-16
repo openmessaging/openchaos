@@ -97,7 +97,7 @@ public class Recorder {
         try {
             bufferedWriter.flush();
         } catch (IOException e) {
-            logger.error("Recorder close fail", e);
+            logger.error("Recorder shutdown fail", e);
         }
     }
 
@@ -106,7 +106,7 @@ public class Recorder {
             bufferedWriter.flush();
             bufferedWriter.close();
         } catch (IOException e) {
-            logger.error("Recorder close fail", e);
+            logger.error("Recorder shutdown fail", e);
         }
     }
 

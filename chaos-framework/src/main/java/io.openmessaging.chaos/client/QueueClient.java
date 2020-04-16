@@ -21,8 +21,8 @@ package io.openmessaging.chaos.client;
 
 import io.openmessaging.chaos.common.InvokeResult;
 import io.openmessaging.chaos.common.Message;
-import io.openmessaging.chaos.driver.MQChaosClient;
-import io.openmessaging.chaos.driver.MQChaosDriver;
+import io.openmessaging.chaos.driver.mq.MQChaosClient;
+import io.openmessaging.chaos.driver.mq.MQChaosDriver;
 import io.openmessaging.chaos.generator.QueueGenerator;
 import io.openmessaging.chaos.generator.QueueOperation;
 import io.openmessaging.chaos.recorder.Recorder;
@@ -68,6 +68,7 @@ public class QueueClient implements Client {
 
     public void setup() {
         mqChaosClient = mqChaosDriver.createChaosClient(chaosTopic);
+        mqChaosClient.start();
     }
 
     public void teardown() {

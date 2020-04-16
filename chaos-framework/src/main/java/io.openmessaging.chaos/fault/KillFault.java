@@ -20,7 +20,7 @@
 package io.openmessaging.chaos.fault;
 
 import io.openmessaging.chaos.ChaosControl;
-import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
 import io.openmessaging.chaos.generator.FixedFaultGenerator;

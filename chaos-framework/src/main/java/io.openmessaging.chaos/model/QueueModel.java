@@ -27,8 +27,8 @@ import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.DriverConfiguration;
 import io.openmessaging.chaos.client.Client;
 import io.openmessaging.chaos.client.QueueClient;
-import io.openmessaging.chaos.driver.MQChaosDriver;
-import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.driver.mq.MQChaosDriver;
+import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.recorder.RequestLogEntry;
 import io.openmessaging.chaos.utils.ListPartition;
@@ -106,16 +106,11 @@ public class QueueModel implements Model {
             }
 
             if (isInstall) {
-//                cluster.values().forEach(MQChaosNode::setup);
-                List<CompletableFuture<Void>> futures = new ArrayList<>();
-                for(MQChaosNode node:cluster.values()){
-                    futures.add(node.setup());
-                }
-                futures.forEach(CompletableFuture::join);
+                cluster.values().forEach(MQChaosNode::setup);
             }
 
             logger.info("Cluster shutdown");
-            cluster.values().forEach(MQChaosNode::teardown);
+            cluster.values().forEach(MQChaosNode::stop);
             logger.info("Wait for all nodes to shutdown...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(10));
@@ -186,7 +181,7 @@ public class QueueModel implements Model {
         clients.forEach(Client::teardown);
         logger.info("Teardown mq cluster");
         cluster.values().forEach(MQChaosNode::teardown);
-        mqChaosDriver.close();
+        mqChaosDriver.shutdown();
     }
 
     private static MQChaosDriver createChaosMQDriver(File driverConfigFile) throws IOException {

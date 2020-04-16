@@ -36,7 +36,7 @@ public interface ChaosDriver {
     void initialize(File configurationFile, List<String> nodes) throws IOException;
 
     /**
-     * Close the ChaosDriver
+     * Shutdown the ChaosDriver
      */
-    void close();
+    void shutdown();
 }

@@ -21,7 +21,7 @@ package io.openmessaging.chaos.driver.rocketmq;
 
 import com.google.common.collect.Lists;
 import io.openmessaging.chaos.common.InvokeResult;
-import io.openmessaging.chaos.driver.MQChaosClient;
+import io.openmessaging.chaos.driver.mq.MQChaosClient;
 import java.util.List;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQBrokerException;
@@ -53,6 +53,8 @@ public class RocketMQChaosClient implements MQChaosClient {
         this.defaultLitePullConsumer = defaultLitePullConsumer;
         this.chaosTopic = chaosTopic;
     }
+
+
 
     @Override public InvokeResult enqueue(String value) {
         Message message = new Message(chaosTopic, value.getBytes());
@@ -113,6 +115,19 @@ public class RocketMQChaosClient implements MQChaosClient {
             return Lists.transform(messages, messageExt -> new io.openmessaging.chaos.common.Message(messageExt.getKeys(), new String(messageExt.getBody())));
         } else {
             return null;
+        }
+    }
+
+    @Override public void start() {
+        try {
+            if (defaultMQProducer != null) {
+                defaultMQProducer.start();
+            }
+            if (defaultLitePullConsumer != null) {
+                defaultLitePullConsumer.start();
+            }
+        } catch (MQClientException e) {
+            logger.error("Failed to start the created producer instance.", e);
         }
     }
 
