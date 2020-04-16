@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package io.openmessaging.chaos.utils;
+package io.openmessaging.chaos.common.utils;
 
 
 import io.openmessaging.chaos.common.utils.SshUtil;

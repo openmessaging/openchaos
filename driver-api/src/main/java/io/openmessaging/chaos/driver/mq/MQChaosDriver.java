@@ -17,35 +17,27 @@
  * under the License.
  */
 
-package io.openmessaging.chaos.driver;
+package io.openmessaging.chaos.driver.mq;
 
+import io.openmessaging.chaos.driver.ChaosDriver;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
-public interface MQChaosNode {
-
-    /**
-     * Set up the distributed system program to be tested on this particular node. No need to start process.
-     */
-    CompletableFuture<Void> setup();
+public interface MQChaosDriver extends ChaosDriver {
 
     /**
-     * Start the distributed system process to be tested on this particular node
+     * Create a new topic with a given number of partitions
      */
-    void start();
+    void createTopic(String topic, int partitions);
 
     /**
-     * Teardown the distributed system process to be tested on this particular node when test is complete
+     * Create a ChaosClient for a given topic. ChaosClient will apply operations to the cluster to be tested
      */
-    void teardown();
+    MQChaosClient createChaosClient(String topic);
 
     /**
-     * Kill the distributed system process to be tested on this particular node
+     * Create a ChaosNode. ChaosNode represents one of the nodes in the cluster to be tested
+     * @param node current node
+     * @param nodes all the nodes of the distributed system to be tested
      */
-    void kill();
-
-    /**
-     * Get the name of the process to be suspended during fault injection
-     */
-    List<String> getSuspendProcessName();
+    MQChaosNode createChaosNode(String node, List<String> nodes);
 }

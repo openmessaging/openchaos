@@ -108,4 +108,10 @@ public class RTOChecker implements Checker {
 
         rtoTestResult.isValid = true;
     }
+
+    public static void main(String[] args) {
+        RTOChecker rtoChecker = new RTOChecker("2020-04-14-12-04-22-RocketMQ-chaos-history-file");
+        System.out.println(rtoChecker.check());
+
+    }
 }

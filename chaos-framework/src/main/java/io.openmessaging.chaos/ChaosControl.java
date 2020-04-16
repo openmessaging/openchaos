@@ -34,12 +34,12 @@ import io.openmessaging.chaos.checker.PerfChecker;
 import io.openmessaging.chaos.checker.RTOChecker;
 import io.openmessaging.chaos.checker.result.TestResult;
 import io.openmessaging.chaos.common.utils.SshUtil;
-import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.fault.Fault;
 import io.openmessaging.chaos.fault.KillFault;
 import io.openmessaging.chaos.fault.NetFault;
 import io.openmessaging.chaos.fault.NoopFault;
-import io.openmessaging.chaos.fault.SuspendFault;
+import io.openmessaging.chaos.fault.PauseFault;
 import io.openmessaging.chaos.model.Model;
 import io.openmessaging.chaos.model.QueueModel;
 import io.openmessaging.chaos.recorder.Recorder;
@@ -249,10 +249,10 @@ public class ChaosControl {
                         case "minor-suspend":
                         case "major-suspend":
                         case "random-suspend":
-                            fault = new SuspendFault(map, arguments.fault, recorder);
+                            fault = new PauseFault(map, arguments.fault, recorder);
                             break;
                         case "fixed-suspend":
-                            fault = new SuspendFault(map, arguments.fault, recorder, faultNodeList);
+                            fault = new PauseFault(map, arguments.fault, recorder, faultNodeList);
                             break;
                         default:
                             throw new RuntimeException("no such fault");

@@ -19,7 +19,7 @@
 
 package io.openmessaging.chaos.model;
 
-import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import java.util.List;
 import java.util.Map;
 

@@ -23,9 +23,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.io.BaseEncoding;
-import io.openmessaging.chaos.driver.MQChaosClient;
-import io.openmessaging.chaos.driver.MQChaosDriver;
-import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.driver.mq.MQChaosClient;
+import io.openmessaging.chaos.driver.mq.MQChaosDriver;
+import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQBrokerConfig;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQClientConfig;
 import java.io.File;
@@ -67,11 +67,6 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         DefaultMQProducer defaultMQProducer = new DefaultMQProducer("ProducerGroup_Chaos");
         defaultMQProducer.setNamesrvAddr(getNameserver());
         defaultMQProducer.setInstanceName("ProducerInstance" + getRandomString());
-        try {
-            defaultMQProducer.start();
-        } catch (MQClientException e) {
-            log.error("Failed to start the created producer instance.", e);
-        }
         DefaultLitePullConsumer defaultLitePullConsumer = new DefaultLitePullConsumer("ConsumerGroup_Chaos");
         defaultLitePullConsumer.setNamesrvAddr(getNameserver());
         defaultLitePullConsumer.setInstanceName("ConsumerInstance" + getRandomString());
@@ -79,7 +74,6 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         defaultLitePullConsumer.setPullBatchSize(5);
         try {
             defaultLitePullConsumer.subscribe(topic, "*");
-            defaultLitePullConsumer.start();
         } catch (MQClientException e) {
             log.error("Failed to start the created lite pull consumer instance.", e);
         }
@@ -118,7 +112,7 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         }
     }
 
-    public void close() {
+    public void shutdown() {
         rmqAdmin.shutdown();
     }
 

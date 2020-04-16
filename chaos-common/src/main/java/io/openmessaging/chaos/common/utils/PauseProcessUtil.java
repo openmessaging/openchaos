@@ -1,9 +1,9 @@
-package io.openmessaging.chaos.utils;
+package io.openmessaging.chaos.common.utils;
 
 import io.openmessaging.chaos.common.utils.SshUtil;
 import java.util.List;
 
-public class SuspendProcessUtil {
+public class PauseProcessUtil {
 
     public static void suspend(String node, List<String> processNames) throws Exception {
         for (String processName : processNames) {

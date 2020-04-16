@@ -25,7 +25,7 @@ import io.openmessaging.chaos.generator.FaultOperation;
 import io.openmessaging.chaos.generator.FixedFaultGenerator;
 import io.openmessaging.chaos.generator.NetFaultGenerator;
 import io.openmessaging.chaos.recorder.Recorder;
-import io.openmessaging.chaos.utils.NetUtil;
+import io.openmessaging.chaos.common.utils.NetUtil;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;

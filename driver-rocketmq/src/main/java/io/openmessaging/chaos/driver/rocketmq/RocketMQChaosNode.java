@@ -19,13 +19,13 @@
 
 package io.openmessaging.chaos.driver.rocketmq;
 
+import io.openmessaging.chaos.common.utils.PauseProcessUtil;
 import io.openmessaging.chaos.common.utils.SshUtil;
-import io.openmessaging.chaos.driver.MQChaosNode;
+import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQBrokerConfig;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ public class RocketMQChaosNode implements MQChaosNode {
         this.rmqBrokerConfig = rmqBrokerConfig;
     }
 
-    @Override public CompletableFuture<Void> setup() {
+    @Override public void setup() {
         try {
             //Download rocketmq package
             logger.info("Node {} download rocketmq...", node);
@@ -84,11 +84,15 @@ public class RocketMQChaosNode implements MQChaosNode {
             logger.error("Node {} setup rocketmq node failed", node, e);
             throw new RuntimeException(e);
         }
-        return CompletableFuture.completedFuture(null);
     }
 
     @Override public void teardown() {
-        kill();
+        try {
+            SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", installDir, installDir));
+        } catch (Exception e) {
+            logger.error("Node {} teardown rocketmq node failed", node, e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override public void start() {
@@ -108,6 +112,10 @@ public class RocketMQChaosNode implements MQChaosNode {
         }
     }
 
+    @Override public void stop() {
+        kill();
+    }
+
     @Override public void kill() {
         try {
             //Kill nameserver
@@ -124,13 +132,32 @@ public class RocketMQChaosNode implements MQChaosNode {
         }
     }
 
-    @Override public List<String> getSuspendProcessName() {
+    @Override public void pause() {
         List<String> names = new ArrayList<>();
         names.add("org.apache.rocketmq.broker.BrokerStartup");
         if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
             names.add("org.apache.rocketmq.namesrv.NamesrvStartup");
         }
-        return names;
+        try {
+            PauseProcessUtil.suspend(node, names);
+        } catch (Exception e) {
+            logger.error("Node {} pause rocketmq processes failed", node, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override public void resume() {
+        List<String> names = new ArrayList<>();
+        names.add("org.apache.rocketmq.broker.BrokerStartup");
+        if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+            names.add("org.apache.rocketmq.namesrv.NamesrvStartup");
+        }
+        try {
+            PauseProcessUtil.recover(node, names);
+        } catch (Exception e) {
+            logger.error("Node {} resume rocketmq processes failed", node, e);
+            throw new RuntimeException(e);
+        }
     }
 
     private String getDledgerPeers(List<String> nodes) {
