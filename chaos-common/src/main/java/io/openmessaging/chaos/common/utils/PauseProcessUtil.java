@@ -1,6 +1,5 @@
 package io.openmessaging.chaos.common.utils;
 
-import io.openmessaging.chaos.common.utils.SshUtil;
 import java.util.List;
 
 public class PauseProcessUtil {
