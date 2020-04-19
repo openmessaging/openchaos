@@ -1,20 +1,14 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 
 package io.openmessaging.chaos.checker;
@@ -37,20 +31,20 @@ import org.slf4j.LoggerFactory;
 
 public class MQChecker implements Checker {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private static final Logger log = LoggerFactory.getLogger(MQChecker.class);
+
+    static {
+        MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
+    }
+
     private Set<String> lostSet = new HashSet<>();
     private Multiset<String> duplicateSet = HashMultiset.create();
     private AtomicLong enqueueInvokeCount = new AtomicLong();
     private AtomicLong enqueueSuccessCount = new AtomicLong();
     private AtomicLong dequeueSuccessCount = new AtomicLong();
     private String fileName;
-    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-    static {
-        mapper.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
-    }
-
-    private static final Logger logger = LoggerFactory.getLogger(MQChecker.class);
 
     public MQChecker(String fileName) {
         this.fileName = fileName;
@@ -68,9 +62,9 @@ public class MQChecker implements Checker {
         try {
             checkInner();
             MQTestResult = generateResult();
-            mapper.writeValue(new File(fileName.replace("history", "result")), MQTestResult);
+            MAPPER.writeValue(new File(fileName.replace("history", "result")), MQTestResult);
         } catch (Exception e) {
-            logger.error("MQChecker check fail", e);
+            log.error("MQChecker check fail", e);
         }
 
         return MQTestResult;

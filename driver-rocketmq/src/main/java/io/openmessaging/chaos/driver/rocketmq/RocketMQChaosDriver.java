@@ -1,20 +1,14 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 
 package io.openmessaging.chaos.driver.rocketmq;
@@ -44,14 +38,28 @@ import org.slf4j.LoggerFactory;
 
 public class RocketMQChaosDriver implements MQChaosDriver {
 
+    private static final Random RANDOM = new Random();
+    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private static final Logger log = LoggerFactory.getLogger(RocketMQChaosDriver.class);
     private DefaultMQAdminExt rmqAdmin;
     private RocketMQClientConfig rmqClientConfig;
     private RocketMQBrokerConfig rmqBrokerConfig;
     private List<String> nodes;
-    private static final Random random = new Random();
-    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private static final Logger log = LoggerFactory.getLogger(RocketMQChaosDriver.class);
+
+    private static RocketMQClientConfig readConfigForClient(File configurationFile) throws IOException {
+        return MAPPER.readValue(configurationFile, RocketMQClientConfig.class);
+    }
+
+    private static RocketMQBrokerConfig readConfigForBroker(File configurationFile) throws IOException {
+        return MAPPER.readValue(configurationFile, RocketMQBrokerConfig.class);
+    }
+
+    private static String getRandomString() {
+        byte[] buffer = new byte[5];
+        RANDOM.nextBytes(buffer);
+        return BaseEncoding.base64Url().omitPadding().encode(buffer);
+    }
 
     public void initialize(File configurationFile, List<String> nodes) throws IOException {
         this.rmqClientConfig = readConfigForClient(configurationFile);
@@ -114,20 +122,6 @@ public class RocketMQChaosDriver implements MQChaosDriver {
 
     public void shutdown() {
         rmqAdmin.shutdown();
-    }
-
-    private static RocketMQClientConfig readConfigForClient(File configurationFile) throws IOException {
-        return mapper.readValue(configurationFile, RocketMQClientConfig.class);
-    }
-
-    private static RocketMQBrokerConfig readConfigForBroker(File configurationFile) throws IOException {
-        return mapper.readValue(configurationFile, RocketMQBrokerConfig.class);
-    }
-
-    private static String getRandomString() {
-        byte[] buffer = new byte[5];
-        random.nextBytes(buffer);
-        return BaseEncoding.base64Url().omitPadding().encode(buffer);
     }
 
     private String getNameserver() {

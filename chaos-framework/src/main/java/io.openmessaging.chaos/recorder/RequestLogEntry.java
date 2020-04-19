@@ -27,7 +27,8 @@ public class RequestLogEntry {
         this.timestamp = timestamp;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return String.format("%d\t%s\t%s\t%s\t%s\t%d\n", clientId, operation, type, value, shardingKey, timestamp);
     }
 }

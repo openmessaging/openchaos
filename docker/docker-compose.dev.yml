@@ -2,4 +2,4 @@ version: '3.7'
 services:
   control:
     volumes:
-      - ${CHAOS_ROOT}:/openmessaging-chaos
+    - ${CHAOS_ROOT}:/openmessaging-chaos

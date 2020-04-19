@@ -1,20 +1,14 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 
 package io.openmessaging.chaos.driver.rocketmq;
@@ -39,12 +33,9 @@ import org.slf4j.LoggerFactory;
 
 public class RocketMQChaosClient implements MQChaosClient {
 
+    private static final Logger log = LoggerFactory.getLogger(RocketMQChaosClient.class);
     private final DefaultMQProducer defaultMQProducer;
-
     private final DefaultLitePullConsumer defaultLitePullConsumer;
-
-    private static final Logger logger = LoggerFactory.getLogger(RocketMQChaosClient.class);
-
     private String chaosTopic;
 
     public RocketMQChaosClient(final DefaultMQProducer defaultMQProducer,
@@ -54,31 +45,31 @@ public class RocketMQChaosClient implements MQChaosClient {
         this.chaosTopic = chaosTopic;
     }
 
-
-
-    @Override public InvokeResult enqueue(String value) {
+    @Override
+    public InvokeResult enqueue(String value) {
         Message message = new Message(chaosTopic, value.getBytes());
         try {
             defaultMQProducer.send(message);
         } catch (RemotingException e) {
             if (e instanceof RemotingConnectException || e instanceof RemotingSendRequestException) {
-                logger.warn("Enqueue fail", e);
+                log.warn("Enqueue fail", e);
                 return InvokeResult.FAILURE;
             } else {
-                logger.warn("Enqueue unknown", e);
+                log.warn("Enqueue unknown", e);
                 return InvokeResult.UNKNOWN;
             }
         } catch (IllegalStateException | MQClientException | InterruptedException | MQBrokerException e) {
-            logger.warn("Enqueue fail", e);
+            log.warn("Enqueue fail", e);
             return InvokeResult.FAILURE;
         } catch (Exception e) {
-            logger.warn("Enqueue unknown", e);
+            log.warn("Enqueue unknown", e);
             return InvokeResult.UNKNOWN;
         }
         return InvokeResult.SUCCESS;
     }
 
-    @Override public InvokeResult enqueue(String shardingKey, String value) {
+    @Override
+    public InvokeResult enqueue(String shardingKey, String value) {
         Message message = new Message(chaosTopic, value.getBytes());
         message.setKeys(shardingKey);
         try {
@@ -92,23 +83,24 @@ public class RocketMQChaosClient implements MQChaosClient {
             }, shardingKey);
         } catch (RemotingException e) {
             if (e instanceof RemotingConnectException || e instanceof RemotingSendRequestException) {
-                logger.warn("Enqueue fail", e);
+                log.warn("Enqueue fail", e);
                 return InvokeResult.FAILURE;
             } else {
-                logger.warn("Enqueue unknown", e);
+                log.warn("Enqueue unknown", e);
                 return InvokeResult.UNKNOWN;
             }
         } catch (IllegalStateException | MQClientException | InterruptedException | MQBrokerException e) {
-            logger.warn("Enqueue fail", e);
+            log.warn("Enqueue fail", e);
             return InvokeResult.FAILURE;
         } catch (Exception e) {
-            logger.warn("Enqueue unknown", e);
+            log.warn("Enqueue unknown", e);
             return InvokeResult.UNKNOWN;
         }
         return InvokeResult.SUCCESS;
     }
 
-    @Override public List<io.openmessaging.chaos.common.Message> dequeue() {
+    @Override
+    public List<io.openmessaging.chaos.common.Message> dequeue() {
         List<MessageExt> messages = defaultLitePullConsumer.poll();
         if (!messages.isEmpty()) {
             defaultLitePullConsumer.commitSync();
@@ -118,7 +110,8 @@ public class RocketMQChaosClient implements MQChaosClient {
         }
     }
 
-    @Override public void start() {
+    @Override
+    public void start() {
         try {
             if (defaultMQProducer != null) {
                 defaultMQProducer.start();
@@ -127,7 +120,7 @@ public class RocketMQChaosClient implements MQChaosClient {
                 defaultLitePullConsumer.start();
             }
         } catch (MQClientException e) {
-            logger.error("Failed to start the created producer instance.", e);
+            log.error("Failed to start the created producer instance.", e);
         }
     }
 

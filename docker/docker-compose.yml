@@ -5,7 +5,7 @@ x-node:
   env_file: ./secret/node.env
   privileged: true
   networks:
-    - chaos
+  - chaos
 
 services:
   control:
@@ -15,19 +15,19 @@ services:
     env_file: ./secret/control.env
     privileged: true
     ports:
-      - "8080"
+    - "8080"
     networks:
-      - chaos
+    - chaos
   n1:
-    << : *default-node
+    <<: *default-node
     container_name: chaos-n1
     hostname: n1
   n2:
-    << : *default-node
+    <<: *default-node
     container_name: chaos-n2
     hostname: n2
   n3:
-    << : *default-node
+    <<: *default-node
     container_name: chaos-n3
     hostname: n3
 

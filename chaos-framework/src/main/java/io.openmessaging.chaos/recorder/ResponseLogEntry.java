@@ -33,7 +33,8 @@ public class ResponseLogEntry {
         this.latency = latency;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return String.format("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d\n", clientId, operation, type, result, value, shardingKey, timestamp, latency);
     }
 }

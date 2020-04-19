@@ -1,20 +1,14 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 
 package io.openmessaging.chaos.driver.rocketmq;
@@ -31,17 +25,12 @@ import org.slf4j.LoggerFactory;
 
 public class RocketMQChaosNode implements MQChaosNode {
 
+    private static final String INSTALL_DIR = "rocketmq-chaos-test";
+    private static final String ROCKETMQ_VERSION = "4.6.0";
+    private static final Logger log = LoggerFactory.getLogger(RocketMQChaosNode.class);
     private String node;
-
     private List<String> nodes;
-
     private RocketMQBrokerConfig rmqBrokerConfig;
-
-    private static final String installDir = "rocketmq-chaos-test";
-
-    private static final String rocketmqVersion = "4.6.0";
-
-    private static final Logger logger = LoggerFactory.getLogger(RocketMQChaosNode.class);
 
     public RocketMQChaosNode(String node, List<String> nodes, RocketMQBrokerConfig rmqBrokerConfig) {
         this.node = node;
@@ -49,20 +38,21 @@ public class RocketMQChaosNode implements MQChaosNode {
         this.rmqBrokerConfig = rmqBrokerConfig;
     }
 
-    @Override public void setup() {
+    @Override
+    public void setup() {
         try {
             //Download rocketmq package
-            logger.info("Node {} download rocketmq...", node);
-            SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", installDir, installDir));
-            SshUtil.execCommandInDir(node, installDir,
-                String.format("curl https://archive.apache.org/dist/rocketmq/%s/rocketmq-all-%s-bin-release.zip -o rocketmq.zip", rocketmqVersion, rocketmqVersion),
+            log.info("Node {} download rocketmq...", node);
+            SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", INSTALL_DIR, INSTALL_DIR));
+            SshUtil.execCommandInDir(node, INSTALL_DIR,
+                String.format("curl https://archive.apache.org/dist/rocketmq/%s/rocketmq-all-%s-bin-release.zip -o rocketmq.zip", ROCKETMQ_VERSION, ROCKETMQ_VERSION),
                 "unzip rocketmq.zip", "rm -f rocketmq.zip", "mv rocketmq-all*/* .", "rmdir rocketmq-all*");
-            logger.info("Node {} download rocketmq success", node);
+            log.info("Node {} download rocketmq success", node);
 
             //For docker test, because the memory of local computer is too small
-            SshUtil.execCommandInDir(node, installDir, "sed -i 's/-Xms8g -Xmx8g -Xmn4g/-Xmx1500m/g' bin/runbroker.sh");
-            SshUtil.execCommandInDir(node, installDir, "sed -i  's/-Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m/-Xms500m -Xmx500m -Xmn250m -XX:MetaspaceSize=16m -XX:MaxMetaspaceSize=40m/g' bin/runserver.sh");
-            SshUtil.execCommandInDir(node, installDir, "sed -i 's/exit -1/exit 0/g' bin/mqshutdown");
+            SshUtil.execCommandInDir(node, INSTALL_DIR, "sed -i 's/-Xms8g -Xmx8g -Xmn4g/-Xmx1500m/g' bin/runbroker.sh");
+            SshUtil.execCommandInDir(node, INSTALL_DIR, "sed -i  's/-Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m/-Xms500m -Xmx500m -Xmn250m -XX:MetaspaceSize=16m -XX:MaxMetaspaceSize=40m/g' bin/runserver.sh");
+            SshUtil.execCommandInDir(node, INSTALL_DIR, "sed -i 's/exit -1/exit 0/g' bin/mqshutdown");
 
             //Prepare broker conf
             Field[] fields = rmqBrokerConfig.getClass().getDeclaredFields();
@@ -70,69 +60,74 @@ public class RocketMQChaosNode implements MQChaosNode {
                 String name = fields[i].getName();
                 String value = (String) fields[i].get(rmqBrokerConfig);
                 if (value != null && !value.isEmpty()) {
-                    SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> broker-chaos-test.conf", name + "=" + value));
+                    SshUtil.execCommandInDir(node, INSTALL_DIR, String.format("echo '%s' >> broker-chaos-test.conf", name + "=" + value));
                 }
             }
 
             String dledgerPeers = getDledgerPeers(nodes);
 
-            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerPeers=" + dledgerPeers));
+            SshUtil.execCommandInDir(node, INSTALL_DIR, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerPeers=" + dledgerPeers));
 
-            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerSelfId=n" + nodes.indexOf(node)));
+            SshUtil.execCommandInDir(node, INSTALL_DIR, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerSelfId=n" + nodes.indexOf(node)));
 
         } catch (Exception e) {
-            logger.error("Node {} setup rocketmq node failed", node, e);
+            log.error("Node {} setup rocketmq node failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
-    @Override public void teardown() {
+    @Override
+    public void teardown() {
         try {
-            SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", installDir, installDir));
+            SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", INSTALL_DIR, INSTALL_DIR));
         } catch (Exception e) {
-            logger.error("Node {} teardown rocketmq node failed", node, e);
+            log.error("Node {} teardown rocketmq node failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
-    @Override public void start() {
+    @Override
+    public void start() {
         try {
             //Start nameserver
             if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
-                logger.info("Node {} start nameserver...", node);
-                SshUtil.execCommandInDir(node, installDir, "nohup sh bin/mqnamesrv > nameserver.log 2>&1 &");
+                log.info("Node {} start nameserver...", node);
+                SshUtil.execCommandInDir(node, INSTALL_DIR, "nohup sh bin/mqnamesrv > nameserver.log 2>&1 &");
             }
             //Start broker
-            logger.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/mqbroker -n '%s' -c broker-chaos-test.conf > broker.log 2>&1 &"
+            log.info("Node {} start broker...", node);
+            SshUtil.execCommandInDir(node, INSTALL_DIR, String.format("nohup sh bin/mqbroker -n '%s' -c broker-chaos-test.conf > broker.log 2>&1 &"
                 , getNameserver(nodes)));
         } catch (Exception e) {
-            logger.error("Node {} start rocketmq node failed", node, e);
+            log.error("Node {} start rocketmq node failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
-    @Override public void stop() {
+    @Override
+    public void stop() {
         kill();
     }
 
-    @Override public void kill() {
+    @Override
+    public void kill() {
         try {
             //Kill nameserver
             if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
-                logger.info("Node {} nameserver killed...", node);
-                SshUtil.execCommandInDir(node, installDir, "sh bin/mqshutdown namesrv");
+                log.info("Node {} nameserver killed...", node);
+                SshUtil.execCommandInDir(node, INSTALL_DIR, "sh bin/mqshutdown namesrv");
             }
             //Kill broker
-            logger.info("Node {} broker killed...", node);
-            SshUtil.execCommandInDir(node, installDir, "sh bin/mqshutdown broker");
+            log.info("Node {} broker killed...", node);
+            SshUtil.execCommandInDir(node, INSTALL_DIR, "sh bin/mqshutdown broker");
         } catch (Exception e) {
-            logger.error("Node {} kill rocketmq node failed", node, e);
+            log.error("Node {} kill rocketmq node failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
-    @Override public void pause() {
+    @Override
+    public void pause() {
         List<String> names = new ArrayList<>();
         names.add("org.apache.rocketmq.broker.BrokerStartup");
         if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
@@ -141,12 +136,13 @@ public class RocketMQChaosNode implements MQChaosNode {
         try {
             PauseProcessUtil.suspend(node, names);
         } catch (Exception e) {
-            logger.error("Node {} pause rocketmq processes failed", node, e);
+            log.error("Node {} pause rocketmq processes failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
-    @Override public void resume() {
+    @Override
+    public void resume() {
         List<String> names = new ArrayList<>();
         names.add("org.apache.rocketmq.broker.BrokerStartup");
         if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
@@ -155,7 +151,7 @@ public class RocketMQChaosNode implements MQChaosNode {
         try {
             PauseProcessUtil.recover(node, names);
         } catch (Exception e) {
-            logger.error("Node {} resume rocketmq processes failed", node, e);
+            log.error("Node {} resume rocketmq processes failed", node, e);
             throw new RuntimeException(e);
         }
     }

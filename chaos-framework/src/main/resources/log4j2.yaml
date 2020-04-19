@@ -20,15 +20,15 @@
 Configuration:
   status: INFO
   name: messaging-chaos
-  
+
   Appenders:
     Console:
       name: Console
       target: SYSTEM_OUT
       PatternLayout:
         Pattern: "%d{HH:mm:ss.SSS} [%t] %-4level - %msg%n"
-        
-  Loggers: 
+
+  Loggers:
     Root:
       level: info
       additivity: false

@@ -1,20 +1,14 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 
 package io.openmessaging.chaos.checker;
@@ -40,10 +34,10 @@ import org.slf4j.LoggerFactory;
 
 public class PerfChecker implements Checker {
 
+    private static final Logger log = LoggerFactory.getLogger(PerfChecker.class);
     private String fileName;
     private long testStartTimestamp;
     private long testEndTimestamp;
-    private static final Logger logger = LoggerFactory.getLogger(PerfChecker.class);
 
     public PerfChecker(String fileName, long testStartTimestamp, long testEndTimestamp) {
         this.fileName = fileName;
@@ -51,7 +45,8 @@ public class PerfChecker implements Checker {
         this.testEndTimestamp = testEndTimestamp;
     }
 
-    @Override public TestResult check() {
+    @Override
+    public TestResult check() {
         TestResult testResult = new TestResult("PerfTestResult");
         testResult.isValid = true;
         if (!new File(fileName).exists()) {
@@ -61,7 +56,7 @@ public class PerfChecker implements Checker {
         try {
             generateLatencyPointGraph();
         } catch (Exception e) {
-            logger.error("", e);
+            log.error("", e);
             testResult.isValid = false;
         }
 
@@ -142,7 +137,7 @@ public class PerfChecker implements Checker {
                         enqueueUnknownList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
                         break;
                     default:
-                        logger.error("Error data in enqueue");
+                        log.error("Error data in enqueue");
                 }
             }
         });

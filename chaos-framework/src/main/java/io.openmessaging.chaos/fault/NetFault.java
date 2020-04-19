@@ -1,31 +1,25 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 
 package io.openmessaging.chaos.fault;
 
 import io.openmessaging.chaos.ChaosControl;
+import io.openmessaging.chaos.common.utils.NetUtil;
 import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
 import io.openmessaging.chaos.generator.FixedFaultGenerator;
 import io.openmessaging.chaos.generator.NetFaultGenerator;
 import io.openmessaging.chaos.recorder.Recorder;
-import io.openmessaging.chaos.common.utils.NetUtil;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -36,12 +30,9 @@ import org.slf4j.LoggerFactory;
  */
 public class NetFault implements Fault {
 
+    private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
     private volatile List<FaultOperation> faultOperations;
-
     private FaultGenerator faultGenerator;
-
-    private static final Logger logger = LoggerFactory.getLogger(ChaosControl.class);
-
     private String mode;
 
     private List<String> nodes;
@@ -62,12 +53,13 @@ public class NetFault implements Fault {
         this.faultGenerator = new FixedFaultGenerator(nodes, faultNodes, mode);
     }
 
-    @Override public synchronized void invoke() {
-        logger.info("Invoke {} fault", mode);
+    @Override
+    public synchronized void invoke() {
+        log.info("Invoke {} fault", mode);
         recorder.recordFaultStart(mode, System.currentTimeMillis());
         faultOperations = faultGenerator.generate();
         for (FaultOperation operation : faultOperations) {
-            logger.info("Invoke node {} fault, fault is {}, invoke args is {}",
+            log.info("Invoke node {} fault, fault is {}, invoke args is {}",
                 operation.getNode(), operation.getName(), operation.getInvokeArgs());
             try {
                 switch (operation.getName()) {
@@ -99,23 +91,24 @@ public class NetFault implements Fault {
                         NetUtil.loss(operation.getNode(), targetNodes);
                         break;
                     default:
-                        logger.error("No such fault");
+                        log.error("No such fault");
                         break;
                 }
             } catch (Exception e) {
-                logger.error("Invoke fault {} failed", operation.getName(), e);
+                log.error("Invoke fault {} failed", operation.getName(), e);
             }
         }
     }
 
-    @Override public synchronized void recover() {
+    @Override
+    public synchronized void recover() {
         if (faultOperations == null)
             return;
-        logger.info("Recover {} fault", mode);
-        recorder.recordFaultEnd(mode,System.currentTimeMillis());
+        log.info("Recover {} fault", mode);
+        recorder.recordFaultEnd(mode, System.currentTimeMillis());
         for (FaultOperation operation : faultOperations) {
             try {
-                logger.info("Recover node {} fault, fault is {}, recover args is {}",
+                log.info("Recover node {} fault, fault is {}, recover args is {}",
                     operation.getNode(), operation.getName(), operation.getRecoverArgs());
                 switch (operation.getName()) {
                     case "random-partition":
@@ -138,11 +131,11 @@ public class NetFault implements Fault {
                         NetUtil.healLoss(operation.getNode());
                         break;
                     default:
-                        logger.error("No such fault");
+                        log.error("No such fault");
                         break;
                 }
             } catch (Exception e) {
-                logger.error("Recover fault {} failed", operation.getName(), e);
+                log.error("Recover fault {} failed", operation.getName(), e);
             }
         }
         faultOperations = null;

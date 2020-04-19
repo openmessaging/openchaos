@@ -22,9 +22,9 @@ driverClass: io.openmessaging.chaos.driver.rocketmq.RocketMQChaosDriver
 
 # RocketMQ cluster configuration
 nodes:
-  - n1
-  - n2
-  - n3
+- n1
+- n2
+- n3
 
 # RocketMQ client configuration
 clusterName: DefaultCluster
