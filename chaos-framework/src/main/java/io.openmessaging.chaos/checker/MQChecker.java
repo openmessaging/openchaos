@@ -53,21 +53,21 @@ public class MQChecker implements Checker {
     @Override
     public MQTestResult check() {
         if (!new File(fileName).exists()) {
-            System.out.println("File not exist.");
+            System.err.println("File not exist.");
             System.exit(0);
         }
 
-        MQTestResult MQTestResult = null;
+        MQTestResult mqTestResult = null;
 
         try {
             checkInner();
-            MQTestResult = generateResult();
-            MAPPER.writeValue(new File(fileName.replace("history", "result")), MQTestResult);
+            mqTestResult = generateResult();
+            MAPPER.writeValue(new File(fileName.replace("history", "result")), mqTestResult);
         } catch (Exception e) {
             log.error("MQChecker check fail", e);
         }
 
-        return MQTestResult;
+        return mqTestResult;
     }
 
     private void checkInner() throws IOException {
@@ -75,22 +75,22 @@ public class MQChecker implements Checker {
             map(x -> x.split("\t")).
             filter(x -> !x[0].equals("fault")).
             forEach(line -> {
-                if (line[1].equals("enqueue") && line[2].equals("request")) {
-                    enqueueInvokeCount.incrementAndGet();
-                } else if (line[3].equals("SUCCESS")) {
-                    if (line[1].equals("enqueue")) {
-                        enqueueSuccessCount.incrementAndGet();
-                        lostSet.add(line[4]);
-                    } else if (line[1].equals("dequeue")) {
-                        dequeueSuccessCount.getAndIncrement();
-                        if (lostSet.contains(line[4])) {
-                            lostSet.remove(line[4]);
-                        } else {
-                            duplicateSet.add(line[4]);
+                    if (line[1].equals("enqueue") && line[2].equals("request")) {
+                        enqueueInvokeCount.incrementAndGet();
+                    } else if (line[3].equals("SUCCESS")) {
+                        if (line[1].equals("enqueue")) {
+                            enqueueSuccessCount.incrementAndGet();
+                            lostSet.add(line[4]);
+                        } else if (line[1].equals("dequeue")) {
+                            dequeueSuccessCount.getAndIncrement();
+                            if (lostSet.contains(line[4])) {
+                                lostSet.remove(line[4]);
+                            } else {
+                                duplicateSet.add(line[4]);
+                            }
                         }
                     }
-                }
-            });
+                });
         checkDuplicateSet(lostSet, duplicateSet);
     }
 
@@ -105,18 +105,18 @@ public class MQChecker implements Checker {
     }
 
     private MQTestResult generateResult() {
-        MQTestResult MQTestResult = new MQTestResult();
-        MQTestResult.enqueueInvokeCount = enqueueInvokeCount.get();
-        MQTestResult.enqueueSuccessCount = enqueueSuccessCount.get();
-        MQTestResult.enqueueActualCount = dequeueSuccessCount.get();
-        MQTestResult.lostMessageCount = lostSet.size();
-        MQTestResult.lostMessages = lostSet;
-        MQTestResult.duplicateMessageCount = duplicateSet.size();
-        MQTestResult.duplicateMessages = duplicateSet;
-        MQTestResult.atMostOnce = duplicateSet.isEmpty();
-        MQTestResult.atLeastOnce = lostSet.isEmpty();
-        MQTestResult.exactlyOnce = lostSet.isEmpty() && duplicateSet.isEmpty();
-        MQTestResult.isValid = lostSet.isEmpty();
-        return MQTestResult;
+        MQTestResult mQTestResult = new MQTestResult();
+        mQTestResult.enqueueInvokeCount = enqueueInvokeCount.get();
+        mQTestResult.enqueueSuccessCount = enqueueSuccessCount.get();
+        mQTestResult.enqueueActualCount = dequeueSuccessCount.get();
+        mQTestResult.lostMessageCount = lostSet.size();
+        mQTestResult.lostMessages = lostSet;
+        mQTestResult.duplicateMessageCount = duplicateSet.size();
+        mQTestResult.duplicateMessages = duplicateSet;
+        mQTestResult.atMostOnce = duplicateSet.isEmpty();
+        mQTestResult.atLeastOnce = lostSet.isEmpty();
+        mQTestResult.exactlyOnce = lostSet.isEmpty() && duplicateSet.isEmpty();
+        mQTestResult.isValid = lostSet.isEmpty();
+        return mQTestResult;
     }
 }

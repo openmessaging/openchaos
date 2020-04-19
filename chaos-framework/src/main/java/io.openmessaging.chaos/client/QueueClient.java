@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 public class QueueClient implements Client {
 
-    private static final AtomicInteger clientIdGenerator = new AtomicInteger(0);
+    private static final AtomicInteger CLIENT_ID_GENERATOR = new AtomicInteger(0);
     private static final Logger log = LoggerFactory.getLogger(QueueClient.class);
     private MQChaosClient mqChaosClient;
     private MQChaosDriver mqChaosDriver;
@@ -46,7 +46,7 @@ public class QueueClient implements Client {
         this.mqChaosDriver = mqChaosDriver;
         this.chaosTopic = chaosTopic;
         this.recorder = recorder;
-        clientId = clientIdGenerator.getAndIncrement();
+        clientId = CLIENT_ID_GENERATOR.getAndIncrement();
         this.isOrderTest = isOrderTest;
         this.shardingKeys = shardingKeys;
     }

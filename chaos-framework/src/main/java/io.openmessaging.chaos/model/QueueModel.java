@@ -25,7 +25,6 @@ import io.openmessaging.chaos.common.utils.Utils;
 import io.openmessaging.chaos.driver.mq.MQChaosDriver;
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.recorder.Recorder;
-import io.openmessaging.chaos.recorder.RequestLogEntry;
 import io.openmessaging.chaos.worker.ClientWorker;
 import io.openmessaging.chaos.worker.Worker;
 import java.io.File;
@@ -46,11 +45,11 @@ import org.slf4j.LoggerFactory;
  */
 public class QueueModel implements Model {
 
-    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private static final Logger log = LoggerFactory.getLogger(QueueModel.class);
-    private static final ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
+    private static final ObjectWriter WRITER = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
     static {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
@@ -74,13 +73,13 @@ public class QueueModel implements Model {
         clients = new ArrayList<>();
         workers = new ArrayList<>();
         cluster = new HashMap<>();
-        chaosTopic = String.format("%s-chaos-topic", dateFormat.format(new Date()));
+        chaosTopic = String.format("%s-chaos-topic", DATE_FORMAT.format(new Date()));
     }
 
     private static MQChaosDriver createChaosMQDriver(File driverConfigFile) throws IOException {
 
         DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile, DriverConfiguration.class);
-        log.info("Initial driver: {}", writer.writeValueAsString(driverConfiguration));
+        log.info("Initial driver: {}", WRITER.writeValueAsString(driverConfiguration));
 
         MQChaosDriver mqChaosDriver;
 
@@ -92,10 +91,6 @@ public class QueueModel implements Model {
         }
 
         return mqChaosDriver;
-    }
-
-    public static void main(String[] args) throws Exception {
-        System.out.println(writer.writeValueAsString(new RequestLogEntry(1, "123", "123", 123)));
     }
 
     @Override

@@ -54,7 +54,7 @@ public class ChaosControl {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
 
     static {
@@ -110,7 +110,7 @@ public class ChaosControl {
 
                 log.info("--------------- CHAOS TEST --- DRIVER : {}---------------", driverConfiguration.name);
 
-                String historyFile = String.format("%s-%s-chaos-history-file", dateFormat.format(new Date()), driverConfiguration.name);
+                String historyFile = String.format("%s-%s-chaos-history-file", DATE_FORMAT.format(new Date()), driverConfiguration.name);
 
                 RateLimiter rateLimiter = RateLimiter.create(arguments.rate);
 
@@ -288,28 +288,24 @@ public class ChaosControl {
 
         @Parameter(names = {
             "-r",
-            "--rate"
-        }, description = "Approximate number of requests per second. eg: 20", validateWith = PositiveInteger.class)
+            "--rate"}, description = "Approximate number of requests per second. eg: 20", validateWith = PositiveInteger.class)
         int rate = 20;
 
         @Parameter(names = {
             "-u",
-            "--username"
-        }, description = "User name for ssh remote login. eg: admin")
+            "--username"}, description = "User name for ssh remote login. eg: admin")
         String username = "root";
 
         @Parameter(names = {
             "-f",
-            "--fault"
-        }, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, fixed-kill, random-partition, " +
+            "--fault"}, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, fixed-kill, random-partition, " +
             "fixed-partition, partition-majorities-ring, bridge, random-loss, minor-suspend, major-suspend, random-suspend, fixed-suspend"
             , validateWith = FaultValidator.class)
         String fault = "noop";
 
         @Parameter(names = {
             "-n",
-            "--fault-nodes"
-        }, description = "The nodes need to be fault injection. The nodes are separated by semicolons. eg: 'n1;n2;n3' " +
+            "--fault-nodes"}, description = "The nodes need to be fault injection. The nodes are separated by semicolons. eg: 'n1;n2;n3' " +
             " Note: this parameter must be used with fixed-xxx faults such as fixed-kill, fixed-partition, fixed-suspend.")
         String faultNodes = null;
 

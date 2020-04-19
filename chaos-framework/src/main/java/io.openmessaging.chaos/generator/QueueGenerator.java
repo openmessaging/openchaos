@@ -18,9 +18,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class QueueGenerator {
 
-    private static final AtomicLong stagger = new AtomicLong(0);
+    private static AtomicLong stagger = new AtomicLong(0);
 
-    private static final Random random = new Random();
+    private static Random random = new Random();
 
     public static QueueOperation generate() {
         if (random.nextDouble() < 0.5) {
