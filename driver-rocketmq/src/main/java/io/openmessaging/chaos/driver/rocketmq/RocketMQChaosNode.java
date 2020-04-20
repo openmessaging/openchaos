@@ -13,12 +13,12 @@
 
 package io.openmessaging.chaos.driver.rocketmq;
 
+import io.openmessaging.chaos.common.utils.KillProcessUtil;
 import io.openmessaging.chaos.common.utils.PauseProcessUtil;
 import io.openmessaging.chaos.common.utils.SshUtil;
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQBrokerConfig;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +27,8 @@ public class RocketMQChaosNode implements MQChaosNode {
 
     private static final String INSTALL_DIR = "rocketmq-chaos-test";
     private static final String ROCKETMQ_VERSION = "4.6.0";
+    private static final String BROKER_PROCESS_NAME = "org.apache.rocketmq.broker.BrokerStartup";
+    private static final String NAMESERVER_PROCESS_NAME = "org.apache.rocketmq.namesrv.NamesrvStartup";
     private static final Logger log = LoggerFactory.getLogger(RocketMQChaosNode.class);
     private String node;
     private List<String> nodes;
@@ -52,7 +54,6 @@ public class RocketMQChaosNode implements MQChaosNode {
             //For docker test, because the memory of local computer is too small
             SshUtil.execCommandInDir(node, INSTALL_DIR, "sed -i 's/-Xms8g -Xmx8g -Xmn4g/-Xmx1500m/g' bin/runbroker.sh");
             SshUtil.execCommandInDir(node, INSTALL_DIR, "sed -i  's/-Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m/-Xms500m -Xmx500m -Xmn250m -XX:MetaspaceSize=16m -XX:MaxMetaspaceSize=40m/g' bin/runserver.sh");
-            SshUtil.execCommandInDir(node, INSTALL_DIR, "sed -i 's/exit -1/exit 0/g' bin/mqshutdown");
 
             //Prepare broker conf
             Field[] fields = rmqBrokerConfig.getClass().getDeclaredFields();
@@ -65,9 +66,7 @@ public class RocketMQChaosNode implements MQChaosNode {
             }
 
             String dledgerPeers = getDledgerPeers(nodes);
-
             SshUtil.execCommandInDir(node, INSTALL_DIR, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerPeers=" + dledgerPeers));
-
             SshUtil.execCommandInDir(node, INSTALL_DIR, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerSelfId=n" + nodes.indexOf(node)));
 
         } catch (Exception e) {
@@ -106,35 +105,37 @@ public class RocketMQChaosNode implements MQChaosNode {
 
     @Override
     public void stop() {
-        kill();
+        try {
+            KillProcessUtil.kill(node, BROKER_PROCESS_NAME);
+            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+                KillProcessUtil.kill(node, NAMESERVER_PROCESS_NAME);
+            }
+        } catch (Exception e) {
+            log.error("Node {} stop rocketmq processes failed", node, e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void kill() {
         try {
-            //Kill nameserver
+            KillProcessUtil.forceKill(node, BROKER_PROCESS_NAME);
             if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
-                log.info("Node {} nameserver killed...", node);
-                SshUtil.execCommandInDir(node, INSTALL_DIR, "sh bin/mqshutdown namesrv");
+                KillProcessUtil.forceKill(node, NAMESERVER_PROCESS_NAME);
             }
-            //Kill broker
-            log.info("Node {} broker killed...", node);
-            SshUtil.execCommandInDir(node, INSTALL_DIR, "sh bin/mqshutdown broker");
         } catch (Exception e) {
-            log.error("Node {} kill rocketmq node failed", node, e);
+            log.error("Node {} kill rocketmq processes failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
     @Override
     public void pause() {
-        List<String> names = new ArrayList<>();
-        names.add("org.apache.rocketmq.broker.BrokerStartup");
-        if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
-            names.add("org.apache.rocketmq.namesrv.NamesrvStartup");
-        }
         try {
-            PauseProcessUtil.suspend(node, names);
+            PauseProcessUtil.suspend(node, BROKER_PROCESS_NAME);
+            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+                PauseProcessUtil.suspend(node, NAMESERVER_PROCESS_NAME);
+            }
         } catch (Exception e) {
             log.error("Node {} pause rocketmq processes failed", node, e);
             throw new RuntimeException(e);
@@ -143,13 +144,11 @@ public class RocketMQChaosNode implements MQChaosNode {
 
     @Override
     public void resume() {
-        List<String> names = new ArrayList<>();
-        names.add("org.apache.rocketmq.broker.BrokerStartup");
-        if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
-            names.add("org.apache.rocketmq.namesrv.NamesrvStartup");
-        }
         try {
-            PauseProcessUtil.recover(node, names);
+            PauseProcessUtil.resume(node, BROKER_PROCESS_NAME);
+            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+                PauseProcessUtil.resume(node, NAMESERVER_PROCESS_NAME);
+            }
         } catch (Exception e) {
             log.error("Node {} resume rocketmq processes failed", node, e);
             throw new RuntimeException(e);

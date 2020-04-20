@@ -22,29 +22,27 @@ package io.openmessaging.chaos.common.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PauseProcessUtil {
+public class KillProcessUtil {
 
-    private static final Logger log = LoggerFactory.getLogger(PauseProcessUtil.class);
+    private static final Logger log = LoggerFactory.getLogger(KillProcessUtil.class);
 
-    public static void suspend(String node, String processName) throws Exception {
-        log.info("Suspend node {} process {} .", node, processName);
+    public static void kill(String node, String processName) throws Exception {
+        log.info("Kill node {} process {} .", node, processName);
         String pid = SshUtil.execCommandWithArgsReturnStr(node, String.format("ps ax | grep -i '%s' | grep java | grep -v grep | awk '{print $1}'", processName)).trim();
         if (!pid.isEmpty()) {
-            SshUtil.execCommand(node, String.format("kill -STOP %s", pid));
+            SshUtil.execCommand(node, String.format("kill %s", pid));
         } else {
             log.info("No {} process running in node {}.", processName, node);
         }
     }
 
-    public static void resume(String node, String processName) throws Exception {
-
-        log.info("Resume node {} process {} .", node, processName);
+    public static void forceKill(String node, String processName) throws Exception {
+        log.info("Force kill node {} process {} .", node, processName);
         String pid = SshUtil.execCommandWithArgsReturnStr(node, String.format("ps ax | grep -i '%s' | grep java | grep -v grep | awk '{print $1}'", processName)).trim();
         if (!pid.isEmpty()) {
-            SshUtil.execCommand(node, String.format("kill -CONT %s", pid));
+            SshUtil.execCommand(node, String.format("kill -9 %s", pid));
         } else {
             log.info("No {} process running in node {}.", processName, node);
         }
-
     }
 }
