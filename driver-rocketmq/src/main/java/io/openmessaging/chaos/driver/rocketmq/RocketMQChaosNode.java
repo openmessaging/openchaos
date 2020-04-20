@@ -100,7 +100,7 @@ public class RocketMQChaosNode implements MQChaosNode {
             }
             //Start broker
             log.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/mqbroker -n '%s' -c conf/dledger/broker-n0.conf > broker.log 2>&1 &"
+            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/mqbroker -n '%s' -c broker-chaos-test.conf > broker.log 2>&1 &"
                     , getNameserver(nodes)));
         } catch (Exception e) {
             log.error("Node {} start rocketmq node failed", node, e);
