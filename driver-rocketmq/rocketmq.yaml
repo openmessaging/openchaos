@@ -38,3 +38,5 @@ storePathCommitLog: /tmp/rmqstore/node00/commitlog
 enableDLegerCommitLog: true
 dLegerGroup: RaftNode00
 sendMessageThreadPoolNums: 16
+installDir: rocketmq-chaos-test
+rocketmqVersion: 4.6.0
