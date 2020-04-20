@@ -18,10 +18,9 @@ import io.openmessaging.chaos.common.utils.PauseProcessUtil;
 import io.openmessaging.chaos.common.utils.SshUtil;
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQBrokerConfig;
-
+import io.openmessaging.chaos.driver.rocketmq.config.RocketMQConfig;
 import java.lang.reflect.Field;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,13 +34,22 @@ public class RocketMQChaosNode implements MQChaosNode {
     private RocketMQBrokerConfig rmqBrokerConfig;
     private String installDir = "rocketmq-chaos-test";
     private String rocketmqVersion = "4.6.0";
+    private String configureFilePath = "broker-chaos-test.conf";
 
-    public RocketMQChaosNode(String node, List<String> nodes, RocketMQBrokerConfig rmqBrokerConfig) {
+    public RocketMQChaosNode(String node, List<String> nodes, RocketMQConfig rmqConfig,
+        RocketMQBrokerConfig rmqBrokerConfig) {
         this.node = node;
         this.nodes = nodes;
         this.rmqBrokerConfig = rmqBrokerConfig;
-        this.installDir = rmqBrokerConfig.installDir;
-        this.rocketmqVersion = rmqBrokerConfig.rocketmqVersion;
+        if (rmqConfig.installDir != null && !rmqConfig.installDir.isEmpty()) {
+            this.installDir = rmqConfig.installDir;
+        }
+        if (rmqConfig.rocketmqVersion != null && !rmqConfig.rocketmqVersion.isEmpty()) {
+            this.rocketmqVersion = rmqConfig.rocketmqVersion;
+        }
+        if (rmqConfig.configureFilePath != null && !rmqConfig.configureFilePath.isEmpty()) {
+            this.configureFilePath = rmqConfig.configureFilePath;
+        }
     }
 
     @Override
@@ -65,14 +73,14 @@ public class RocketMQChaosNode implements MQChaosNode {
                 String name = fields[i].getName();
                 String value = (String) fields[i].get(rmqBrokerConfig);
                 if (value != null && !value.isEmpty()) {
-                    SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> broker-chaos-test.conf", name + "=" + value));
+                    SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> %s", name + "=" + value, configureFilePath));
                 }
             }
 
             String dledgerPeers = getDledgerPeers(nodes);
-         
-            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerPeers=" + dledgerPeers));
-            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> broker-chaos-test.conf", "dLegerSelfId=n" + nodes.indexOf(node)));
+
+            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> %s", "dLegerPeers=" + dledgerPeers, configureFilePath));
+            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> %s", "dLegerSelfId=n" + nodes.indexOf(node), configureFilePath));
           
         } catch (Exception e) {
             log.error("Node {} setup rocketmq node failed", node, e);
@@ -100,8 +108,8 @@ public class RocketMQChaosNode implements MQChaosNode {
             }
             //Start broker
             log.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/mqbroker -n '%s' -c broker-chaos-test.conf > broker.log 2>&1 &"
-                    , getNameserver(nodes)));
+            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/mqbroker -n '%s' -c %s > broker.log 2>&1 &"
+                , getNameserver(nodes), configureFilePath));
         } catch (Exception e) {
             log.error("Node {} start rocketmq node failed", node, e);
             throw new RuntimeException(e);

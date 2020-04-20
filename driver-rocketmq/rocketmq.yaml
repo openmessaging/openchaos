@@ -26,6 +26,9 @@ nodes:
 - n2
 - n3
 
+# RocketMQ configuration
+rocketmqVersion: 4.6.0
+
 # RocketMQ client configuration
 clusterName: DefaultCluster
 vipChannelEnabled: false
@@ -38,5 +41,3 @@ storePathCommitLog: /tmp/rmqstore/node00/commitlog
 enableDLegerCommitLog: true
 dLegerGroup: RaftNode00
 sendMessageThreadPoolNums: 16
-installDir: rocketmq-chaos-test
-rocketmqVersion: 4.6.0

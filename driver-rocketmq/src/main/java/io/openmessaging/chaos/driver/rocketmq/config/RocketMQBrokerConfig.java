@@ -28,6 +28,4 @@ public class RocketMQBrokerConfig {
     public String dLegerGroup;
     public String sendMessageThreadPoolNums;
     public String namesrvAddr;
-    public String installDir;
-    public String rocketmqVersion;
 }

@@ -28,6 +28,7 @@ import io.openmessaging.chaos.driver.mq.MQChaosDriver;
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQBrokerConfig;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQClientConfig;
+import io.openmessaging.chaos.driver.rocketmq.config.RocketMQConfig;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -51,6 +52,7 @@ public class RocketMQChaosDriver implements MQChaosDriver {
     private DefaultMQAdminExt rmqAdmin;
     private RocketMQClientConfig rmqClientConfig;
     private RocketMQBrokerConfig rmqBrokerConfig;
+    private RocketMQConfig rmqConfig;
     private List<String> nodes;
 
     private static RocketMQClientConfig readConfigForClient(File configurationFile) throws IOException {
@@ -59,6 +61,10 @@ public class RocketMQChaosDriver implements MQChaosDriver {
 
     private static RocketMQBrokerConfig readConfigForBroker(File configurationFile) throws IOException {
         return MAPPER.readValue(configurationFile, RocketMQBrokerConfig.class);
+    }
+
+    private static RocketMQConfig readConfigForRMQ(File configurationFile) throws IOException {
+        return MAPPER.readValue(configurationFile, RocketMQConfig.class);
     }
 
     private static String getRandomString() {
@@ -70,11 +76,12 @@ public class RocketMQChaosDriver implements MQChaosDriver {
     public void initialize(File configurationFile, List<String> nodes) throws IOException {
         this.rmqClientConfig = readConfigForClient(configurationFile);
         this.rmqBrokerConfig = readConfigForBroker(configurationFile);
+        this.rmqConfig = readConfigForRMQ(configurationFile);
         this.nodes = nodes;
     }
 
     public MQChaosNode createChaosNode(String node, List<String> nodes) {
-        return new RocketMQChaosNode(node, nodes, rmqBrokerConfig);
+        return new RocketMQChaosNode(node, nodes, rmqConfig, rmqBrokerConfig);
     }
 
     public MQChaosClient createChaosClient(String topic) {
