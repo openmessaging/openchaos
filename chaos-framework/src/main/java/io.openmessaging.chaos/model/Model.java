@@ -14,6 +14,7 @@
 package io.openmessaging.chaos.model;
 
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,13 @@ public interface Model {
      * @return
      */
     Map<String, MQChaosNode> setupCluster(List<String> nodes, boolean isInstall);
+
+    /**
+     * Ensure cluster are ready
+     *
+     * @throws IOException
+     */
+    void probeCluster() throws IOException;
 
     /**
      * Start the test

@@ -17,8 +17,6 @@ import io.openmessaging.chaos.ChaosControl;
 import io.openmessaging.chaos.common.utils.NetUtil;
 import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
-import io.openmessaging.chaos.generator.FixedFaultGenerator;
-import io.openmessaging.chaos.generator.NetFaultGenerator;
 import io.openmessaging.chaos.recorder.Recorder;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,10 +30,10 @@ public class NetFault implements Fault {
 
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
     private volatile List<FaultOperation> faultOperations;
-    private FaultGenerator faultGenerator;
     private String mode;
 
     private List<String> nodes;
+    private List<String> faultNodes;
 
     private Recorder recorder;
 
@@ -43,21 +41,24 @@ public class NetFault implements Fault {
         this.mode = mode;
         this.nodes = nodes;
         this.recorder = recorder;
-        this.faultGenerator = new NetFaultGenerator(nodes, mode);
     }
 
     public NetFault(List<String> nodes, String mode, Recorder recorder, List<String> faultNodes) {
         this.mode = mode;
         this.nodes = nodes;
         this.recorder = recorder;
-        this.faultGenerator = new FixedFaultGenerator(nodes, faultNodes, mode);
+        this.faultNodes = faultNodes;
     }
 
     @Override
     public synchronized void invoke() {
         log.info("Invoke {} fault", mode);
         recorder.recordFaultStart(mode, System.currentTimeMillis());
-        faultOperations = faultGenerator.generate();
+        if (faultNodes != null) {
+            faultOperations = FaultGenerator.generate(nodes, faultNodes, mode);
+        } else {
+            faultOperations = FaultGenerator.generate(nodes, mode);
+        }
         for (FaultOperation operation : faultOperations) {
             log.info("Invoke node {} fault, fault is {}, invoke args is {}",
                 operation.getNode(), operation.getName(), operation.getInvokeArgs());

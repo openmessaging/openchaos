@@ -26,6 +26,7 @@ import io.openmessaging.chaos.checker.MQChecker;
 import io.openmessaging.chaos.checker.OrderChecker;
 import io.openmessaging.chaos.checker.PerfChecker;
 import io.openmessaging.chaos.checker.RTOChecker;
+import io.openmessaging.chaos.checker.RecoveryChecker;
 import io.openmessaging.chaos.checker.result.TestResult;
 import io.openmessaging.chaos.common.utils.SshUtil;
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
@@ -46,6 +47,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +59,8 @@ public class ChaosControl {
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
+
+    public static volatile boolean stopFlag = false;
 
     static {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
@@ -79,191 +84,201 @@ public class ChaosControl {
             System.exit(-1);
         }
 
-        arguments.drivers.forEach(driverConfig -> {
+        Model model = null;
+        Recorder recorder = null;
+        List<TestResult> resultList = new ArrayList<>();
 
-            Model model = null;
-            Recorder recorder = null;
-            List<TestResult> resultList = new ArrayList<>();
+        try {
 
-            try {
+            File driverConfigFile = new File(arguments.driver);
+            DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile,
+                DriverConfiguration.class);
 
-                File driverConfigFile = new File(driverConfig);
-                DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile,
-                    DriverConfiguration.class);
-
-                List<String> faultNodeList = new ArrayList<>();
-                if (arguments.fault.startsWith("fixed-")) {
-                    if (arguments.faultNodes == null || arguments.faultNodes.isEmpty()) {
-                        throw new IllegalArgumentException("fault-nodes parameter can not be null or empty when inject fixed-xxx fault to system.");
-                    } else {
-                        String[] faultNodeArray = arguments.faultNodes.split(";");
-                        for (String faultNode : faultNodeArray) {
-                            if (!driverConfiguration.nodes.contains(faultNode)) {
-                                throw new IllegalArgumentException(String.format("fault-node %s is not in current config file.", faultNode));
-                            }
-                        }
-                        faultNodeList.addAll(Arrays.asList(faultNodeArray));
-                    }
-                }
-
-                SshUtil.init(arguments.username, driverConfiguration.nodes);
-
-                log.info("--------------- CHAOS TEST --- DRIVER : {}---------------", driverConfiguration.name);
-
-                String historyFile = String.format("%s-%s-chaos-history-file", DATE_FORMAT.format(new Date()), driverConfiguration.name);
-
-                RateLimiter rateLimiter = RateLimiter.create(arguments.rate);
-
-                recorder = Recorder.newRecorder(historyFile);
-
-                if (recorder == null) {
-                    System.err.printf("Create %s failed", historyFile);
-                    System.exit(-1);
-                }
-                List<String> shardingKeys = new ArrayList<>();
-                for (int i = 0; i < 2 * arguments.concurrency; i++) {
-                    shardingKeys.add("shardingKey" + i);
-                }
-
-                //Currently only queue model is supported
-                model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
-
-                Map<String, MQChaosNode> map = null;
-
-                if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
-                    map = model.setupCluster(driverConfiguration.nodes, arguments.install);
-                }
-
-                model.setupClient(arguments.isOrderTest, shardingKeys);
-
-                //Initial fault
-                Fault fault;
-                if (map == null || map.isEmpty()) {
-                    log.warn("Configure file does not contain nodes, use noop fault");
-                    fault = new NoopFault();
+            List<String> faultNodeList = new ArrayList<>();
+            if (arguments.fault.startsWith("fixed-")) {
+                if (arguments.faultNodes == null || arguments.faultNodes.isEmpty()) {
+                    throw new IllegalArgumentException("fault-nodes parameter can not be null or empty when inject fixed-xxx fault to system.");
                 } else {
-                    switch (arguments.fault) {
-                        case "noop":
-                            fault = new NoopFault();
-                            break;
-                        case "minor-kill":
-                        case "major-kill":
-                        case "random-kill":
-                            fault = new KillFault(map, arguments.fault, recorder);
-                            break;
-                        case "fixed-kill":
-                            fault = new KillFault(map, arguments.fault, recorder, faultNodeList);
-                            break;
-                        case "random-partition":
-                        case "random-delay":
-                        case "random-loss":
-                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
-                            break;
-                        case "fixed-partition":
-                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder, faultNodeList);
-                            break;
-                        case "partition-majorities-ring":
-                            if (driverConfiguration.nodes.size() <= 3)
-                                throw new IllegalArgumentException("The number of nodes less than or equal to 3, unable to form partition-majorities-ring");
-                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
-                            break;
-                        case "bridge":
-                            if (driverConfiguration.nodes.size() != 5)
-                                throw new IllegalArgumentException("The number of nodes is not equal to 5, unable to form bridge");
-                            fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
-                            break;
-                        case "minor-suspend":
-                        case "major-suspend":
-                        case "random-suspend":
-                            fault = new PauseFault(map, arguments.fault, recorder);
-                            break;
-                        case "fixed-suspend":
-                            fault = new PauseFault(map, arguments.fault, recorder, faultNodeList);
-                            break;
-                        default:
-                            throw new RuntimeException("no such fault");
+                    String[] faultNodeArray = arguments.faultNodes.split(";");
+                    for (String faultNode : faultNodeArray) {
+                        if (!driverConfiguration.nodes.contains(faultNode)) {
+                            throw new IllegalArgumentException(String.format("fault-node %s is not in current config file.", faultNode));
+                        }
                     }
+                    faultNodeList.addAll(Arrays.asList(faultNodeArray));
                 }
-
-                //Start fault worker
-                FaultWorker faultWorker = new FaultWorker(log, fault, arguments.interval);
-
-                faultWorker.start();
-
-                long testStartTimeStamp = System.currentTimeMillis();
-
-                //Start model
-                model.start();
-
-                //Wait for the chaos test to execute
-                Thread.sleep(TimeUnit.SECONDS.toMillis(arguments.time));
-
-                //Stop model
-                model.stop();
-
-                //Interrupt fault worker
-                faultWorker.breakLoop();
-
-                //Recovery fault
-                fault.recover();
-
-                log.info("Wait for recovery some time");
-
-                //Wait for recovery, sleep 20 s
-                Thread.sleep(TimeUnit.SECONDS.toMillis(20));
-
-                //Model do something after stop
-                model.afterStop();
-
-                recorder.flush();
-
-                long testEndTimestamp = System.currentTimeMillis();
-
-                log.info("Start check...");
-
-                List<Checker> checkerList = new ArrayList<>();
-
-                checkerList.add(new MQChecker(historyFile));
-                checkerList.add(new PerfChecker(historyFile, testStartTimeStamp, testEndTimestamp));
-                if (arguments.rto) {
-                    checkerList.add(new RTOChecker(historyFile));
-                }
-                if (arguments.isOrderTest) {
-                    checkerList.add(new OrderChecker(historyFile, shardingKeys));
-                }
-                checkerList.forEach(checker -> resultList.add(checker.check()));
-
-                log.info("Check complete.");
-
-            } catch (Exception e) {
-                log.error("Failed to run chaos test.", e);
-
-                if (recorder != null) {
-                    recorder.delete();
-                    recorder = null;
-                }
-            } finally {
-                if (model != null)
-                    model.shutdown();
-
-                if (recorder != null)
-                    recorder.close();
-
-                SshUtil.close();
             }
 
-            try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(3));
-            } catch (InterruptedException e) {
-                log.error("", e);
+            SshUtil.init(arguments.username, driverConfiguration.nodes);
+
+            log.info("--------------- CHAOS TEST --- DRIVER : {}---------------", driverConfiguration.name);
+
+            String historyFile = String.format("%s-%s-chaos-history-file", DATE_FORMAT.format(new Date()), driverConfiguration.name);
+
+            RateLimiter rateLimiter = RateLimiter.create(arguments.rate);
+
+            recorder = Recorder.newRecorder(historyFile);
+
+            if (recorder == null) {
+                System.err.printf("Create %s failed", historyFile);
+                System.exit(-1);
+            }
+            List<String> shardingKeys = new ArrayList<>();
+            for (int i = 0; i < 2 * arguments.concurrency; i++) {
+                shardingKeys.add("shardingKey" + i);
             }
 
-            if (resultList.size() != 0) {
-                log.info("----CHAOS TEST RESULT----");
-                resultList.forEach(testResult -> log.info(testResult.toString()));
-                log.info("----CHAOS TEST RESULT----");
+            //Currently only queue model is supported
+            model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
+
+            Map<String, MQChaosNode> map = null;
+
+            if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
+                map = model.setupCluster(driverConfiguration.nodes, arguments.install);
             }
-        });
+
+            model.setupClient(arguments.isOrderTest, shardingKeys);
+
+            //Initial fault
+            Fault fault;
+            if (map == null || map.isEmpty()) {
+                log.warn("Configure file does not contain nodes, use noop fault");
+                fault = new NoopFault();
+            } else {
+                switch (arguments.fault) {
+                    case "noop":
+                        fault = new NoopFault();
+                        break;
+                    case "minor-kill":
+                    case "major-kill":
+                    case "random-kill":
+                        fault = new KillFault(map, arguments.fault, recorder);
+                        break;
+                    case "fixed-kill":
+                        fault = new KillFault(map, arguments.fault, recorder, faultNodeList);
+                        break;
+                    case "random-partition":
+                    case "random-delay":
+                    case "random-loss":
+                        fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                        break;
+                    case "fixed-partition":
+                        fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder, faultNodeList);
+                        break;
+                    case "partition-majorities-ring":
+                        if (driverConfiguration.nodes.size() <= 3)
+                            throw new IllegalArgumentException("The number of nodes less than or equal to 3, unable to form partition-majorities-ring");
+                        fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                        break;
+                    case "bridge":
+                        if (driverConfiguration.nodes.size() != 5)
+                            throw new IllegalArgumentException("The number of nodes is not equal to 5, unable to form bridge");
+                        fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                        break;
+                    case "minor-suspend":
+                    case "major-suspend":
+                    case "random-suspend":
+                        fault = new PauseFault(map, arguments.fault, recorder);
+                        break;
+                    case "fixed-suspend":
+                        fault = new PauseFault(map, arguments.fault, recorder, faultNodeList);
+                        break;
+                    default:
+                        throw new RuntimeException("no such fault");
+                }
+            }
+
+            //Start fault worker
+            FaultWorker faultWorker = new FaultWorker(log, fault, arguments.interval);
+
+            faultWorker.start();
+
+            long testStartTimeStamp = System.currentTimeMillis();
+
+            //Start model
+            model.start();
+
+            Timer timer = new Timer(true);
+            timer.schedule(new TimerTask() {
+                @Override public void run() {
+                    ChaosControl.stopFlag = true;
+                }
+            }, arguments.time * 1000);
+
+            while (!ChaosControl.stopFlag) {
+                Thread.sleep(10);
+            }
+
+            //Stop model
+            model.stop();
+
+            //Interrupt fault worker
+            faultWorker.breakLoop();
+
+            //Recovery fault
+            fault.recover();
+
+            log.info("Wait for recovery some time");
+
+            //Wait for recovery, sleep 20 s
+            Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+
+            //Model do something after stop
+            model.afterStop();
+
+            recorder.flush();
+
+            long testEndTimestamp = System.currentTimeMillis();
+
+            log.info("Start check...");
+
+            List<Checker> checkerList = new ArrayList<>();
+
+            checkerList.add(new MQChecker(historyFile));
+            checkerList.add(new PerfChecker(historyFile, testStartTimeStamp, testEndTimestamp));
+            if (arguments.rto) {
+                checkerList.add(new RTOChecker(historyFile));
+            }
+            if (arguments.recovery){
+                checkerList.add(new RecoveryChecker(historyFile));
+            }
+            if (arguments.isOrderTest) {
+                checkerList.add(new OrderChecker(historyFile, shardingKeys));
+            }
+            checkerList.forEach(checker -> resultList.add(checker.check()));
+
+            log.info("Check complete.");
+
+        } catch (Exception e) {
+
+            log.error("Failed to run chaos test.", e);
+
+            if (recorder != null) {
+                recorder.delete();
+                recorder = null;
+            }
+
+        } finally {
+            if (model != null)
+                model.shutdown();
+
+            if (recorder != null)
+                recorder.close();
+
+            SshUtil.close();
+        }
+
+        try {
+            Thread.sleep(TimeUnit.SECONDS.toMillis(3));
+        } catch (InterruptedException e) {
+            log.error("", e);
+        }
+
+        if (resultList.size() != 0) {
+            log.info("----CHAOS TEST RESULT----");
+            resultList.forEach(testResult -> log.info(testResult.toString()));
+            log.info("----CHAOS TEST RESULT----");
+        }
     }
 
     static class Arguments {
@@ -273,8 +288,8 @@ public class ChaosControl {
 
         @Parameter(names = {
             "-d",
-            "--drivers"}, description = "Drivers list. eg.: driver-rocketmq/rocketmq.yaml", required = true)
-        List<String> drivers;
+            "--driver"}, description = "Driver. eg.: driver-rocketmq/rocketmq.yaml", required = true)
+        String driver;
 
         @Parameter(names = {
             "-t",
@@ -315,11 +330,15 @@ public class ChaosControl {
         int interval = 30;
 
         @Parameter(names = {
-            "--rto"}, description = "Calculate failure recovery time.")
+            "--rto"}, description = "Calculate failure recovery time in fault.")
         boolean rto = false;
 
         @Parameter(names = {
-            "--order-test"}, description = "Check the partition order of messaging platform.")
+            "--recovery"}, description = "Calculate failure recovery time.")
+        boolean recovery = false;
+
+        @Parameter(names = {
+            "--order"}, description = "Check the partition order of messaging platform.")
         boolean isOrderTest = false;
 
         @Parameter(names = {

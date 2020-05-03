@@ -17,8 +17,6 @@ import io.openmessaging.chaos.ChaosControl;
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
-import io.openmessaging.chaos.generator.FixedFaultGenerator;
-import io.openmessaging.chaos.generator.SingleFaultGenerator;
 import io.openmessaging.chaos.recorder.Recorder;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +27,7 @@ public class PauseFault implements Fault {
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
     private volatile List<FaultOperation> faultOperations;
     private Map<String, MQChaosNode> nodesMap;
-    private FaultGenerator faultGenerator;
+    private List<String> faultNodes;
     private String mode;
     private Recorder recorder;
 
@@ -37,21 +35,24 @@ public class PauseFault implements Fault {
         this.nodesMap = nodesMap;
         this.mode = mode;
         this.recorder = recorder;
-        this.faultGenerator = new SingleFaultGenerator(nodesMap.keySet(), mode);
     }
 
     public PauseFault(Map<String, MQChaosNode> nodesMap, String mode, Recorder recorder, List<String> faultNodes) {
         this.nodesMap = nodesMap;
         this.mode = mode;
         this.recorder = recorder;
-        this.faultGenerator = new FixedFaultGenerator(nodesMap.keySet(), faultNodes, mode);
+        this.faultNodes = faultNodes;
     }
 
     @Override
     public synchronized void invoke() {
         log.info("Invoke {} fault....", mode);
         recorder.recordFaultStart(mode, System.currentTimeMillis());
-        faultOperations = faultGenerator.generate();
+        if (faultNodes != null) {
+            faultOperations = FaultGenerator.generate(nodesMap.keySet(), faultNodes, mode);
+        } else {
+            faultOperations = FaultGenerator.generate(nodesMap.keySet(), mode);
+        }
         for (FaultOperation operation : faultOperations) {
             log.info("Suspend node {} processes...", operation.getNode());
             MQChaosNode mqChaosNode = nodesMap.get(operation.getNode());

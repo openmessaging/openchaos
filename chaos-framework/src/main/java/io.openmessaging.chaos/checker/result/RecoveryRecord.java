@@ -11,17 +11,10 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.checker.result;
 
-import com.beust.jcommander.IParameterValidator;
-import com.beust.jcommander.ParameterException;
-import io.openmessaging.chaos.generator.FaultGenerator;
-
-public class FaultValidator implements IParameterValidator {
-
-    @Override
-    public void validate(String name, String value) throws ParameterException {
-        if (!FaultGenerator.isInFaultList(name))
-            throw new ParameterException("Fault must be one of " + FaultGenerator.getFaultList());
-    }
+public class RecoveryRecord {
+    public long recoveryTime;
+    public long unavailableStartTimestamp;
+    public long unavailableEndTimestamp;
 }

@@ -13,12 +13,184 @@
 
 package io.openmessaging.chaos.generator;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
-public interface FaultGenerator {
+public class FaultGenerator {
 
-    /**
-     * Generate the operations of fault
-     */
-    List<FaultOperation> generate();
+    private static List<String> faultList = Arrays.asList(
+        "noop", "minor-kill", "major-kill", "random-kill", "fixed-kill", "random-partition",
+        "fixed-partition", "partition-majorities-ring", "bridge", "random-loss",
+        "minor-suspend", "major-suspend", "random-suspend", "fixed-suspend");
+
+    private static Random random = new Random();
+
+    public static List<String> getFaultList() {
+        return faultList;
+    }
+
+    public static boolean isInFaultList(String faultName) {
+        return faultList.contains(faultName);
+    }
+
+    public static List<FaultOperation> generate(Collection<String> nodes, String faultName) {
+        if (nodes == null || nodes.isEmpty()) {
+            throw new IllegalArgumentException("Nodes can not be null or empty");
+        }
+        int num;
+        switch (faultName) {
+            case "noop":
+                return Collections.EMPTY_LIST;
+            case "minor-suspend":
+            case "minor-kill":
+                num = nodes.size() % 2 == 0 ? nodes.size() / 2 - 1 : nodes.size() / 2;
+                return faultInRandomNumberNodes(nodes, num, faultName);
+            case "major-suspend":
+            case "major-kill":
+                num = nodes.size() % 2 == 0 ? nodes.size() / 2 : nodes.size() / 2 + 1;
+                return faultInRandomNumberNodes(nodes, num, faultName);
+            case "random-suspend":
+            case "random-kill":
+            case "random-delay":
+            case "random-loss":
+                num = random.nextInt(nodes.size()) + 1;
+                return faultInRandomNumberNodes(nodes, num, faultName);
+            case "random-partition":
+                return randomPartition(nodes, faultName);
+            case "partition-majorities-ring":
+                return partitionMajoritiesRing(nodes, faultName);
+            case "bridge":
+                return bridge(nodes,faultName);
+            default:
+                throw new IllegalArgumentException("Fault cannot be recognized");
+        }
+    }
+
+    public static List<FaultOperation> generate(Collection<String> nodes, Collection<String> faultNodes, String faultName) {
+        if (nodes == null || nodes.isEmpty()) {
+            throw new IllegalArgumentException("Nodes cannot be null or empty");
+        }
+        List<FaultOperation> operations = new ArrayList<>();
+        switch (faultName) {
+            case "fixed-kill":
+            case "fixed-suspend":
+                for (String node : faultNodes) {
+                    operations.add(new FaultOperation(faultName, node));
+                }
+                break;
+            case "fixed-partition":
+                Set<String> partition1 = new HashSet<>(faultNodes);
+                Set<String> partition2 = new HashSet<>(nodes);
+                partition2.removeAll(partition1);
+                nodes.forEach(node -> {
+                    if (partition1.contains(node)) {
+                        operations.add(getPartitionOperation(faultName, node, partition2));
+                    } else {
+                        operations.add(getPartitionOperation(faultName, node, partition1));
+                    }
+                });
+                break;
+            default:
+                throw new IllegalArgumentException("Fault cannot be recognized");
+        }
+        return operations;
+    }
+
+    private static List<FaultOperation> randomPartition(Collection<String> nodes, String faultName) {
+        int num = random.nextInt(nodes.size() - 1) + 1;
+        List<FaultOperation> operations = new ArrayList<>();
+        List<String> shuffleNodes = new ArrayList<>(nodes);
+        Collections.shuffle(shuffleNodes);
+        Set<String> partition1 = new HashSet<>();
+        Set<String> partition2 = new HashSet<>();
+        for (int i = 0; i < shuffleNodes.size(); i++) {
+            if (i < num) {
+                partition1.add(shuffleNodes.get(i));
+            } else {
+                partition2.add(shuffleNodes.get(i));
+            }
+        }
+
+        nodes.forEach(node -> {
+            if (partition1.contains(node)) {
+                operations.add(getPartitionOperation(faultName, node, partition2));
+            } else {
+                operations.add(getPartitionOperation(faultName, node, partition1));
+            }
+        });
+
+        return operations;
+    }
+
+    private static List<FaultOperation> partitionMajoritiesRing(Collection<String> nodes, String faultName) {
+        if (nodes.size() <= 3)
+            throw new IllegalArgumentException("The number of nodes less than or equal to 3, unable to form partition-majorities-ring");
+        List<FaultOperation> operations = new ArrayList<>();
+        List<String> shuffleNodes = new LinkedList<>(nodes);
+        Collections.shuffle(shuffleNodes);
+        for (int i = 0; i < shuffleNodes.size(); i++) {
+            Set<String> partitionNodes = new HashSet<>(shuffleNodes);
+            partitionNodes.remove(shuffleNodes.get(i));
+            if (i == 0) {
+                partitionNodes.remove(shuffleNodes.get(shuffleNodes.size() - 1));
+                partitionNodes.remove(shuffleNodes.get(1));
+            } else if (i == shuffleNodes.size() - 1) {
+                partitionNodes.remove(shuffleNodes.get(shuffleNodes.size() - 2));
+                partitionNodes.remove(shuffleNodes.get(0));
+            } else {
+                partitionNodes.remove(shuffleNodes.get(i - 1));
+                partitionNodes.remove(shuffleNodes.get(i + 1));
+            }
+            operations.add(getPartitionOperation(faultName, shuffleNodes.get(i), partitionNodes));
+        }
+        return operations;
+    }
+
+    private static List<FaultOperation> bridge(Collection<String> nodes, String faultName) {
+        if (nodes.size() != 5)
+            throw new IllegalArgumentException("The number of nodes is not equal to 5, unable to form bridge");
+        List<FaultOperation> operations = new ArrayList<>();
+        List<String> shuffleNodes = new LinkedList<>(nodes);
+        Collections.shuffle(shuffleNodes);
+        Set<String> partitionSet1 = new HashSet<>();
+        partitionSet1.add(shuffleNodes.get(0));
+        partitionSet1.add(shuffleNodes.get(1));
+        Set<String> partitionSet2 = new HashSet<>();
+        partitionSet2.add(shuffleNodes.get(2));
+        partitionSet2.add(shuffleNodes.get(3));
+        for (int i = 0; i < shuffleNodes.size(); i++) {
+            if (i == 4) {
+                break;
+            } else if (i < 2) {
+                operations.add(getPartitionOperation(faultName, shuffleNodes.get(i), partitionSet2));
+            } else {
+                operations.add(getPartitionOperation(faultName, shuffleNodes.get(i), partitionSet1));
+            }
+        }
+        return operations;
+    }
+
+    private static List<FaultOperation> faultInRandomNumberNodes(Collection<String> nodes, int num, String faultName) {
+        List<FaultOperation> operations = new ArrayList<>();
+        List<String> shuffleNodes = new ArrayList<>(nodes);
+        Collections.shuffle(shuffleNodes);
+        for (int i = 0; i < num; i++) {
+            FaultOperation operation = new FaultOperation(faultName, shuffleNodes.get(i));
+            operations.add(operation);
+        }
+        return operations;
+    }
+
+    private static FaultOperation getPartitionOperation(String node, String faultName, Set<String> partitionNodes) {
+        List<String> invokeArgs = new ArrayList<>(partitionNodes);
+        List<String> recoverArgs = new ArrayList<>(partitionNodes);
+        return new FaultOperation(faultName, node, invokeArgs, recoverArgs);
+    }
 }

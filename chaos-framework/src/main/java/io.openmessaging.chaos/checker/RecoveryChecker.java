@@ -16,8 +16,8 @@ package io.openmessaging.chaos.checker;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.openmessaging.chaos.checker.result.RTORecord;
-import io.openmessaging.chaos.checker.result.RTOTestResult;
+import io.openmessaging.chaos.checker.result.RecoveryRecord;
+import io.openmessaging.chaos.checker.result.RecoveryTestResult;
 import io.openmessaging.chaos.checker.result.TestResult;
 import java.io.File;
 import java.nio.file.Files;
@@ -27,9 +27,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RTOChecker implements Checker {
-
-    private static final Logger log = LoggerFactory.getLogger(RTOChecker.class);
+public class RecoveryChecker implements Checker {
+    private static final Logger log = LoggerFactory.getLogger(RecoveryChecker.class);
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -39,70 +38,63 @@ public class RTOChecker implements Checker {
 
     private String fileName;
 
-    public RTOChecker(String fileName) {
+    public RecoveryChecker(String fileName) {
         this.fileName = fileName;
     }
 
     @Override
     public TestResult check() {
-        RTOTestResult rtoTestResult = new RTOTestResult();
+        RecoveryTestResult recoveryTestResult = new RecoveryTestResult();
         try {
-            checkInner(rtoTestResult);
+            checkInner(recoveryTestResult);
         } catch (Exception e) {
             log.error("", e);
-            rtoTestResult.isValid = false;
+            recoveryTestResult.isValid = false;
         }
         try {
-            MAPPER.writeValue(new File(fileName.replace("history", "rto-result")), rtoTestResult);
+            MAPPER.writeValue(new File(fileName.replace("history", "recovery-result")), recoveryTestResult);
         } catch (Exception e) {
             log.error("", e);
         }
 
-        return rtoTestResult;
+        return recoveryTestResult;
     }
 
-    private void checkInner(RTOTestResult rtoTestResult) throws Exception {
+    private void checkInner(RecoveryTestResult recoveryTestResult) throws Exception {
 
         List<String[]> allRecords = Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).collect(Collectors.toList());
 
-        boolean isInFault = false;
+        RecoveryRecord recoveryRecord = null;
+
         boolean unavailableFlag = false;
-        RTORecord rtoRecord = null;
 
         for (String[] x : allRecords) {
 
-            if (x[0].equals("fault") && x[2].equals("start")) {
-                isInFault = true;
-                rtoRecord = new RTORecord();
-                rtoTestResult.getResults().add(rtoRecord);
-            }
+            if (!unavailableFlag && x[3].equals("FAILURE")) {
 
-            if (isInFault && !unavailableFlag && x[3].equals("FAILURE") && rtoRecord.startTimestamp == 0) {
-                rtoRecord.isUnavailableInFaultInterval = true;
-                rtoRecord.startTimestamp = Long.parseLong(x[6]) - Long.parseLong(x[7]);
+                RecoveryRecord lastRecord = recoveryTestResult.getResults().getLast();
+
+                if (lastRecord != null && Long.parseLong(x[6]) - lastRecord.unavailableEndTimestamp < 50) {
+                    continue;
+                }
+
+                recoveryRecord = new RecoveryRecord();
+                recoveryTestResult.getResults().add(recoveryRecord);
+
+                recoveryRecord.unavailableStartTimestamp = Long.parseLong(x[6]) - Long.parseLong(x[7]);
                 unavailableFlag = true;
             }
 
-            if (isInFault && unavailableFlag && x[3].equals("SUCCESS") && rtoRecord.endTimestamp == 0) {
-                rtoRecord.endTimestamp = Long.parseLong(x[6]);
-                rtoRecord.rtoTime = rtoRecord.endTimestamp - rtoRecord.startTimestamp;
-                rtoRecord.isRecoveryInFaultInterval = true;
+            if (unavailableFlag && x[3].equals("SUCCESS") && recoveryRecord.unavailableEndTimestamp == 0) {
+
+                recoveryRecord.unavailableEndTimestamp = Long.parseLong(x[6]);
+                recoveryRecord.recoveryTime = recoveryRecord.unavailableEndTimestamp - recoveryRecord.unavailableStartTimestamp;
                 unavailableFlag = false;
             }
 
-            if (!isInFault && unavailableFlag && x[3].equals("SUCCESS")) {
-                unavailableFlag = false;
-            }
-
-            if (isInFault && x[0].equals("fault") && x[2].equals("end")) {
-                isInFault = false;
-            }
-
-            if (!unavailableFlag && !isInFault && x[3].equals("FAILURE")) {
-                rtoTestResult.setUnexpectedUnavailableInNormalInterval(true);
-            }
         }
 
-        rtoTestResult.isValid = true;
+        recoveryTestResult.isValid = true;
     }
+
 }

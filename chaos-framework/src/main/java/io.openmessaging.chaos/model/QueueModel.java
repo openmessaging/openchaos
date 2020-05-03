@@ -187,4 +187,9 @@ public class QueueModel implements Model {
         cluster.values().forEach(MQChaosNode::stop);
         mqChaosDriver.shutdown();
     }
+
+    @Override
+    public void probeCluster() throws IOException {
+
+    }
 }
