@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +65,13 @@ public class QueueModel implements Model {
     private RateLimiter rateLimiter;
     private MQChaosDriver mqChaosDriver;
     private String chaosTopic;
+    private boolean isOrderTest;
+    private boolean isUsePull;
+    private List<String> shardingKeys;
+    private AtomicLong msgReceivedCount = new AtomicLong(0);
 
-    public QueueModel(int concurrency, RateLimiter rateLimiter, Recorder recorder, File driverConfigFile) {
+    public QueueModel(int concurrency, RateLimiter rateLimiter, Recorder recorder, File driverConfigFile,
+        boolean isOrderTest, boolean isUsePull, List<String> shardingKeys) {
         this.concurrency = concurrency;
         this.recorder = recorder;
         this.driverConfigFile = driverConfigFile;
@@ -74,6 +80,9 @@ public class QueueModel implements Model {
         workers = new ArrayList<>();
         cluster = new HashMap<>();
         chaosTopic = String.format("%s-chaos-topic", DATE_FORMAT.format(new Date()));
+        this.isOrderTest = isOrderTest;
+        this.isUsePull = isUsePull;
+        this.shardingKeys = shardingKeys;
     }
 
     private static MQChaosDriver createChaosMQDriver(File driverConfigFile) throws IOException {
@@ -134,7 +143,7 @@ public class QueueModel implements Model {
     }
 
     @Override
-    public void setupClient(boolean isOrderTest, List<String> shardingKeys) {
+    public void setupClient() {
         try {
             if (mqChaosDriver == null) {
                 mqChaosDriver = createChaosMQDriver(driverConfigFile);
@@ -147,7 +156,7 @@ public class QueueModel implements Model {
 
             List<List<String>> shardingKeyLists = Utils.partitionList(shardingKeys, concurrency);
             for (int i = 0; i < concurrency; i++) {
-                Client client = new QueueClient(mqChaosDriver, chaosTopic, recorder, isOrderTest, shardingKeyLists.get(i));
+                Client client = new QueueClient(mqChaosDriver, chaosTopic, recorder, isOrderTest, isUsePull, shardingKeyLists.get(i), msgReceivedCount);
                 client.setup();
                 clients.add(client);
                 ClientWorker clientWorker = new ClientWorker("queueClient-" + i, client, rateLimiter, log);
@@ -189,7 +198,20 @@ public class QueueModel implements Model {
     }
 
     @Override
-    public void probeCluster() throws IOException {
-
+    public boolean probeCluster() {
+        int probeTimes = 0;
+        try {
+            while (msgReceivedCount.get() == 0) {
+                if (++probeTimes == 10) {
+                    break;
+                }
+                clients.forEach(Client::nextInvoke);
+                Thread.sleep(500);
+            }
+        } catch (Exception e) {
+            log.error("", e);
+            return false;
+        }
+        return probeTimes != 10;
     }
 }

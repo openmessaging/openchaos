@@ -15,14 +15,14 @@ package io.openmessaging.chaos.common;
 
 public class Message {
     public String shardingKey;
-    public String payload;
+    public byte[] payload;
 
-    public Message(String shardingKey, String payload) {
+    public Message(String shardingKey, byte[] payload) {
         this.shardingKey = shardingKey;
         this.payload = payload;
     }
 
-    public Message(String payload) {
+    public Message(byte[] payload) {
         this.payload = payload;
     }
 }

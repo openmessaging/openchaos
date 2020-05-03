@@ -19,32 +19,15 @@
 
 package io.openmessaging.chaos.driver.mq;
 
-import io.openmessaging.chaos.common.InvokeResult;
 import io.openmessaging.chaos.common.Message;
-import io.openmessaging.chaos.driver.ChaosClient;
-import java.util.List;
 
-public interface MQChaosClient extends ChaosClient {
-
-    /**
-     * Enqueue a value to mq cluster
-     *
-     * @param value
-     * @return result of enqueue
-     */
-    InvokeResult enqueue(String value);
+/**
+ * Just for push consumer.
+ */
+public interface ConsumerCallback {
 
     /**
-     * Enqueue a value with sharding key to mq cluster
-     *
-     * @param value
-     * @return result of enqueue
+     * Push Consumer should invoke this method once for each message received
      */
-    InvokeResult enqueue(String shardingKey, String value);
-
-    /**
-     * Dequeue from mq cluster
-     */
-    List<Message> dequeue();
-
+    void messageReceived(Message message);
 }

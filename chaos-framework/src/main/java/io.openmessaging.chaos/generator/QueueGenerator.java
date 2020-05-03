@@ -22,11 +22,15 @@ public class QueueGenerator {
 
     private static Random random = new Random();
 
-    public static QueueOperation generate() {
-        if (random.nextDouble() < 0.5) {
-            return new QueueOperation("enqueue", String.valueOf(stagger.getAndIncrement()));
+    public static QueueOperation generate(boolean isUsePull) {
+        if (isUsePull) {
+            if (random.nextDouble() < 0.5) {
+                return new QueueOperation("enqueue", String.valueOf(stagger.getAndIncrement()));
+            } else {
+                return new QueueOperation("dequeue");
+            }
         } else {
-            return new QueueOperation("dequeue");
+            return new QueueOperation("enqueue", String.valueOf(stagger.getAndIncrement()));
         }
     }
 }

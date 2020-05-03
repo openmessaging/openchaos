@@ -23,9 +23,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.io.BaseEncoding;
-import io.openmessaging.chaos.driver.mq.MQChaosClient;
+import io.openmessaging.chaos.common.Message;
+import io.openmessaging.chaos.driver.mq.ConsumerCallback;
 import io.openmessaging.chaos.driver.mq.MQChaosDriver;
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
+import io.openmessaging.chaos.driver.mq.MQChaosProducer;
+import io.openmessaging.chaos.driver.mq.MQChaosPullConsumer;
+import io.openmessaging.chaos.driver.mq.MQChaosPushConsumer;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQBrokerConfig;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQClientConfig;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQConfig;
@@ -35,9 +39,13 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.common.TopicConfig;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.apache.rocketmq.tools.command.CommandUtil;
 import org.slf4j.Logger;
@@ -73,6 +81,7 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         return BaseEncoding.base64Url().omitPadding().encode(buffer);
     }
 
+    @Override
     public void initialize(File configurationFile, List<String> nodes) throws IOException {
         this.rmqClientConfig = readConfigForClient(configurationFile);
         this.rmqBrokerConfig = readConfigForBroker(configurationFile);
@@ -80,15 +89,43 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         this.nodes = nodes;
     }
 
+    @Override
     public MQChaosNode createChaosNode(String node, List<String> nodes) {
         return new RocketMQChaosNode(node, nodes, rmqConfig, rmqBrokerConfig);
     }
 
-    public MQChaosClient createChaosClient(String topic) {
+    @Override
+    public MQChaosProducer createProducer(String topic) {
         DefaultMQProducer defaultMQProducer = new DefaultMQProducer("ProducerGroup_Chaos");
         defaultMQProducer.setNamesrvAddr(getNameserver());
         defaultMQProducer.setInstanceName("ProducerInstance" + getRandomString());
-        DefaultLitePullConsumer defaultLitePullConsumer = new DefaultLitePullConsumer("ConsumerGroup_Chaos");
+
+        return new RocketMQChaosProducer(defaultMQProducer, topic);
+    }
+
+    @Override
+    public MQChaosPushConsumer createPushConsumer(String topic, String subscriptionName,
+        ConsumerCallback consumerCallback) {
+        DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer(subscriptionName);
+        defaultMQPushConsumer.setNamesrvAddr(getNameserver());
+        defaultMQPushConsumer.setInstanceName("ConsumerInstance" + getRandomString());
+        try {
+            defaultMQPushConsumer.subscribe(topic, "*");
+            defaultMQPushConsumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
+                for (MessageExt message : msgs) {
+                    consumerCallback.messageReceived(new Message(message.getKeys(), message.getBody()));
+                }
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            });
+        } catch (MQClientException e) {
+            log.error("Failed to create consumer instance.", e);
+        }
+        return new RocketMQChaosPushConsumer(defaultMQPushConsumer);
+    }
+
+    @Override
+    public MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName) {
+        DefaultLitePullConsumer defaultLitePullConsumer = new DefaultLitePullConsumer(subscriptionName);
         defaultLitePullConsumer.setNamesrvAddr(getNameserver());
         defaultLitePullConsumer.setInstanceName("ConsumerInstance" + getRandomString());
         defaultLitePullConsumer.setPollTimeoutMillis(100);
@@ -98,10 +135,10 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         } catch (MQClientException e) {
             log.error("Failed to start the created lite pull consumer instance.", e);
         }
-
-        return new RocketMQChaosClient(defaultMQProducer, defaultLitePullConsumer, topic);
+        return new RocketMQChaosPullConsumer(defaultLitePullConsumer);
     }
 
+    @Override
     public void createTopic(String topic, int partitions) {
 
         this.rmqAdmin = new DefaultMQAdminExt();

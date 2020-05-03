@@ -14,7 +14,6 @@
 package io.openmessaging.chaos.model;
 
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +22,7 @@ public interface Model {
     /**
      * Set up all the clients
      */
-    void setupClient(boolean isOrderTest, List<String> shardingKeys);
+    void setupClient();
 
     /**
      * Set up cluster to be tested
@@ -36,10 +35,8 @@ public interface Model {
 
     /**
      * Ensure cluster are ready
-     *
-     * @throws IOException
      */
-    void probeCluster() throws IOException;
+    boolean probeCluster();
 
     /**
      * Start the test

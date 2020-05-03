@@ -13,17 +13,14 @@
 
 package io.openmessaging.chaos.driver.rocketmq;
 
-import com.google.common.collect.Lists;
 import io.openmessaging.chaos.common.InvokeResult;
-import io.openmessaging.chaos.driver.mq.MQChaosClient;
+import io.openmessaging.chaos.driver.mq.MQChaosProducer;
 import java.util.List;
-import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.common.message.Message;
-import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.exception.RemotingConnectException;
 import org.apache.rocketmq.remoting.exception.RemotingException;
@@ -31,23 +28,20 @@ import org.apache.rocketmq.remoting.exception.RemotingSendRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RocketMQChaosClient implements MQChaosClient {
+public class RocketMQChaosProducer implements MQChaosProducer {
 
-    private static final Logger log = LoggerFactory.getLogger(RocketMQChaosClient.class);
+    private static final Logger log = LoggerFactory.getLogger(RocketMQChaosProducer.class);
     private final DefaultMQProducer defaultMQProducer;
-    private final DefaultLitePullConsumer defaultLitePullConsumer;
     private String chaosTopic;
 
-    public RocketMQChaosClient(final DefaultMQProducer defaultMQProducer,
-        final DefaultLitePullConsumer defaultLitePullConsumer, String chaosTopic) {
+    public RocketMQChaosProducer(final DefaultMQProducer defaultMQProducer, String chaosTopic) {
         this.defaultMQProducer = defaultMQProducer;
-        this.defaultLitePullConsumer = defaultLitePullConsumer;
         this.chaosTopic = chaosTopic;
     }
 
     @Override
-    public InvokeResult enqueue(String value) {
-        Message message = new Message(chaosTopic, value.getBytes());
+    public InvokeResult enqueue(byte[] payload) {
+        Message message = new Message(chaosTopic, payload);
         try {
             defaultMQProducer.send(message);
         } catch (RemotingException e) {
@@ -69,8 +63,8 @@ public class RocketMQChaosClient implements MQChaosClient {
     }
 
     @Override
-    public InvokeResult enqueue(String shardingKey, String value) {
-        Message message = new Message(chaosTopic, value.getBytes());
+    public InvokeResult enqueue(String shardingKey, byte[] payload) {
+        Message message = new Message(chaosTopic, payload);
         message.setKeys(shardingKey);
         try {
             defaultMQProducer.send(message, new MessageQueueSelector() {
@@ -100,24 +94,10 @@ public class RocketMQChaosClient implements MQChaosClient {
     }
 
     @Override
-    public List<io.openmessaging.chaos.common.Message> dequeue() {
-        List<MessageExt> messages = defaultLitePullConsumer.poll();
-        if (!messages.isEmpty()) {
-            defaultLitePullConsumer.commitSync();
-            return Lists.transform(messages, messageExt -> new io.openmessaging.chaos.common.Message(messageExt.getKeys(), new String(messageExt.getBody())));
-        } else {
-            return null;
-        }
-    }
-
-    @Override
     public void start() {
         try {
             if (defaultMQProducer != null) {
                 defaultMQProducer.start();
-            }
-            if (defaultLitePullConsumer != null) {
-                defaultLitePullConsumer.start();
             }
         } catch (MQClientException e) {
             log.error("Failed to start the created producer instance.", e);
@@ -127,9 +107,6 @@ public class RocketMQChaosClient implements MQChaosClient {
     public void close() {
         if (defaultMQProducer != null) {
             defaultMQProducer.shutdown();
-        }
-        if (defaultLitePullConsumer != null) {
-            defaultLitePullConsumer.shutdown();
         }
     }
 }

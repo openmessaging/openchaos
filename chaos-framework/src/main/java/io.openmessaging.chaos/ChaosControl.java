@@ -129,7 +129,13 @@ public class ChaosControl {
             }
 
             //Currently only queue model is supported
-            model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
+            switch (arguments.model) {
+                case "queue":
+                    model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile, arguments.isOrderTest, arguments.pull, shardingKeys);
+                    break;
+                default:
+                    throw new RuntimeException("model not recognized.");
+            }
 
             Map<String, MQChaosNode> map = null;
 
@@ -137,7 +143,7 @@ public class ChaosControl {
                 map = model.setupCluster(driverConfiguration.nodes, arguments.install);
             }
 
-            model.setupClient(arguments.isOrderTest, shardingKeys);
+            model.setupClient();
 
             //Initial fault
             Fault fault;
@@ -187,6 +193,14 @@ public class ChaosControl {
                         throw new RuntimeException("no such fault");
                 }
             }
+
+            //Ensure cluster and clients are ready
+            log.info("Probe cluster, ensure cluster and clients are ready...");
+            boolean isReady = model.probeCluster();
+            if (!isReady) {
+                throw new RuntimeException("Cluster and clients are not ready, please check.");
+            }
+            log.info("Cluster and clients are ready.");
 
             //Start fault worker
             FaultWorker faultWorker = new FaultWorker(log, fault, arguments.interval);
@@ -239,7 +253,7 @@ public class ChaosControl {
             if (arguments.rto) {
                 checkerList.add(new RTOChecker(historyFile));
             }
-            if (arguments.recovery){
+            if (arguments.recovery) {
                 checkerList.add(new RecoveryChecker(historyFile));
             }
             if (arguments.isOrderTest) {
@@ -330,6 +344,11 @@ public class ChaosControl {
         int interval = 30;
 
         @Parameter(names = {
+            "-m",
+            "--model"}, description = "Test model. Currently only queue model is supported.")
+        String model = "queue";
+
+        @Parameter(names = {
             "--rto"}, description = "Calculate failure recovery time in fault.")
         boolean rto = false;
 
@@ -338,8 +357,12 @@ public class ChaosControl {
         boolean recovery = false;
 
         @Parameter(names = {
-            "--order"}, description = "Check the partition order of messaging platform.")
+            "--order"}, description = "Check the partition order of messaging platform. Just for mq model.")
         boolean isOrderTest = false;
+
+        @Parameter(names = {
+            "--pull"}, description = "Driver use pull consumer, default is push consumer. Just for mq model.")
+        boolean pull = false;
 
         @Parameter(names = {
             "--install"}, description = "Whether to install program. It will download the installation package on each cluster node. " +

@@ -24,9 +24,21 @@ public interface MQChaosDriver extends ChaosDriver {
     void createTopic(String topic, int partitions);
 
     /**
-     * Create a ChaosClient for a given topic. ChaosClient will apply operations to the cluster to be tested
+     * Create a Producer for a given topic. Producer will apply operations to the cluster to be tested
      */
-    MQChaosClient createChaosClient(String topic);
+    MQChaosProducer createProducer(String topic);
+
+    /**
+     * Create a PushConsumer. Note: if driver use pull consumer, you can choose not to implement this method
+     */
+    MQChaosPushConsumer createPushConsumer(String topic,
+        String subscriptionName,
+        ConsumerCallback consumerCallback);
+
+    /**
+     * Create a PullConsumer. Note: if driver use push consumer, you can choose not to implement this method
+     */
+    MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName);
 
     /**
      * Create a ChaosNode. ChaosNode represents one of the nodes in the cluster to be tested

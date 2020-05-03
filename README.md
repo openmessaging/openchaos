@@ -29,7 +29,7 @@ In another shell, use `docker exec -it chaos-control bash` to enter the controll
 
 ```shell
 mvn clean install
-bin/chaos.sh --drivers driver-rocketmq/rocketmq.yaml --install
+bin/chaos.sh --driver driver-rocketmq/rocketmq.yaml --install
 ```
 
 ## Option
@@ -40,8 +40,8 @@ Usage: messaging-chaos [options]
     -c, --concurrency
       The number of clients. eg: 5
       Default: 4
-  * -d, --drivers
-      Drivers list. eg.: driver-rocketmq/rocketmq.yaml
+  * -d, --driver
+      Driver. eg.: driver-rocketmq/rocketmq.yaml
     -f, --fault
       Fault type to be injected. eg: noop, minor-kill, major-kill, 
       random-kill, fixed-kill, random-partition, fixed-partition, 
@@ -66,14 +66,23 @@ Usage: messaging-chaos [options]
       Chaos execution time in seconds (excluding check time and recovery 
       time). eg: 60
       Default: 60
-    --order-test
-      Check the partition order of messaging platform.
+    -m, --model
+      Test model. Currently only queue model is supported.
+      Default: queue
+    --order
+      Check the partition order of messaging platform. Just for mq model.
+      Default: false
+    --pull
+      Driver use pull consumer, default is push consumer. Just for mq model.
       Default: false
     -r, --rate
       Approximate number of requests per second. eg: 20
       Default: 20
-    --rto
+    --recovery
       Calculate failure recovery time.
+      Default: false
+    --rto
+      Calculate failure recovery time in fault.
       Default: false
     -u, --username
       User name for ssh remote login. eg: admin
