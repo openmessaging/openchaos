@@ -21,7 +21,7 @@ public class FaultValidator implements IParameterValidator {
 
     @Override
     public void validate(String name, String value) throws ParameterException {
-        if (!FaultGenerator.isInFaultList(name))
+        if (!FaultGenerator.isInFaultList(value))
             throw new ParameterException("Fault must be one of " + FaultGenerator.getFaultList());
     }
 }
