@@ -77,7 +77,7 @@ public class RTOChecker implements Checker {
                 rtoTestResult.getResults().add(rtoRecord);
             }
 
-            if (isInFault && !unavailableFlag && x[3].equals("FAILURE") && rtoRecord.startTimestamp == 0) {
+            if (isInFault && !unavailableFlag && (x[3].equals("FAILURE") || x[3].equals("UNKNOWN")) && rtoRecord.startTimestamp == 0) {
                 rtoRecord.isUnavailableInFaultInterval = true;
                 rtoRecord.startTimestamp = Long.parseLong(x[6]) - Long.parseLong(x[7]);
                 unavailableFlag = true;

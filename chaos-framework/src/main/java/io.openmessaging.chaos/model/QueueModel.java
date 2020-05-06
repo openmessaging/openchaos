@@ -184,7 +184,6 @@ public class QueueModel implements Model {
 
     @Override
     public void afterStop() {
-        log.info("Invoke drain");
         clients.forEach(Client::lastInvoke);
     }
 

@@ -31,6 +31,7 @@ public class KillFault implements Fault {
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
     private volatile List<FaultOperation> faultOperations;
     private Map<String, MQChaosNode> nodesMap;
+    private List<String> faultNodes;
     private String mode;
     private Recorder recorder;
 
@@ -44,13 +45,18 @@ public class KillFault implements Fault {
         this.nodesMap = nodesMap;
         this.mode = mode;
         this.recorder = recorder;
+        this.faultNodes = faultNodes;
     }
 
     @Override
     public synchronized void invoke() {
         log.info("Invoke {} fault....", mode);
         recorder.recordFaultStart(mode, System.currentTimeMillis());
-        faultOperations = FaultGenerator.generate(nodesMap.keySet(), mode);
+        if (faultNodes != null) {
+            faultOperations = FaultGenerator.generate(nodesMap.keySet(), faultNodes, mode);
+        } else {
+            faultOperations = FaultGenerator.generate(nodesMap.keySet(), mode);
+        }
         for (FaultOperation operation : faultOperations) {
             log.info("Kill node {} processes...", operation.getNode());
             MQChaosNode mqChaosNode = nodesMap.get(operation.getNode());

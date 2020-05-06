@@ -98,6 +98,8 @@ public class ChaosControl {
             if (arguments.fault.startsWith("fixed-")) {
                 if (arguments.faultNodes == null || arguments.faultNodes.isEmpty()) {
                     throw new IllegalArgumentException("fault-nodes parameter can not be null or empty when inject fixed-xxx fault to system.");
+                } else if (driverConfiguration.nodes == null || driverConfiguration.nodes.isEmpty()) {
+                    throw new IllegalArgumentException("the nodes in configure file can not be null or empty when inject fixed-xxx fault to system.");
                 } else {
                     String[] faultNodeArray = arguments.faultNodes.split(";");
                     for (String faultNode : faultNodeArray) {

@@ -29,10 +29,16 @@ public class RecoveryTestResult extends TestResult {
         int count = 0;
         for (RecoveryRecord record : results) {
             count++;
+            if(record.unavailableEndTimestamp == 0){
+                stringBuilder.append("\n\t").append(count).
+                    append(": unavailableStartTimestamp = ").append(record.unavailableStartTimestamp).
+                    append("   ").append("not recovery in test.");
+                continue;
+            }
             stringBuilder.append("\n\t").append(count).
                 append(": unavailableStartTimestamp = ").append(record.unavailableStartTimestamp).
                 append("   ").append("unavailableEndTimestamp = ").append(record.unavailableEndTimestamp).
-                append("   ").append("recoveryTime= ").append(record.recoveryTime);
+                append("   ").append("recoveryTime= ").append(record.recoveryTime).append("ms");
         }
         stringBuilder.append("\n\t").append("isValid=").append(isValid);
         stringBuilder.append("\n}");

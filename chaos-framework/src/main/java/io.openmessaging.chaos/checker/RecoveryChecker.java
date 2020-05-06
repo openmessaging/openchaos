@@ -70,11 +70,10 @@ public class RecoveryChecker implements Checker {
 
         for (String[] x : allRecords) {
 
-            if (!unavailableFlag && x[3].equals("FAILURE")) {
+            if (!unavailableFlag && (x[3].equals("FAILURE") || x[3].equals("UNKNOWN"))) {
 
-                RecoveryRecord lastRecord = recoveryTestResult.getResults().getLast();
-
-                if (lastRecord != null && Long.parseLong(x[6]) - lastRecord.unavailableEndTimestamp < 50) {
+                RecoveryRecord lastRecord = recoveryTestResult.getResults().peekLast();
+                if (lastRecord != null && Long.parseLong(x[6]) - lastRecord.unavailableEndTimestamp < 2000) {
                     continue;
                 }
 
@@ -96,5 +95,4 @@ public class RecoveryChecker implements Checker {
 
         recoveryTestResult.isValid = true;
     }
-
 }
