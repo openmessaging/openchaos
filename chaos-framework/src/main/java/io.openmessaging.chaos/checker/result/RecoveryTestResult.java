@@ -29,7 +29,7 @@ public class RecoveryTestResult extends TestResult {
         int count = 0;
         for (RecoveryRecord record : results) {
             count++;
-            if(record.unavailableEndTimestamp == 0){
+            if (record.unavailableEndTimestamp == 0) {
                 stringBuilder.append("\n\t").append(count).
                     append(": unavailableStartTimestamp = ").append(record.unavailableStartTimestamp).
                     append("   ").append("not recovery in test.");
