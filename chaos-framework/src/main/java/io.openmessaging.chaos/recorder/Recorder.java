@@ -13,7 +13,6 @@
 
 package io.openmessaging.chaos.recorder;
 
-import io.openmessaging.chaos.common.InvokeResult;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -27,10 +26,6 @@ import org.slf4j.LoggerFactory;
 public class Recorder {
 
     private static final Logger log = LoggerFactory.getLogger(Recorder.class);
-
-    private static final String OP_INVOKE = "invoke";
-
-    private static final String OP_RETURN = "return";
 
     private BufferedWriter bufferedWriter;
 
@@ -62,26 +57,11 @@ public class Recorder {
         }
     }
 
-    public void recordRequest(int clientId, String op, String data) {
-        String recordLine = clientId + "\t" + op + "\t" + OP_INVOKE + "\t" + data + "\n";
-        recordToHistoryFile(recordLine);
-
-        String logLine = "client" + clientId + " request " + op + ", data is " + data;
-        log.info(logLine);
-    }
 
     public void recordRequest(RequestLogEntry requestLogEntry) {
         recordToHistoryFile(requestLogEntry.toString());
 
         String logLine = "client" + requestLogEntry.clientId + " request " + requestLogEntry.operation + ", data is " + requestLogEntry.value;
-        log.info(logLine);
-    }
-
-    public void recordResponse(int clientId, String op, InvokeResult res, String data) {
-        String recordLine = clientId + "\t" + op + "\t" + OP_RETURN + "\t" + res + "\t" + data + "\n";
-        recordToHistoryFile(recordLine);
-
-        String logLine = "client" + clientId + " " + op + " response " + res + ", data is " + data;
         log.info(logLine);
     }
 

@@ -35,6 +35,7 @@ import io.openmessaging.chaos.fault.KillFault;
 import io.openmessaging.chaos.fault.NetFault;
 import io.openmessaging.chaos.fault.NoopFault;
 import io.openmessaging.chaos.fault.PauseFault;
+import io.openmessaging.chaos.http.Agent;
 import io.openmessaging.chaos.model.Model;
 import io.openmessaging.chaos.model.QueueModel;
 import io.openmessaging.chaos.recorder.Recorder;
@@ -60,7 +61,25 @@ public class ChaosControl {
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
 
-    public static volatile boolean stopFlag = false;
+    public static volatile Status status = Status.CHECK_COMPLETE;
+
+    public static List<TestResult> resultList;
+
+    private static Fault fault;
+
+    private static Model model;
+
+    private static Recorder recorder;
+
+    private static FaultWorker faultWorker;
+
+    private static long testStartTimeStamp;
+
+    private static long testEndTimestamp;
+
+    private static String historyFile;
+
+    private static List<String> shardingKeys;
 
     static {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
@@ -84,12 +103,50 @@ public class ChaosControl {
             System.exit(-1);
         }
 
-        Model model = null;
-        Recorder recorder = null;
-        List<TestResult> resultList = new ArrayList<>();
+        try {
+            if (arguments.agent) {
+
+                Agent.startAgent(arguments.port);
+
+            } else {
+
+                ready(arguments);
+
+                if (ChaosControl.status == Status.READY_FAILED) {
+                    return;
+                }
+
+                run(arguments);
+
+                Timer timer = new Timer(true);
+                timer.schedule(new TimerTask() {
+                    @Override public void run() {
+                        ChaosControl.status = Status.STOP;
+                    }
+                }, arguments.time * 1000);
+
+                while (ChaosControl.status != Status.STOP) {
+                    Thread.sleep(10);
+                }
+
+                stop();
+                check(arguments);
+                showResult();
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to run chaos test.", e);
+            clearAfterException();
+        } finally {
+            clear();
+        }
+    }
+
+    public static void ready(Arguments arguments) {
+
+        ChaosControl.status = Status.READY_ING;
 
         try {
-
             File driverConfigFile = new File(arguments.driver);
             DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile,
                 DriverConfiguration.class);
@@ -115,7 +172,7 @@ public class ChaosControl {
 
             log.info("--------------- CHAOS TEST --- DRIVER : {}---------------", driverConfiguration.name);
 
-            String historyFile = String.format("%s-%s-chaos-history-file", DATE_FORMAT.format(new Date()), driverConfiguration.name);
+            historyFile = String.format("%s-%s-chaos-history-file", DATE_FORMAT.format(new Date()), driverConfiguration.name);
 
             RateLimiter rateLimiter = RateLimiter.create(arguments.rate);
 
@@ -125,7 +182,7 @@ public class ChaosControl {
                 System.err.printf("Create %s failed", historyFile);
                 System.exit(-1);
             }
-            List<String> shardingKeys = new ArrayList<>();
+            shardingKeys = new ArrayList<>();
             for (int i = 0; i < 2 * arguments.concurrency; i++) {
                 shardingKeys.add("shardingKey" + i);
             }
@@ -148,7 +205,7 @@ public class ChaosControl {
             model.setupClient();
 
             //Initial fault
-            Fault fault;
+
             if (map == null || map.isEmpty()) {
                 log.warn("Configure file does not contain nodes, use noop fault");
                 fault = new NoopFault();
@@ -204,97 +261,136 @@ public class ChaosControl {
             }
             log.info("Cluster and clients are ready.");
 
-            //Start fault worker
-            FaultWorker faultWorker = new FaultWorker(log, fault, arguments.interval);
-
-            faultWorker.start();
-
-            long testStartTimeStamp = System.currentTimeMillis();
-
-            //Start model
-            model.start();
-
-            Timer timer = new Timer(true);
-            timer.schedule(new TimerTask() {
-                @Override public void run() {
-                    ChaosControl.stopFlag = true;
-                }
-            }, arguments.time * 1000);
-
-            while (!ChaosControl.stopFlag) {
-                Thread.sleep(10);
-            }
-
-            //Stop model
-            model.stop();
-
-            //Interrupt fault worker
-            faultWorker.breakLoop();
-
-            //Recovery fault
-            fault.recover();
-
-            log.info("Wait for recovery some time");
-
-            //Wait for recovery, sleep 20 s
-            Thread.sleep(TimeUnit.SECONDS.toMillis(20));
-
-            //Model do something after stop
-            model.afterStop();
-
-            recorder.flush();
-
-            long testEndTimestamp = System.currentTimeMillis();
-
-            log.info("Start check...");
-
-            List<Checker> checkerList = new ArrayList<>();
-
-            checkerList.add(new MQChecker(historyFile));
-            checkerList.add(new PerfChecker(historyFile, testStartTimeStamp, testEndTimestamp));
-            if (arguments.rto) {
-                checkerList.add(new RTOChecker(historyFile));
-            }
-            if (arguments.recovery) {
-                checkerList.add(new RecoveryChecker(historyFile));
-            }
-            if (arguments.isOrderTest) {
-                checkerList.add(new OrderChecker(historyFile, shardingKeys));
-            }
-            checkerList.forEach(checker -> resultList.add(checker.check()));
-
-            log.info("Check complete.");
+            ChaosControl.status = Status.READY_COMPLETE;
 
         } catch (Exception e) {
 
-            log.error("Failed to run chaos test.", e);
-
-            if (recorder != null) {
-                recorder.delete();
-                recorder = null;
-            }
-
-        } finally {
-            if (model != null)
-                model.shutdown();
-
-            if (recorder != null)
-                recorder.close();
-
-            SshUtil.close();
+            ChaosControl.status = Status.READY_FAILED;
+            log.error("Failed to ready chaos test.", e);
+            clearAfterException();
         }
+    }
+
+    public static void run(Arguments arguments) {
+
+        ChaosControl.status = Status.RUN_ING;
+        //Start fault worker
+        faultWorker = new FaultWorker(log, fault, arguments.interval);
+
+        faultWorker.start();
+
+        testStartTimeStamp = System.currentTimeMillis();
+
+        //Start model
+        model.start();
+
+    }
+
+    public static void stop() {
+
+        ChaosControl.status = Status.STOP_ING;
+        //Stop model
+        model.stop();
+
+        //Interrupt fault worker
+        faultWorker.breakLoop();
+
+        //Recovery fault
+        fault.recover();
+
+        log.info("Wait for recovery some time");
 
         try {
-            Thread.sleep(TimeUnit.SECONDS.toMillis(3));
-        } catch (InterruptedException e) {
-            log.error("", e);
+            //Wait for recovery, sleep 20 s
+            Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+        } catch (Exception e) {
+            log.info("", e);
         }
+
+        //Model do something after stop
+        model.afterStop();
+
+        recorder.flush();
+
+        testEndTimestamp = System.currentTimeMillis();
+
+    }
+
+    public static void check(Arguments arguments) {
+
+        ChaosControl.status = Status.CHECK_ING;
+
+        log.info("Start check...");
+        ChaosControl.status = Status.CHECK_ING;
+
+        List<Checker> checkerList = new ArrayList<>();
+
+        checkerList.add(new MQChecker(historyFile));
+        checkerList.add(new PerfChecker(historyFile, testStartTimeStamp, testEndTimestamp));
+        if (arguments.rto) {
+            checkerList.add(new RTOChecker(historyFile));
+        }
+        if (arguments.recovery) {
+            checkerList.add(new RecoveryChecker(historyFile));
+        }
+        if (arguments.isOrderTest) {
+            checkerList.add(new OrderChecker(historyFile, shardingKeys));
+        }
+
+        resultList = new ArrayList<>();
+        checkerList.forEach(checker -> resultList.add(checker.check()));
+
+        log.info("Check complete.");
+
+        ChaosControl.status = Status.CHECK_COMPLETE;
+    }
+
+    private static void showResult() {
 
         if (resultList.size() != 0) {
             log.info("----CHAOS TEST RESULT----");
             resultList.forEach(testResult -> log.info(testResult.toString()));
             log.info("----CHAOS TEST RESULT----");
         }
+    }
+
+    private static void clearAfterException() {
+
+        if (recorder != null) {
+            recorder.delete();
+            recorder.close();
+            recorder = null;
+        }
+
+        if (model != null) {
+            model.shutdown();
+            model = null;
+        }
+
+        SshUtil.close();
+    }
+
+    public static void clear() {
+
+        if (recorder != null) {
+            recorder.close();
+            recorder = null;
+        }
+
+        if (model != null) {
+            model.shutdown();
+            model = null;
+        }
+
+        fault = null;
+        faultWorker = null;
+        testStartTimeStamp = 0;
+        testEndTimestamp = 0;
+        historyFile = null;
+        shardingKeys = null;
+
+        SshUtil.close();
+
     }
 
     static class Arguments {
@@ -370,6 +466,27 @@ public class ChaosControl {
             "--install"}, description = "Whether to install program. It will download the installation package on each cluster node. " +
             "When you first use OpenMessaging-Chaos to test a distributed system, it should be true.")
         boolean install = false;
+
+        @Parameter(names = {
+            "--agent"}, description = "Run program as a http agent.")
+        boolean agent = false;
+
+        @Parameter(names = {
+            "-p",
+            "--port"}, description = "The listening port of http agent.")
+        int port = 8080;
+
+    }
+
+    enum Status {
+        READY_ING,
+        READY_COMPLETE,
+        READY_FAILED,
+        RUN_ING,
+        STOP,
+        STOP_ING,
+        CHECK_ING,
+        CHECK_COMPLETE,
     }
 
 }
