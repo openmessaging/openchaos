@@ -13,8 +13,12 @@
 
 package io.openmessaging.chaos.http;
 
+import com.alibaba.fastjson.JSON;
+import io.openmessaging.chaos.Arguments;
+import io.openmessaging.chaos.ChaosControl;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -29,14 +33,18 @@ public class Agent extends AbstractVerticle {
         this.port = port;
     }
 
+    private volatile Arguments arguments;
+
     @Override
     public void start() {
         Router router = Router.router(vertx);
 
         router.route().handler(BodyHandler.create());
 
+        router.post("/ready").handler(this::handleReady);
         router.post("/start").handler(this::handleStart);
         router.post("/stop").handler(this::handleStop);
+        router.post("/reset").handler(this::handleReset);
         router.post("/record").handler(this::handleRecord);
         router.get("/status").handler(this::getStatus);
         router.get("/result").handler(this::getResult);
@@ -44,24 +52,64 @@ public class Agent extends AbstractVerticle {
         vertx.createHttpServer().requestHandler(router::accept).listen(port);
     }
 
-    private void handleStart(RoutingContext routingContext) {
+    private void handleReady(RoutingContext routingContext) {
+        HttpServerResponse response = routingContext.response();
+        if (ChaosControl.getStatus() == ChaosControl.Status.COMPLETE || ChaosControl.getStatus() == ChaosControl.Status.READY_FAILED) {
+            arguments = JSON.parseObject(routingContext.getBodyAsString(), Arguments.class);
+            new Thread(() -> ChaosControl.ready(arguments)).start();
+            response.putHeader("content-type", "application/json").end("READY_ING");
+        } else {
+            response.putHeader("content-type", "application/json").end("FAIL");
+        }
+    }
 
+    private void handleStart(RoutingContext routingContext) {
+        HttpServerResponse response = routingContext.response();
+        if (ChaosControl.getStatus() == ChaosControl.Status.READY_COMPLETE) {
+            new Thread(() -> ChaosControl.run(arguments)).start();
+            response.putHeader("content-type", "application/json").end("START_ING");
+        } else {
+            response.putHeader("content-type", "application/json").end("FAIL");
+        }
     }
 
     private void handleStop(RoutingContext routingContext) {
+        HttpServerResponse response = routingContext.response();
+        if (ChaosControl.getStatus() == ChaosControl.Status.RUN_ING) {
+            new Thread(() -> {
+                ChaosControl.stop();
+                ChaosControl.check(arguments);
+                ChaosControl.clear();
+            }).start();
 
+            response.putHeader("content-type", "application/json").end("STOP_ING");
+        } else {
+            response.putHeader("content-type", "application/json").end("FAIL");
+        }
+    }
+
+    private void handleReset(RoutingContext routingContext) {
+        HttpServerResponse response = routingContext.response();
+        ChaosControl.clear();
+        arguments = null;
+        ChaosControl.setResultList(null);
+        ChaosControl.setStatus(ChaosControl.Status.COMPLETE);
+        response.putHeader("content-type", "application/json").end("OK");
     }
 
     private void handleRecord(RoutingContext routingContext) {
-
+        HttpServerResponse response = routingContext.response();
+        response.putHeader("content-type", "application/json").end("OK");
     }
 
     private void getStatus(RoutingContext routingContext) {
-
+        HttpServerResponse response = routingContext.response();
+        response.putHeader("content-type", "application/json").end(JSON.toJSONString(ChaosControl.getStatus()));
     }
 
     private void getResult(RoutingContext routingContext) {
-
+        HttpServerResponse response = routingContext.response();
+        response.putHeader("content-type", "application/json").end(JSON.toJSONString(ChaosControl.getResultList()));
     }
 
     public synchronized static void startAgent(int port) {

@@ -14,9 +14,7 @@
 package io.openmessaging.chaos;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.validators.PositiveInteger;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -61,9 +59,9 @@ public class ChaosControl {
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
 
-    public static volatile Status status = Status.CHECK_COMPLETE;
+    private static volatile Status status = Status.COMPLETE;
 
-    public static List<TestResult> resultList;
+    private static List<TestResult> resultList;
 
     private static Fault fault;
 
@@ -104,7 +102,10 @@ public class ChaosControl {
         }
 
         try {
+
             if (arguments.agent) {
+
+                log.info("Start ChaosControl HTTP Agent...");
 
                 Agent.startAgent(arguments.port);
 
@@ -121,11 +122,11 @@ public class ChaosControl {
                 Timer timer = new Timer(true);
                 timer.schedule(new TimerTask() {
                     @Override public void run() {
-                        ChaosControl.status = Status.STOP;
+                        ChaosControl.status = Status.STOP_ING;
                     }
                 }, arguments.time * 1000);
 
-                while (ChaosControl.status != Status.STOP) {
+                while (ChaosControl.status != Status.STOP_ING) {
                     Thread.sleep(10);
                 }
 
@@ -147,6 +148,23 @@ public class ChaosControl {
         ChaosControl.status = Status.READY_ING;
 
         try {
+
+            if (arguments.driver == null || arguments.driver.isEmpty()) {
+                throw new IllegalArgumentException("Parameter driver cannot be null or empty");
+            }
+
+            if (arguments.time <= 0) {
+                throw new IllegalArgumentException("Parameter time should be positive");
+            }
+
+            if (arguments.concurrency <= 0) {
+                throw new IllegalArgumentException("Parameter concurrency should be positive");
+            }
+
+            if (arguments.rate <= 0) {
+                throw new IllegalArgumentException("Parameter rate should be positive");
+            }
+
             File driverConfigFile = new File(arguments.driver);
             DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile,
                 DriverConfiguration.class);
@@ -342,7 +360,7 @@ public class ChaosControl {
 
         log.info("Check complete.");
 
-        ChaosControl.status = Status.CHECK_COMPLETE;
+        ChaosControl.status = Status.COMPLETE;
     }
 
     private static void showResult() {
@@ -370,6 +388,26 @@ public class ChaosControl {
         SshUtil.close();
     }
 
+    public static void setStatus(Status status) {
+        ChaosControl.status = status;
+    }
+
+    public static Status getStatus() {
+        return status;
+    }
+
+    public static void setResultList(List<TestResult> resultList) {
+        ChaosControl.resultList = resultList;
+    }
+
+    public static List<TestResult> getResultList() {
+        return resultList;
+    }
+
+    public static Recorder getRecorder() {
+        return recorder;
+    }
+
     public static void clear() {
 
         if (recorder != null) {
@@ -378,6 +416,7 @@ public class ChaosControl {
         }
 
         if (model != null) {
+            model.stop();
             model.shutdown();
             model = null;
         }
@@ -390,103 +429,16 @@ public class ChaosControl {
         shardingKeys = null;
 
         SshUtil.close();
-
     }
 
-    static class Arguments {
-
-        @Parameter(names = {"-h", "--help"}, description = "Help message", help = true)
-        boolean help;
-
-        @Parameter(names = {
-            "-d",
-            "--driver"}, description = "Driver. eg.: driver-rocketmq/rocketmq.yaml", required = true)
-        String driver;
-
-        @Parameter(names = {
-            "-t",
-            "--limit-time"}, description = "Chaos execution time in seconds (excluding check time and recovery time). eg: 60", validateWith = PositiveInteger.class)
-        int time = 60;
-
-        @Parameter(names = {
-            "-c",
-            "--concurrency"}, description = "The number of clients. eg: 5", validateWith = PositiveInteger.class)
-        int concurrency = 4;
-
-        @Parameter(names = {
-            "-r",
-            "--rate"}, description = "Approximate number of requests per second. eg: 20", validateWith = PositiveInteger.class)
-        int rate = 20;
-
-        @Parameter(names = {
-            "-u",
-            "--username"}, description = "User name for ssh remote login. eg: admin")
-        String username = "root";
-
-        @Parameter(names = {
-            "-f",
-            "--fault"}, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, fixed-kill, random-partition, " +
-            "fixed-partition, partition-majorities-ring, bridge, random-loss, minor-suspend, major-suspend, random-suspend, fixed-suspend"
-            , validateWith = FaultValidator.class)
-        String fault = "noop";
-
-        @Parameter(names = {
-            "-n",
-            "--fault-nodes"}, description = "The nodes need to be fault injection. The nodes are separated by semicolons. eg: 'n1;n2;n3' " +
-            " Note: this parameter must be used with fixed-xxx faults such as fixed-kill, fixed-partition, fixed-suspend.")
-        String faultNodes = null;
-
-        @Parameter(names = {
-            "-i",
-            "--fault-interval"}, description = "Fault injection interval. eg: 30", validateWith = PositiveInteger.class)
-        int interval = 30;
-
-        @Parameter(names = {
-            "-m",
-            "--model"}, description = "Test model. Currently only queue model is supported.")
-        String model = "queue";
-
-        @Parameter(names = {
-            "--rto"}, description = "Calculate failure recovery time in fault.")
-        boolean rto = false;
-
-        @Parameter(names = {
-            "--recovery"}, description = "Calculate failure recovery time.")
-        boolean recovery = false;
-
-        @Parameter(names = {
-            "--order"}, description = "Check the partition order of messaging platform. Just for mq model.")
-        boolean isOrderTest = false;
-
-        @Parameter(names = {
-            "--pull"}, description = "Driver use pull consumer, default is push consumer. Just for mq model.")
-        boolean pull = false;
-
-        @Parameter(names = {
-            "--install"}, description = "Whether to install program. It will download the installation package on each cluster node. " +
-            "When you first use OpenMessaging-Chaos to test a distributed system, it should be true.")
-        boolean install = false;
-
-        @Parameter(names = {
-            "--agent"}, description = "Run program as a http agent.")
-        boolean agent = false;
-
-        @Parameter(names = {
-            "-p",
-            "--port"}, description = "The listening port of http agent.")
-        int port = 8080;
-
-    }
-
-    enum Status {
+    public enum Status {
         READY_ING,
         READY_COMPLETE,
         READY_FAILED,
         RUN_ING,
-        STOP,
         STOP_ING,
         CHECK_ING,
-        CHECK_COMPLETE,
+        COMPLETE,
     }
 
 }
