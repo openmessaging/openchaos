@@ -22,8 +22,6 @@ import io.openmessaging.chaos.checker.result.TestResult;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +35,12 @@ public class RTOChecker implements Checker {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
     }
 
+    private boolean isInFault;
+
+    private boolean unavailableFlag;
+
+    private RTORecord rtoRecord;
+
     private String fileName;
 
     public RTOChecker(String fileName) {
@@ -45,6 +49,7 @@ public class RTOChecker implements Checker {
 
     @Override
     public TestResult check() {
+
         RTOTestResult rtoTestResult = new RTOTestResult();
         try {
             checkInner(rtoTestResult);
@@ -61,16 +66,13 @@ public class RTOChecker implements Checker {
         return rtoTestResult;
     }
 
-    private void checkInner(RTOTestResult rtoTestResult) throws Exception {
+    private synchronized void checkInner(RTOTestResult rtoTestResult) throws Exception {
 
-        List<String[]> allRecords = Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).collect(Collectors.toList());
+        isInFault = false;
+        unavailableFlag = false;
+        rtoRecord = null;
 
-        boolean isInFault = false;
-        boolean unavailableFlag = false;
-        RTORecord rtoRecord = null;
-
-        for (String[] x : allRecords) {
-
+        Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).forEach(x -> {
             if (x[0].equals("fault") && x[2].equals("start")) {
                 isInFault = true;
                 rtoRecord = new RTORecord();
@@ -101,7 +103,7 @@ public class RTOChecker implements Checker {
             if (!unavailableFlag && !isInFault && x[3].equals("FAILURE")) {
                 rtoTestResult.setUnexpectedUnavailableInNormalInterval(true);
             }
-        }
+        });
 
         rtoTestResult.isValid = true;
     }

@@ -16,6 +16,7 @@ package io.openmessaging.chaos.generator;
 import java.util.List;
 
 public class FaultOperation {
+
     private String name;
     private String node;
     private List<String> invokeArgs;
@@ -63,5 +64,14 @@ public class FaultOperation {
 
     public void setRecoverArgs(List<String> recoverArgs) {
         this.recoverArgs = recoverArgs;
+    }
+
+    @Override public String toString() {
+        return "FaultOperation {" +
+            "name='" + name + '\'' +
+            ", node='" + node + '\'' +
+            ", invokeArgs=" + invokeArgs +
+            ", recoverArgs=" + recoverArgs +
+            '}';
     }
 }

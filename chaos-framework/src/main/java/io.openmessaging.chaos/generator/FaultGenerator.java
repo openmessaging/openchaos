@@ -188,7 +188,7 @@ public class FaultGenerator {
         return operations;
     }
 
-    private static FaultOperation getPartitionOperation(String node, String faultName, Set<String> partitionNodes) {
+    private static FaultOperation getPartitionOperation(String faultName, String node, Set<String> partitionNodes) {
         List<String> invokeArgs = new ArrayList<>(partitionNodes);
         List<String> recoverArgs = new ArrayList<>(partitionNodes);
         return new FaultOperation(faultName, node, invokeArgs, recoverArgs);
