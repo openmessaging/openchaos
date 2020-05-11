@@ -48,9 +48,10 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/openmessaging/openmessaging-chaos.git</connection>
-        <developerConnection>https://github.com/openmessaging/openmessaging-chaos.git</developerConnection>
-        <url>https://github.com/openmessaging/openmessaging-chaos</url>
+        <connection>scm:git:git@github.com:openmessaging/openmessaging-chaos.git</connection>
+        <developerConnection>git@github.com:openmessaging/openmessaging-chaos.git</developerConnection>
+        <url>git@github.com:openmessaging/openmessaging-chaos</url>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
