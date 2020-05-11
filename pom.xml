@@ -50,7 +50,7 @@
     <scm>
         <url>git@github.com:openmessaging/openmessaging-chaos.git</url>
         <connection>scm:git:git@github.com:openmessaging/openmessaging-chaos.git</connection>
-        <developerConnection>scm:git@github.com:openmessaging/openmessaging-chaos.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:openmessaging/openmessaging-chaos.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
