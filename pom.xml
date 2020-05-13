@@ -29,6 +29,7 @@
         <module>driver-api</module>
         <module>driver-rocketmq</module>
         <module>chaos-common</module>
+        <module>driver-kafka</module>
     </modules>
 
     <parent>
@@ -126,6 +127,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>driver-rocketmq</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>driver-kafka</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
