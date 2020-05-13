@@ -1,3 +1,16 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.openmessaging.chaos.driver.kafka;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -6,7 +19,18 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.openmessaging.chaos.driver.kafka.config.KafkaBrokerConfig;
 import io.openmessaging.chaos.driver.kafka.config.KafkaClientConfig;
 import io.openmessaging.chaos.driver.kafka.config.KafkaConfig;
-import io.openmessaging.chaos.driver.mq.*;
+import io.openmessaging.chaos.driver.mq.ConsumerCallback;
+import io.openmessaging.chaos.driver.mq.MQChaosDriver;
+import io.openmessaging.chaos.driver.mq.MQChaosNode;
+import io.openmessaging.chaos.driver.mq.MQChaosProducer;
+import io.openmessaging.chaos.driver.mq.MQChaosPullConsumer;
+import io.openmessaging.chaos.driver.mq.MQChaosPushConsumer;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -15,17 +39,10 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-
 public class KafkaChaosDriver implements MQChaosDriver {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosDriver.class);
     private KafkaClientConfig kafkaClientConfig;
     private KafkaConfig kafkaConfig;
@@ -43,7 +60,6 @@ public class KafkaChaosDriver implements MQChaosDriver {
     private static KafkaBrokerConfig readBrokerConfigForKafka(File configurationFile) throws IOException {
         return MAPPER.readValue(configurationFile, KafkaBrokerConfig.class);
     }
-
 
     @Override
     public void initialize(File configurationFile, List<String> nodes) throws IOException {
@@ -83,7 +99,8 @@ public class KafkaChaosDriver implements MQChaosDriver {
     }
 
     @Override
-    public MQChaosPushConsumer createPushConsumer(String topic, String subscriptionName, ConsumerCallback consumerCallback) {
+    public MQChaosPushConsumer createPushConsumer(String topic, String subscriptionName,
+                                                  ConsumerCallback consumerCallback) {
         return new KafkaChaosPushConsumer();
     }
 
@@ -102,12 +119,10 @@ public class KafkaChaosDriver implements MQChaosDriver {
         return new KafkaChaosPullConsumer(kafkaConsumer);
     }
 
-
     @Override
     public MQChaosNode createChaosNode(String node, List<String> nodes) {
         return new KafkaChaosNode(node, nodes, kafkaConfig, kafkaBrokerConfig);
     }
-
 
     @Override
     public void shutdown() {
