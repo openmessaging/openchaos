@@ -23,7 +23,7 @@ public class Arguments {
 
     @Parameter(names = {
         "-d",
-        "--driver"}, description = "Driver. eg.: driver-rocketmq/rocketmq.yaml")
+        "--driver"}, description = "Driver. eg.: driver-rocketmq/rocketmq.yaml", required = true)
     public String driver;
 
     @Parameter(names = {

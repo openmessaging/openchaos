@@ -72,12 +72,8 @@ public class Recorder {
         log.info(logLine);
     }
 
-    public void recordFaultStart(String faultName, long timeStamp) {
-        recordToHistoryFile(String.format("fault\t%s\tstart\t%d\n", faultName, timeStamp));
-    }
-
-    public void recordFaultEnd(String faultName, long timeStamp) {
-        recordToHistoryFile(String.format("fault\t%s\tend\t%d\n", faultName, timeStamp));
+    public void recordFault(FaultLogEntry faultLogEntry) {
+        recordToHistoryFile(String.format("fault\t%s\t%s\t%d\n", faultLogEntry.faultName, faultLogEntry.operation, faultLogEntry.timestamp));
     }
 
     private synchronized void recordToHistoryFile(String recordLine) {

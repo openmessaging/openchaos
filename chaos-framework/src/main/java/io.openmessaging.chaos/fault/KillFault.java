@@ -17,6 +17,7 @@ import io.openmessaging.chaos.ChaosControl;
 import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
+import io.openmessaging.chaos.recorder.FaultLogEntry;
 import io.openmessaging.chaos.recorder.Recorder;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class KillFault implements Fault {
     @Override
     public synchronized void invoke() {
         log.info("Invoke {} fault....", mode);
-        recorder.recordFaultStart(mode, System.currentTimeMillis());
+        recorder.recordFault(new FaultLogEntry(mode,"start", System.currentTimeMillis()));
         if (faultNodes != null) {
             faultOperations = FaultGenerator.generate(nodesMap.keySet(), faultNodes, mode);
         } else {
@@ -69,7 +70,7 @@ public class KillFault implements Fault {
         if (faultOperations == null)
             return;
         log.info("Recover {} fault....", mode);
-        recorder.recordFaultEnd(mode, System.currentTimeMillis());
+        recorder.recordFault(new FaultLogEntry(mode,"end", System.currentTimeMillis()));
         for (FaultOperation operation : faultOperations) {
             log.info("Restart node {} processes...", operation.getNode());
             MQChaosNode mqChaosNode = nodesMap.get(operation.getNode());

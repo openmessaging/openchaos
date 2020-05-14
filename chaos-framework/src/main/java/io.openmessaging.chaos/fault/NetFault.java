@@ -17,6 +17,7 @@ import io.openmessaging.chaos.ChaosControl;
 import io.openmessaging.chaos.common.utils.NetUtil;
 import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
+import io.openmessaging.chaos.recorder.FaultLogEntry;
 import io.openmessaging.chaos.recorder.Recorder;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,7 +54,7 @@ public class NetFault implements Fault {
     @Override
     public synchronized void invoke() {
         log.info("Invoke {} fault", mode);
-        recorder.recordFaultStart(mode, System.currentTimeMillis());
+        recorder.recordFault(new FaultLogEntry(mode,"start", System.currentTimeMillis()));
         if (faultNodes != null) {
             faultOperations = FaultGenerator.generate(nodes, faultNodes, mode);
         } else {
@@ -106,7 +107,7 @@ public class NetFault implements Fault {
         if (faultOperations == null)
             return;
         log.info("Recover {} fault", mode);
-        recorder.recordFaultEnd(mode, System.currentTimeMillis());
+        recorder.recordFault(new FaultLogEntry(mode,"end", System.currentTimeMillis()));
         for (FaultOperation operation : faultOperations) {
             try {
                 log.info("Recover node {} fault, fault is {}, recover args is {}",

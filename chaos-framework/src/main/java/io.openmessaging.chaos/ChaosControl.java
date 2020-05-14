@@ -56,6 +56,7 @@ public class ChaosControl {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
 
@@ -78,6 +79,10 @@ public class ChaosControl {
     private static String historyFile;
 
     private static List<String> shardingKeys;
+
+    private static File driverConfigFile;
+
+    private static DriverConfiguration driverConfiguration;
 
     static {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
@@ -102,11 +107,19 @@ public class ChaosControl {
         }
 
         try {
+            driverConfigFile = new File(arguments.driver);
+            driverConfiguration = MAPPER.readValue(driverConfigFile,
+                DriverConfiguration.class);
+        } catch (Exception e) {
+            log.error("Load driver configuration failed", e);
+            System.exit(-1);
+        }
+
+        try {
 
             if (arguments.agent) {
 
                 log.info("Start ChaosControl HTTP Agent...");
-
                 Agent.startAgent(arguments.port);
 
             } else {
@@ -149,12 +162,8 @@ public class ChaosControl {
 
         try {
 
-            if (arguments.driver == null || arguments.driver.isEmpty()) {
-                throw new IllegalArgumentException("Parameter driver cannot be null or empty");
-            }
-
             if (arguments.time <= 0) {
-                throw new IllegalArgumentException("Parameter time should be positive");
+                arguments.time = Integer.MAX_VALUE;
             }
 
             if (arguments.concurrency <= 0) {
@@ -164,10 +173,6 @@ public class ChaosControl {
             if (arguments.rate <= 0) {
                 throw new IllegalArgumentException("Parameter rate should be positive");
             }
-
-            File driverConfigFile = new File(arguments.driver);
-            DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile,
-                DriverConfiguration.class);
 
             List<String> faultNodeList = new ArrayList<>();
             if (arguments.fault.startsWith("fixed-")) {

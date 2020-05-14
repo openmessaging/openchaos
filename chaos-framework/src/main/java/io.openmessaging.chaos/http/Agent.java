@@ -16,6 +16,8 @@ package io.openmessaging.chaos.http;
 import com.alibaba.fastjson.JSON;
 import io.openmessaging.chaos.Arguments;
 import io.openmessaging.chaos.ChaosControl;
+import io.openmessaging.chaos.recorder.FaultLogEntry;
+import io.openmessaging.chaos.recorder.Recorder;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
@@ -99,7 +101,25 @@ public class Agent extends AbstractVerticle {
 
     private void handleRecord(RoutingContext routingContext) {
         HttpServerResponse response = routingContext.response();
-        response.putHeader("content-type", "application/json").end("OK");
+        if (ChaosControl.getStatus() == ChaosControl.Status.RUN_ING) {
+            FaultLogEntry faultLogEntry = JSON.parseObject(routingContext.getBodyAsString(), FaultLogEntry.class);
+            if (faultLogEntry == null) {
+                response.putHeader("content-type", "application/json").end("FAIL");
+                return;
+            } else if (!faultLogEntry.operation.equals("start") && !faultLogEntry.operation.equals("end")) {
+                response.putHeader("content-type", "application/json").end("FAIL");
+                return;
+            }
+            Recorder recorder = ChaosControl.getRecorder();
+            if (recorder != null) {
+                recorder.recordFault(faultLogEntry);
+                response.putHeader("content-type", "application/json").end("OK");
+            } else {
+                response.putHeader("content-type", "application/json").end("FAIL");
+            }
+        } else {
+            response.putHeader("content-type", "application/json").end("FAIL");
+        }
     }
 
     private void getStatus(RoutingContext routingContext) {
