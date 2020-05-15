@@ -73,6 +73,10 @@
             <artifactId>driver-rocketmq</artifactId>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>driver-kafka</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.panayotis</groupId>
             <artifactId>javaplot</artifactId>
         </dependency>
