@@ -30,6 +30,10 @@ services:
     <<: *default-node
     container_name: chaos-n3
     hostname: n3
+  n4:
+    <<: *default-node
+    container_name: chaos-n4
+    hostname: n4
 
 networks:
   chaos:

@@ -14,7 +14,6 @@
 package io.openmessaging.chaos.driver.mq;
 
 import io.openmessaging.chaos.driver.ChaosDriver;
-import java.util.List;
 
 public interface MQChaosDriver extends ChaosDriver {
 
@@ -40,11 +39,4 @@ public interface MQChaosDriver extends ChaosDriver {
      */
     MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName);
 
-    /**
-     * Create a ChaosNode. ChaosNode represents one of the nodes in the cluster to be tested
-     *
-     * @param node current node
-     * @param nodes all the nodes of the distributed system to be tested
-     */
-    MQChaosNode createChaosNode(String node, List<String> nodes);
 }

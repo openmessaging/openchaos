@@ -66,7 +66,6 @@ public class KafkaChaosNode implements MQChaosNode {
             SshUtil.execCommandInDir(node, installDir,
                     String.format("curl http://archive.apache.org/dist/kafka/%s/kafka_%s-%s.tgz -o kafka.tgz", kafkaVersion, scalaVersion, kafkaVersion),
                     "tar -zxf kafka.tgz", "rm -f kafka.tgz", "mv kafka*/* .", "rmdir kafka*");
-            SshUtil.execCommandInDir(node, installDir, "tar -zxf kafka.tgz", "rm -f kafka.tgz", "mv kafka*/* .", "rmdir kafka*");
             log.info("Node {} download kafka success", node);
 
             Field[] fields = kafkaBrokerConfig.getClass().getDeclaredFields();
@@ -74,11 +73,11 @@ public class KafkaChaosNode implements MQChaosNode {
                 String name = fields[i].getName();
                 String value = (String) fields[i].get(kafkaBrokerConfig);
                 if (value != null && !value.isEmpty()) {
-                    SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> %s", formatKey(name) + "=" + value, configureFilePath));
+                    SshUtil.execCommandInDir(node, installDir, String.format("echo '\n%s' >> %s", formatKey(name) + "=" + value, configureFilePath));
                 }
             }
-            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> %s", "broker.id=" + nodes.indexOf(node), configureFilePath));
-            SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> %s", "host.name=" + node, configureFilePath));
+            SshUtil.execCommandInDir(node, installDir, String.format("echo '\n%s' >> %s", "broker.id=" + nodes.indexOf(node), configureFilePath));
+            SshUtil.execCommandInDir(node, installDir, String.format("echo '\n%s' >> %s", "host.name=" + node, configureFilePath));
         } catch (Exception e) {
             log.error("Node {} setup kafka node failed", node, e);
             throw new RuntimeException(e);

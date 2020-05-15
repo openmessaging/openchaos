@@ -31,3 +31,4 @@ nodes:
 installDir: kafka_chaos
 zookeeperConnect: IP:Port
 logDirs: /tmp/kafka-logs
+replicationFactor: 3

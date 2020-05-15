@@ -34,8 +34,14 @@ import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,10 +50,14 @@ public class KafkaChaosDriver implements MQChaosDriver {
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosDriver.class);
-    private KafkaClientConfig kafkaClientConfig;
     private KafkaConfig kafkaConfig;
     private KafkaBrokerConfig kafkaBrokerConfig;
     private List<String> nodes;
+    private AdminClient admin;
+    private Properties topicProperties;
+    private Properties producerProperties;
+    private Properties consumerProperties;
+
 
     private static KafkaClientConfig readConfigForClient(File configurationFile) throws IOException {
         return MAPPER.readValue(configurationFile, KafkaClientConfig.class);
@@ -63,21 +73,41 @@ public class KafkaChaosDriver implements MQChaosDriver {
 
     @Override
     public void initialize(File configurationFile, List<String> nodes) throws IOException {
-        this.kafkaClientConfig = readConfigForClient(configurationFile);
         this.kafkaConfig = readConfigForKafka(configurationFile);
         this.kafkaBrokerConfig = readBrokerConfigForKafka(configurationFile);
         this.nodes = nodes;
+
+        topicProperties = new Properties();
+        topicProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapBrokers(nodes));
+
+        producerProperties = new Properties();
+        producerProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapBrokers(nodes));
+        producerProperties.put("acks", "all");
+        producerProperties.put("retries", 0);
+        producerProperties.put("batch.size", 16384);
+        producerProperties.put("linger.ms", 1);
+        producerProperties.put("buffer.memory", 33554432);
+        producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+
+        consumerProperties = new Properties();
+        consumerProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapBrokers(nodes));
+        consumerProperties.put("enable.auto.commit", "true");
+        consumerProperties.put("auto.commit.interval.ms", "1000");
+        consumerProperties.put("session.timeout.ms", "30000");
+        consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
     }
 
     @Override
     public void createTopic(String topic, int partitions) {
         try {
-            Properties properties = new Properties();
-            properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBroker(nodes));
             List list = new ArrayList();
-            list.add(new NewTopic(topic, partitions, (short) (nodes.size() - 1)));
-            AdminClient.create(properties).createTopics(list);
+            list.add(new NewTopic(topic, partitions, (short) nodes.size()));
+            admin = AdminClient.create(topicProperties);
+            admin.createTopics(list).all().get();
         } catch (Exception e) {
+            log.error("");
             throw new RuntimeException(String.format("Failed to create topic [%s] to cluster", topic), e);
         }
 
@@ -85,36 +115,23 @@ public class KafkaChaosDriver implements MQChaosDriver {
 
     @Override
     public MQChaosProducer createProducer(String topic) {
-        Properties props = new Properties();
-        props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBroker(nodes));
-        props.put("acks", "all");
-        props.put("retries", 0);
-        props.put("batch.size", 16384);
-        props.put("linger.ms", 1);
-        props.put("buffer.memory", 33554432);
-        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        KafkaProducer<String, String> producer = new KafkaProducer<>(props);
+        KafkaProducer<String, byte[]> producer = new KafkaProducer<>(producerProperties);
         return new KafkaChaosProducer(producer, topic);
     }
 
     @Override
     public MQChaosPushConsumer createPushConsumer(String topic, String subscriptionName,
                                                   ConsumerCallback consumerCallback) {
-        return new KafkaChaosPushConsumer();
+        consumerProperties.put("group.id", subscriptionName);
+        KafkaConsumer<String, byte[]> kafkaConsumer = new KafkaConsumer<>(consumerProperties);
+        kafkaConsumer.subscribe(Arrays.asList(topic));
+        return new KafkaChaosPushConsumer(kafkaConsumer, consumerCallback);
     }
 
     @Override
     public MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName) {
-        Properties properties = new Properties();
-        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBroker(nodes));
-        properties.put("group.id", subscriptionName);
-        properties.put("enable.auto.commit", "true");
-        properties.put("auto.commit.interval.ms", "1000");
-        properties.put("session.timeout.ms", "30000");
-        properties.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        properties.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(properties);
+        consumerProperties.put("group.id", subscriptionName);
+        KafkaConsumer<String, byte[]> kafkaConsumer = new KafkaConsumer<>(consumerProperties);
         kafkaConsumer.subscribe(Arrays.asList(topic));
         return new KafkaChaosPullConsumer(kafkaConsumer);
     }
@@ -126,9 +143,12 @@ public class KafkaChaosDriver implements MQChaosDriver {
 
     @Override
     public void shutdown() {
+        if (admin != null) {
+            admin.close();
+        }
     }
 
-    private String getBroker(List<String> nodes) {
+    private String getBootstrapBrokers(List<String> nodes) {
         StringBuilder res = new StringBuilder();
         nodes.forEach(node -> res.append(node + ":9092,"));
         return res.toString().substring(0, res.length() - 1);

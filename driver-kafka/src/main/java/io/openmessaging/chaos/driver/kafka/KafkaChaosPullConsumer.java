@@ -15,45 +15,55 @@ package io.openmessaging.chaos.driver.kafka;
 
 import io.openmessaging.chaos.common.Message;
 import io.openmessaging.chaos.driver.mq.MQChaosPullConsumer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class KafkaChaosPullConsumer implements MQChaosPullConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosPullConsumer.class);
     private KafkaConsumer kafkaConsumer;
+    private final ExecutorService executor;
+    private Future<List<Message>> consumerTask;
 
     public KafkaChaosPullConsumer(KafkaConsumer kafkaConsumer) {
         this.kafkaConsumer = kafkaConsumer;
+        this.executor = Executors.newSingleThreadExecutor();
     }
 
     @Override
     public List<Message> dequeue() {
-        log.info("consumer message.....");
-        try {
-            while (true) {
-                ConsumerRecords<String, String> records = kafkaConsumer.poll(5000);
-                if (!records.isEmpty()) {
 
+        List<Message> res = null;
+
+        this.consumerTask = executor.submit(new Callable<List<Message>>() {
+            @Override public List<Message> call() throws Exception {
+                ConsumerRecords<String, byte[]> records = kafkaConsumer.poll(500);
+                if (!records.isEmpty()) {
                     List<Message> messageList = new ArrayList<>();
-                    for (ConsumerRecord<String, String> record : records) {
-                        messageList.add(new Message(record.key(), record.value().getBytes()));
+                    for (ConsumerRecord<String, byte[]> record : records) {
+                        messageList.add(new Message(record.key(), record.value()));
                     }
                     return messageList;
                 } else {
                     return null;
                 }
             }
+        });
+        try {
+            res = consumerTask.get();
         } catch (Exception e) {
             log.error("dequeue error", e);
         }
-        return null;
+        return res;
     }
 
     @Override
@@ -63,6 +73,15 @@ public class KafkaChaosPullConsumer implements MQChaosPullConsumer {
 
     @Override
     public void close() {
-
+        try {
+            executor.submit(() -> {
+                if (kafkaConsumer != null) {
+                    kafkaConsumer.close();
+                }
+            }).get();
+        } catch (Exception e) {
+            log.error("Close KafkaChaosPullConsumer error", e);
+        }
+        executor.shutdown();
     }
 }

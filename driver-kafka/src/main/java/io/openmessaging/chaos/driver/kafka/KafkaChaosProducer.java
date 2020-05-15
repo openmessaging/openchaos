@@ -17,6 +17,7 @@ import io.openmessaging.chaos.common.InvokeResult;
 import io.openmessaging.chaos.driver.mq.MQChaosProducer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +25,9 @@ public class KafkaChaosProducer implements MQChaosProducer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosProducer.class);
     private String chaosTopic;
-    private KafkaProducer kafkaProducer;
+    private KafkaProducer<String, byte[]> kafkaProducer;
 
-    public KafkaChaosProducer(KafkaProducer kafkaProducer, String chaosTopic) {
+    public KafkaChaosProducer(KafkaProducer<String, byte[]> kafkaProducer, String chaosTopic) {
         this.kafkaProducer = kafkaProducer;
         this.chaosTopic = chaosTopic;
     }
@@ -34,10 +35,12 @@ public class KafkaChaosProducer implements MQChaosProducer {
     @Override
     public InvokeResult enqueue(byte[] payload) {
         try {
-            log.info("send message.....");
-            kafkaProducer.send(new ProducerRecord<String, String>(chaosTopic, new String(payload)));
+            kafkaProducer.send(new ProducerRecord<>(chaosTopic, payload));
+        } catch (TimeoutException e) {
+            log.warn("enqueue timeout...", e);
+            return InvokeResult.UNKNOWN;
         } catch (Exception e) {
-            log.info("enqueue error", e);
+            log.warn("enqueue error", e);
             return InvokeResult.FAILURE;
         }
         return InvokeResult.SUCCESS;
@@ -46,7 +49,10 @@ public class KafkaChaosProducer implements MQChaosProducer {
     @Override
     public InvokeResult enqueue(String shardingKey, byte[] payload) {
         try {
-            kafkaProducer.send(new ProducerRecord(chaosTopic, shardingKey, payload));
+            kafkaProducer.send(new ProducerRecord<>(chaosTopic, shardingKey, payload));
+        } catch (TimeoutException e) {
+            log.warn("enqueue timeout...", e);
+            return InvokeResult.UNKNOWN;
         } catch (Exception e) {
             return InvokeResult.FAILURE;
         }

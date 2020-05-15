@@ -371,9 +371,9 @@ public class ChaosControl {
     private static void showResult() {
 
         if (resultList.size() != 0) {
-            log.info("----CHAOS TEST RESULT----");
+            log.info("--------------- CHAOS TEST RESULT --- DRIVER : {}---------------", driverConfiguration.name);
             resultList.forEach(testResult -> log.info(testResult.toString()));
-            log.info("----CHAOS TEST RESULT----");
+            log.info("--------------- CHAOS TEST RESULT --- DRIVER : {}---------------", driverConfiguration.name);
         }
     }
 
