@@ -17,23 +17,28 @@
 # under the License.
 #
 
+# Kafka driver profile that is configuring to sync all
+# published messages to disk to achieve durability
 name: Kafka
 driverClass: io.openmessaging.chaos.driver.kafka.KafkaChaosDriver
 
 # cluster configuration
 nodes:
-- n1
-- n2
-- n3
+  - n1
+  - n2
+  - n3
 
-# Kafka client configuration
+
+# Kafka client-specific configuration
 replicationFactor: 3
 
 topicConfig: |
   min.insync.replicas=2
+  flush.messages=1
+  flush.ms=0
 
 commonConfig: |
-  bootstrap.servers=n1:9092,n2:9092,n3:9092
+  bootstrap.servers=localhost:9092
 
 producerConfig: |
   acks=all
@@ -42,7 +47,7 @@ producerConfig: |
 
 consumerConfig: |
   auto.offset.reset=earliest
-
+  enable.auto.commit=false
 
 # Kafka broker configuration
 installDir: kafka_chaos

@@ -27,12 +27,12 @@ import io.openmessaging.chaos.driver.mq.MQChaosPullConsumer;
 import io.openmessaging.chaos.driver.mq.MQChaosPushConsumer;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -51,8 +51,8 @@ public class KafkaChaosDriver implements MQChaosDriver {
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosDriver.class);
     private KafkaConfig kafkaConfig;
+    private KafkaClientConfig kafkaClientConfig;
     private KafkaBrokerConfig kafkaBrokerConfig;
-    private List<String> nodes;
     private AdminClient admin;
     private Properties topicProperties;
     private Properties producerProperties;
@@ -67,34 +67,32 @@ public class KafkaChaosDriver implements MQChaosDriver {
         return MAPPER.readValue(configurationFile, KafkaConfig.class);
     }
 
-    private static KafkaBrokerConfig readBrokerConfigForKafka(File configurationFile) throws IOException {
+    private static KafkaBrokerConfig readConfigForBroker(File configurationFile) throws IOException {
         return MAPPER.readValue(configurationFile, KafkaBrokerConfig.class);
     }
 
     @Override
     public void initialize(File configurationFile, List<String> nodes) throws IOException {
         this.kafkaConfig = readConfigForKafka(configurationFile);
-        this.kafkaBrokerConfig = readBrokerConfigForKafka(configurationFile);
-        this.nodes = nodes;
+        this.kafkaBrokerConfig = readConfigForBroker(configurationFile);
+        this.kafkaClientConfig = readConfigForClient(configurationFile);
+
+        Properties commonProperties = new Properties();
+        commonProperties.load(new StringReader(kafkaClientConfig.commonConfig));
 
         topicProperties = new Properties();
-        topicProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapBrokers(nodes));
+        commonProperties.forEach((key, value) -> topicProperties.put(key, value));
+        topicProperties.load(new StringReader(kafkaClientConfig.topicConfig));
 
         producerProperties = new Properties();
-        producerProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapBrokers(nodes));
-        producerProperties.put("acks", "all");
-        producerProperties.put("retries", 0);
-        producerProperties.put("batch.size", 16384);
-        producerProperties.put("linger.ms", 1);
-        producerProperties.put("buffer.memory", 33554432);
+        commonProperties.forEach((key, value) -> producerProperties.put(key, value));
+        producerProperties.load(new StringReader(kafkaClientConfig.producerConfig));
         producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
 
         consumerProperties = new Properties();
-        consumerProperties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapBrokers(nodes));
-        consumerProperties.put("enable.auto.commit", "true");
-        consumerProperties.put("auto.commit.interval.ms", "1000");
-        consumerProperties.put("session.timeout.ms", "30000");
+        commonProperties.forEach((key, value) -> consumerProperties.put(key, value));
+        consumerProperties.load(new StringReader(kafkaClientConfig.consumerConfig));
         consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
     }
@@ -103,7 +101,7 @@ public class KafkaChaosDriver implements MQChaosDriver {
     public void createTopic(String topic, int partitions) {
         try {
             List list = new ArrayList();
-            list.add(new NewTopic(topic, partitions, (short) nodes.size()));
+            list.add(new NewTopic(topic, partitions, kafkaClientConfig.replicationFactor));
             admin = AdminClient.create(topicProperties);
             admin.createTopics(list).all().get();
         } catch (Exception e) {
@@ -122,7 +120,7 @@ public class KafkaChaosDriver implements MQChaosDriver {
     @Override
     public MQChaosPushConsumer createPushConsumer(String topic, String subscriptionName,
                                                   ConsumerCallback consumerCallback) {
-        consumerProperties.put("group.id", subscriptionName);
+        consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, subscriptionName);
         KafkaConsumer<String, byte[]> kafkaConsumer = new KafkaConsumer<>(consumerProperties);
         kafkaConsumer.subscribe(Arrays.asList(topic));
         return new KafkaChaosPushConsumer(kafkaConsumer, consumerCallback);
@@ -130,10 +128,11 @@ public class KafkaChaosDriver implements MQChaosDriver {
 
     @Override
     public MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName) {
-        consumerProperties.put("group.id", subscriptionName);
-        KafkaConsumer<String, byte[]> kafkaConsumer = new KafkaConsumer<>(consumerProperties);
-        kafkaConsumer.subscribe(Arrays.asList(topic));
-        return new KafkaChaosPullConsumer(kafkaConsumer);
+        throw new UnsupportedOperationException("Unsupport create a pull consumer currently");
+//        consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, subscriptionName);
+//        KafkaConsumer<String, byte[]> kafkaConsumer = new KafkaConsumer<>(consumerProperties);
+//        kafkaConsumer.subscribe(Arrays.asList(topic));
+//        return new KafkaChaosPullConsumer(kafkaConsumer);
     }
 
     @Override
@@ -146,11 +145,5 @@ public class KafkaChaosDriver implements MQChaosDriver {
         if (admin != null) {
             admin.close();
         }
-    }
-
-    private String getBootstrapBrokers(List<String> nodes) {
-        StringBuilder res = new StringBuilder();
-        nodes.forEach(node -> res.append(node + ":9092,"));
-        return res.toString().substring(0, res.length() - 1);
     }
 }

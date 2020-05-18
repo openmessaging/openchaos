@@ -32,7 +32,6 @@ public class KafkaChaosPullConsumer implements MQChaosPullConsumer {
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosPullConsumer.class);
     private KafkaConsumer kafkaConsumer;
     private final ExecutorService executor;
-    private Future<List<Message>> consumerTask;
 
     public KafkaChaosPullConsumer(KafkaConsumer kafkaConsumer) {
         this.kafkaConsumer = kafkaConsumer;
@@ -44,7 +43,7 @@ public class KafkaChaosPullConsumer implements MQChaosPullConsumer {
 
         List<Message> res = null;
 
-        this.consumerTask = executor.submit(new Callable<List<Message>>() {
+        Future<List<Message>> consumerTask = executor.submit(new Callable<List<Message>>() {
             @Override public List<Message> call() throws Exception {
                 ConsumerRecords<String, byte[]> records = kafkaConsumer.poll(500);
                 if (!records.isEmpty()) {

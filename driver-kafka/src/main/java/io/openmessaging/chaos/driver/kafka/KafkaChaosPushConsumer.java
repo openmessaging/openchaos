@@ -47,7 +47,6 @@ public class KafkaChaosPushConsumer implements MQChaosPushConsumer {
                     ConsumerRecords<String, byte[]> records = consumer.poll(500);
                     for (ConsumerRecord<String, byte[]> record : records) {
                         callback.messageReceived(new Message(record.key(), record.value()));
-
                     }
                 } catch (Exception e) {
                     log.error("exception occur while consuming message", e);

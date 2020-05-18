@@ -193,7 +193,9 @@ public class QueueModel implements Model {
         clients.forEach(Client::teardown);
         log.info("Stop mq cluster");
         cluster.values().forEach(MQChaosNode::stop);
-        mqChaosDriver.shutdown();
+        if (mqChaosDriver != null) {
+            mqChaosDriver.shutdown();
+        }
     }
 
     @Override

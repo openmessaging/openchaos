@@ -14,5 +14,13 @@
 package io.openmessaging.chaos.driver.kafka.config;
 
 public class KafkaClientConfig {
+    public short replicationFactor;
 
+    public String topicConfig;
+
+    public String commonConfig;
+
+    public String producerConfig;
+
+    public String consumerConfig;
 }

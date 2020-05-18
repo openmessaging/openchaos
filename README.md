@@ -3,7 +3,7 @@
 The framework proposals a unified API for vendors to provide solutions to various aspects of performing the principles of chaos engineering in a Cloud Native environment, its built-in modules will heavily testify reliability, availability and resilience for distriuted system, especially for messaging and eventing. Currently, the community supported the following platforms：
 
 - [Apache RocketMQ](https://rocketmq.apache.org/)
-- [Apache Kafka](https://kafka.apache.org/) -- ongoing
+- [Apache Kafka](https://kafka.apache.org/)
 - [Redis](https://redis.io/) -- ongoing
 
 ## Usage

@@ -17,32 +17,36 @@
 # under the License.
 #
 
-name: Kafka
+
+name: Kafka-exactly-once
 driverClass: io.openmessaging.chaos.driver.kafka.KafkaChaosDriver
 
 # cluster configuration
 nodes:
-- n1
-- n2
-- n3
+  - n1
+  - n2
+  - n3
 
-# Kafka client configuration
+
+# Kafka client-specific configuration
 replicationFactor: 3
 
 topicConfig: |
   min.insync.replicas=2
 
 commonConfig: |
-  bootstrap.servers=n1:9092,n2:9092,n3:9092
+  bootstrap.servers=localhost:9092
 
 producerConfig: |
+  enable.idempotence=true
+  max.in.flight.requests.per.connection=1
+  retries=2147483647
   acks=all
   linger.ms=1
   batch.size=131072
 
 consumerConfig: |
   auto.offset.reset=earliest
-
 
 # Kafka broker configuration
 installDir: kafka_chaos
