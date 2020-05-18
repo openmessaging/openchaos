@@ -380,8 +380,8 @@ public class ChaosControl {
     private static void clearAfterException() {
 
         if (recorder != null) {
-            recorder.delete();
             recorder.close();
+            recorder.delete();
             recorder = null;
         }
 

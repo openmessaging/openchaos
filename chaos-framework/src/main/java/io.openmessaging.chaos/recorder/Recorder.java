@@ -94,7 +94,6 @@ public class Recorder {
 
     public void close() {
         try {
-            bufferedWriter.flush();
             bufferedWriter.close();
         } catch (IOException e) {
             log.error("Recorder shutdown fail", e);
