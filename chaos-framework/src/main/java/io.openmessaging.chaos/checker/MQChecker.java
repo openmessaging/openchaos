@@ -75,7 +75,7 @@ public class MQChecker implements Checker {
             map(x -> x.split("\t")).
             filter(x -> !x[0].equals("fault")).
             forEach(line -> {
-                    if (line[1].equals("enqueue") && line[2].equals("request")) {
+                    if (line[1].equals("enqueue") && line[2].equals("REQUEST")) {
                         enqueueInvokeCount.incrementAndGet();
                     } else if (line[3].equals("SUCCESS")) {
                         if (line[1].equals("enqueue")) {

@@ -207,7 +207,7 @@ public class QueueModel implements Model {
                     break;
                 }
                 clients.forEach(Client::nextInvoke);
-                Thread.sleep(500);
+                Thread.sleep(1000);
             }
         } catch (Exception e) {
             log.error("", e);
