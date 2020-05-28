@@ -89,6 +89,7 @@ public class ChaosControl {
     }
 
     public static void main(String[] args) {
+
         final Arguments arguments = new Arguments();
         JCommander jc = new JCommander(arguments);
         jc.setProgramName("messaging-chaos");
@@ -106,16 +107,17 @@ public class ChaosControl {
             System.exit(-1);
         }
 
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override public void run() {
+                clearAfterException();
+            }
+        });
+
         try {
+
             driverConfigFile = new File(arguments.driver);
             driverConfiguration = MAPPER.readValue(driverConfigFile,
                 DriverConfiguration.class);
-        } catch (Exception e) {
-            log.error("Load driver configuration failed", e);
-            System.exit(-1);
-        }
-
-        try {
 
             if (arguments.agent) {
 
@@ -277,12 +279,12 @@ public class ChaosControl {
             }
 
             //Ensure cluster and clients are ready
-//            log.info("Probe cluster, ensure cluster and clients are ready...");
-//            boolean isReady = model.probeCluster();
-//            if (!isReady) {
-//                throw new RuntimeException("Cluster and clients are not ready, please check.");
-//            }
-//            log.info("Cluster and clients are ready.");
+            log.info("Probe cluster, ensure cluster and clients are ready...");
+            boolean isReady = model.probeCluster();
+            if (!isReady) {
+                throw new RuntimeException("Cluster and clients are not ready, please check.");
+            }
+            log.info("Cluster and clients are ready.");
 
             ChaosControl.status = Status.READY_COMPLETE;
 
@@ -336,7 +338,6 @@ public class ChaosControl {
         recorder.flush();
 
         testEndTimestamp = System.currentTimeMillis();
-
     }
 
     public static void check(Arguments arguments) {

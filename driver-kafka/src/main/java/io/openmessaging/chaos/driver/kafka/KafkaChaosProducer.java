@@ -15,6 +15,7 @@ package io.openmessaging.chaos.driver.kafka;
 
 import io.openmessaging.chaos.common.InvokeResult;
 import io.openmessaging.chaos.driver.mq.MQChaosProducer;
+import java.util.concurrent.ExecutionException;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.TimeoutException;
@@ -35,14 +36,18 @@ public class KafkaChaosProducer implements MQChaosProducer {
     @Override
     public InvokeResult enqueue(byte[] payload) {
         try {
-            kafkaProducer.send(new ProducerRecord<>(chaosTopic, payload));
-        } catch (TimeoutException e) {
-            log.warn("enqueue timeout...", e);
-            return InvokeResult.UNKNOWN;
+            kafkaProducer.send(new ProducerRecord<>(chaosTopic, payload)).get();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof TimeoutException) {
+                log.warn("enqueue timeout...", e);
+                return InvokeResult.UNKNOWN;
+            }
+            return InvokeResult.FAILURE;
         } catch (Exception e) {
             log.warn("enqueue error", e);
             return InvokeResult.FAILURE;
         }
+
         return InvokeResult.SUCCESS;
     }
 

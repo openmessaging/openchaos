@@ -16,12 +16,16 @@ package io.openmessaging.chaos.driver.kafka;
 import io.openmessaging.chaos.common.Message;
 import io.openmessaging.chaos.driver.mq.ConsumerCallback;
 import io.openmessaging.chaos.driver.mq.MQChaosPushConsumer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,9 +49,19 @@ public class KafkaChaosPushConsumer implements MQChaosPushConsumer {
             while (!closing) {
                 try {
                     ConsumerRecords<String, byte[]> records = consumer.poll(500);
+
+                    Map<TopicPartition, OffsetAndMetadata> offsetMap = new HashMap<>();
                     for (ConsumerRecord<String, byte[]> record : records) {
                         callback.messageReceived(new Message(record.key(), record.value()));
+
+                        offsetMap.put(new TopicPartition(record.topic(), record.partition()),
+                            new OffsetAndMetadata(record.offset()));
                     }
+
+                    if (!offsetMap.isEmpty()) {
+                        consumer.commitSync(offsetMap);
+                    }
+
                 } catch (Exception e) {
                     log.error("exception occur while consuming message", e);
                 }
@@ -65,12 +79,12 @@ public class KafkaChaosPushConsumer implements MQChaosPushConsumer {
     public void close() {
         closing = true;
         try {
-            consumerTask.get();
             executor.submit(() -> {
                 if (consumer != null) {
                     consumer.close();
                 }
             }).get();
+            consumerTask.get();
         } catch (Exception e) {
             log.error("Close KafkaChaosPushConsumer failed", e);
         }

@@ -108,7 +108,7 @@ public class MQChecker implements Checker {
         MQTestResult mQTestResult = new MQTestResult();
         mQTestResult.enqueueInvokeCount = enqueueInvokeCount.get();
         mQTestResult.enqueueSuccessCount = enqueueSuccessCount.get();
-        mQTestResult.enqueueActualCount = dequeueSuccessCount.get();
+        mQTestResult.dequeueSuccessCount = dequeueSuccessCount.get();
         mQTestResult.lostMessageCount = lostSet.size();
         mQTestResult.lostMessages = lostSet;
         mQTestResult.duplicateMessageCount = duplicateSet.size();

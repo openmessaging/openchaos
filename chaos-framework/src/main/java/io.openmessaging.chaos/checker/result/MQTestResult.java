@@ -19,7 +19,7 @@ import java.util.Set;
 public class MQTestResult extends TestResult {
     public long enqueueInvokeCount;
     public long enqueueSuccessCount;
-    public long enqueueActualCount;
+    public long dequeueSuccessCount;
     public long lostMessageCount;
     public Set<String> lostMessages;
     public long duplicateMessageCount;
@@ -37,7 +37,7 @@ public class MQTestResult extends TestResult {
         return "\n" + name + "{" +
             "\n\tenqueueInvokeCount=" + enqueueInvokeCount +
             "\n\tenqueueSuccessCount=" + enqueueSuccessCount +
-            "\n\tenqueueActualCount=" + enqueueActualCount +
+            "\n\tdequeueSuccessCount=" + dequeueSuccessCount +
             "\n\tlostMessageCount=" + lostMessageCount +
             "\n\tlostMessages=" + lostMessages +
             "\n\tduplicateMessageCount=" + duplicateMessageCount +
