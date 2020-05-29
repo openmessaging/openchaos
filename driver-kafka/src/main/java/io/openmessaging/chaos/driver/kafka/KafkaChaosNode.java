@@ -85,6 +85,19 @@ public class KafkaChaosNode implements MQChaosNode {
     }
 
     @Override
+    public void start() {
+        try {
+            //Start broker
+            log.info("Node {} start broker...", node);
+            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/kafka-server-start.sh '%s' > broker.log 2>&1 &"
+                , configureFilePath));
+        } catch (Exception e) {
+            log.error("Node {} start kafka node failed", node, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void teardown() {
         try {
             SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", installDir, installDir));
@@ -94,18 +107,6 @@ public class KafkaChaosNode implements MQChaosNode {
         }
     }
 
-    @Override
-    public void start() {
-        try {
-            //Start broker
-            log.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/kafka-server-start.sh '%s' > broker.log 2>&1 &"
-                    , configureFilePath));
-        } catch (Exception e) {
-            log.error("Node {} start kafka node failed", node, e);
-            throw new RuntimeException(e);
-        }
-    }
 
     @Override
     public void stop() {

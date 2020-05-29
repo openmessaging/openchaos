@@ -30,7 +30,7 @@ nodes:
 replicationFactor: 3
 
 topicConfig: |
-  min.insync.replicas=3
+  min.insync.replicas=2
 
 commonConfig: |
   bootstrap.servers=n1:9092,n2:9092,n3:9092

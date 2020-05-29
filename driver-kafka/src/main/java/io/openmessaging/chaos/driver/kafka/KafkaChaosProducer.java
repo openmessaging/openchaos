@@ -54,11 +54,15 @@ public class KafkaChaosProducer implements MQChaosProducer {
     @Override
     public InvokeResult enqueue(String shardingKey, byte[] payload) {
         try {
-            kafkaProducer.send(new ProducerRecord<>(chaosTopic, shardingKey, payload));
-        } catch (TimeoutException e) {
-            log.warn("enqueue timeout...", e);
-            return InvokeResult.UNKNOWN;
+            kafkaProducer.send(new ProducerRecord<>(chaosTopic, shardingKey, payload)).get();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof TimeoutException) {
+                log.warn("enqueue timeout...", e);
+                return InvokeResult.UNKNOWN;
+            }
+            return InvokeResult.FAILURE;
         } catch (Exception e) {
+            log.warn("enqueue error", e);
             return InvokeResult.FAILURE;
         }
         return InvokeResult.SUCCESS;
