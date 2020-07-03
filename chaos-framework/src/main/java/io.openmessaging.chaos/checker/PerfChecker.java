@@ -35,11 +35,15 @@ import org.slf4j.LoggerFactory;
 public class PerfChecker implements Checker {
 
     private static final Logger log = LoggerFactory.getLogger(PerfChecker.class);
+    private String outputDir;
     private String fileName;
     private long testStartTimestamp;
     private long testEndTimestamp;
+    private String filePath;
+    private String originFilePath;
 
-    public PerfChecker(String fileName, long testStartTimestamp, long testEndTimestamp) {
+    public PerfChecker(String outputDir, String fileName, long testStartTimestamp, long testEndTimestamp) {
+        this.outputDir = outputDir;
         this.fileName = fileName;
         this.testStartTimestamp = testStartTimestamp;
         this.testEndTimestamp = testEndTimestamp;
@@ -47,12 +51,21 @@ public class PerfChecker implements Checker {
 
     @Override
     public TestResult check() {
-        TestResult testResult = new TestResult("PerfTestResult");
-        testResult.isValid = true;
-        if (!new File(fileName).exists()) {
+        if (outputDir != null && !outputDir.isEmpty()) {
+            originFilePath = outputDir + File.separator + fileName;
+            filePath = outputDir + File.separator + fileName.replace("history-file", "latency-point-graph.png");
+        } else {
+            originFilePath = fileName;
+            filePath = fileName.replace("history-file", "latency-point-graph.png");
+        }
+
+        if (!new File(originFilePath).exists()) {
             System.err.println("File not exist.");
             System.exit(0);
         }
+
+        TestResult testResult = new TestResult("PerfTestResult");
+        testResult.isValid = true;
         try {
             generateLatencyPointGraph();
         } catch (Exception e) {
@@ -66,7 +79,7 @@ public class PerfChecker implements Checker {
     private void generateLatencyPointGraph() throws Exception {
 
         ImageTerminal png = new ImageTerminal();
-        File file = new File(fileName.replace("history-file", "latency-point-graph.png"));
+        File file = new File(filePath);
         boolean isCreate = file.createNewFile();
         if (!isCreate)
             throw new IOException("Create file fail");
@@ -90,7 +103,7 @@ public class PerfChecker implements Checker {
         List<Point> enqueueUnknownList = new ArrayList<>();
 
         //Fault interval
-        List<String[]> faultLines = Files.lines(Paths.get(fileName)).
+        List<String[]> faultLines = Files.lines(Paths.get(originFilePath)).
             filter(x -> x.startsWith("fault")).map(x -> x.split("\t")).collect(Collectors.toList());
 
         for (int i = 0; i < faultLines.size(); ) {
@@ -124,7 +137,7 @@ public class PerfChecker implements Checker {
             p.addPlot(faultSet);
         }
 
-        Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> !x[0].equals("fault")).filter(x -> x[2].equals("RESPONSE")).filter(x -> Long.parseLong(x[7]) >= 0).forEach(line -> {
+        Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> !x[0].equals("fault")).filter(x -> x[2].equals("RESPONSE")).filter(x -> Long.parseLong(x[7]) >= 0).forEach(line -> {
             if (line[1].equals("enqueue")) {
                 switch (line[3]) {
                     case "SUCCESS":

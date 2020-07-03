@@ -21,26 +21,40 @@ Configuration:
   status: INFO
   name: messaging-chaos
 
+
   Appenders:
     Console:
       name: Console
       target: SYSTEM_OUT
       PatternLayout:
-        Pattern: "%d{HH:mm:ss.SSS} [%t] %-4level - %msg%n"
+        Pattern: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-4level - %msg%n"
+    RollingFile:
+      name: ROLLING_FILE
+      fileName: "${sys:user.home}/logs/openmessaging-chaos.log"
+      filePattern: "${sys:user.home}/$${date:yyyy-MM}/openmessaging-chaos-%d{yyyy-MM-dd}-%i.log.gz"
+      PatternLayout:
+        Pattern: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-4level - %msg%n"
+      Policies:
+        SizeBasedTriggeringPolicy:
+          size: "300 MB"
+      DefaultRolloverStrategy:
+        max: 100
 
   Loggers:
     Root:
       level: info
       additivity: false
       AppenderRef:
-        ref: Console
+        - ref: Console
+        - ref: ROLLING_FILE
 
     Logger:
       name: org.apache.sshd
       additivity: false
       level: error
       AppenderRef:
-        ref: Console
+        - ref: Console
+        - ref: ROLLING_FILE
 
         
        

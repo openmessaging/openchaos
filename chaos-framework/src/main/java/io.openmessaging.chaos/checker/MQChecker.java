@@ -45,14 +45,27 @@ public class MQChecker implements Checker {
     private AtomicLong enqueueSuccessCount = new AtomicLong();
     private AtomicLong dequeueSuccessCount = new AtomicLong();
     private String fileName;
+    private String outputDir;
+    private String originFilePath;
+    private String filePath;
 
-    public MQChecker(String fileName) {
+    public MQChecker(String outputDir, String fileName) {
+        this.outputDir = outputDir;
         this.fileName = fileName;
     }
 
     @Override
     public MQTestResult check() {
-        if (!new File(fileName).exists()) {
+
+        if (outputDir != null && !outputDir.isEmpty()) {
+            originFilePath = outputDir + File.separator + fileName;
+            filePath = outputDir + File.separator + fileName.replace("history", "mq-result");
+        } else {
+            originFilePath = fileName;
+            filePath = fileName.replace("history", "mq-result");
+        }
+
+        if (!new File(originFilePath).exists()) {
             System.err.println("File not exist.");
             System.exit(0);
         }
@@ -62,7 +75,7 @@ public class MQChecker implements Checker {
         try {
             checkInner();
             mqTestResult = generateResult();
-            MAPPER.writeValue(new File(fileName.replace("history", "result")), mqTestResult);
+            MAPPER.writeValue(new File(filePath), mqTestResult);
         } catch (Exception e) {
             log.error("MQChecker check fail", e);
         }
@@ -71,7 +84,7 @@ public class MQChecker implements Checker {
     }
 
     private void checkInner() throws IOException {
-        Files.lines(Paths.get(fileName)).
+        Files.lines(Paths.get(originFilePath)).
             map(x -> x.split("\t")).
             filter(x -> !x[0].equals("fault")).
             forEach(line -> {
@@ -116,7 +129,7 @@ public class MQChecker implements Checker {
         mQTestResult.atMostOnce = duplicateSet.isEmpty();
         mQTestResult.atLeastOnce = lostSet.isEmpty();
         mQTestResult.exactlyOnce = lostSet.isEmpty() && duplicateSet.isEmpty();
-        mQTestResult.isValid = lostSet.isEmpty();
+        mQTestResult.isValid = true;
         return mQTestResult;
     }
 }

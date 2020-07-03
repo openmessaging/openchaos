@@ -41,14 +41,33 @@ public class RTOChecker implements Checker {
 
     private RTORecord rtoRecord;
 
+    private String outputDir;
+
     private String fileName;
 
-    public RTOChecker(String fileName) {
+    private String originFilePath;
+    private String filePath;
+
+    public RTOChecker(String outputDir, String fileName) {
+        this.outputDir = outputDir;
         this.fileName = fileName;
     }
 
     @Override
     public TestResult check() {
+
+        if (outputDir != null && !outputDir.isEmpty()) {
+            originFilePath = outputDir + File.separator + fileName;
+            filePath = outputDir + File.separator + fileName.replace("history", "rto-result");
+        } else {
+            originFilePath = fileName;
+            filePath = fileName.replace("history", "rto-result");
+        }
+
+        if (!new File(originFilePath).exists()) {
+            System.err.println("File not exist.");
+            System.exit(0);
+        }
 
         RTOTestResult rtoTestResult = new RTOTestResult();
         try {
@@ -58,7 +77,7 @@ public class RTOChecker implements Checker {
             rtoTestResult.isValid = false;
         }
         try {
-            MAPPER.writeValue(new File(fileName.replace("history", "rto-result")), rtoTestResult);
+            MAPPER.writeValue(new File(filePath), rtoTestResult);
         } catch (Exception e) {
             log.error("", e);
         }
@@ -72,7 +91,7 @@ public class RTOChecker implements Checker {
         unavailableFlag = false;
         rtoRecord = null;
 
-        Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).forEach(x -> {
+        Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).forEach(x -> {
             if (x[0].equals("fault") && x[2].equals("start")) {
                 isInFault = true;
                 rtoRecord = new RTORecord();

@@ -36,14 +36,32 @@ public class RecoveryChecker implements Checker {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
     }
 
+    private String outputDir;
     private String fileName;
+    private String originFilePath;
+    private String filePath;
 
-    public RecoveryChecker(String fileName) {
+    public RecoveryChecker(String outputDir, String fileName) {
+        this.outputDir = outputDir;
         this.fileName = fileName;
     }
 
     @Override
     public TestResult check() {
+
+        if (outputDir != null && !outputDir.isEmpty()) {
+            originFilePath = outputDir + File.separator + fileName;
+            filePath = outputDir + File.separator + fileName.replace("history", "recovery-result");
+        } else {
+            originFilePath = fileName;
+            filePath = fileName.replace("history", "recovery-result");
+        }
+
+        if (!new File(originFilePath).exists()) {
+            System.err.println("File not exist.");
+            System.exit(0);
+        }
+
         RecoveryTestResult recoveryTestResult = new RecoveryTestResult();
         try {
             checkInner(recoveryTestResult);
@@ -52,7 +70,7 @@ public class RecoveryChecker implements Checker {
             recoveryTestResult.isValid = false;
         }
         try {
-            MAPPER.writeValue(new File(fileName.replace("history", "recovery-result")), recoveryTestResult);
+            MAPPER.writeValue(new File(filePath), recoveryTestResult);
         } catch (Exception e) {
             log.error("", e);
         }
@@ -62,7 +80,7 @@ public class RecoveryChecker implements Checker {
 
     private void checkInner(RecoveryTestResult recoveryTestResult) throws Exception {
 
-        List<String[]> allRecords = Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).collect(Collectors.toList());
+        List<String[]> allRecords = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).collect(Collectors.toList());
 
         RecoveryRecord recoveryRecord = null;
 

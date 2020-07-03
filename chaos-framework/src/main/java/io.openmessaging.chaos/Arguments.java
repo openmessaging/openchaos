@@ -77,10 +77,18 @@ public class Arguments {
         "--recovery"}, description = "Calculate failure recovery time.")
     public boolean recovery = false;
 
+    /**
+     * This property is deprecated and invalid You can set this property in the driver file instead
+     */
+    @Deprecated
     @Parameter(names = {
         "--order"}, description = "Check the partition order of messaging platform. Just for mq model.")
     public boolean isOrderTest = false;
 
+    /**
+     * This property is deprecated and invalid You can set this property in the driver file instead
+     */
+    @Deprecated
     @Parameter(names = {
         "--pull"}, description = "Driver use pull consumer, default is push consumer. Just for mq model.")
     public boolean pull = false;
@@ -98,4 +106,9 @@ public class Arguments {
         "-p",
         "--port"}, description = "The listening port of http agent.")
     public int port = 8080;
+
+    @Parameter(names = {
+        "--output-dir"
+                }, description = "The directory of history files and the output files")
+    public String outputDir;
 }

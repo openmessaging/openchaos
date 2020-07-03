@@ -13,8 +13,12 @@
 
 package io.openmessaging.chaos.checker;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.openmessaging.chaos.checker.result.OrderTestResult;
 import io.openmessaging.chaos.checker.result.TestResult;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -27,17 +31,43 @@ public class OrderChecker implements Checker {
     private static final Logger log = LoggerFactory.getLogger(OrderTestResult.class);
     private String fileName;
     private List<String> shardingKeys;
+    private String outputDir;
+    private String originFilePath;
+    private String filePath;
 
-    public OrderChecker(String fileName, List<String> shardingKeys) {
+    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    static {
+        MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
+    }
+
+    public OrderChecker(String outputDir, String fileName, List<String> shardingKeys) {
+        this.outputDir = outputDir;
         this.fileName = fileName;
         this.shardingKeys = shardingKeys;
     }
 
     @Override
     public TestResult check() {
+
+        if (outputDir != null && !outputDir.isEmpty()) {
+            originFilePath = outputDir + File.separator + fileName;
+            filePath = outputDir + File.separator + fileName.replace("history", "order-result");
+        } else {
+            originFilePath = fileName;
+            filePath = fileName.replace("history", "order-result");
+        }
+
+        if (!new File(originFilePath).exists()) {
+            System.err.println("File not exist.");
+            System.exit(0);
+        }
+
         OrderTestResult orderTestResult = new OrderTestResult();
         try {
             checkInner(orderTestResult);
+            MAPPER.writeValue(new File(filePath), orderTestResult);
         } catch (Exception e) {
             log.error("", e);
             orderTestResult.isValid = false;
@@ -47,7 +77,7 @@ public class OrderChecker implements Checker {
 
     public void checkInner(OrderTestResult orderTestResult) throws Exception {
 
-        List<String[]> allRecords = Files.lines(Paths.get(fileName)).map(x -> x.split("\t")).filter(x -> x[2].equals("RESPONSE") && x[3].equals("SUCCESS")).collect(Collectors.toList());
+        List<String[]> allRecords = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> x[2].equals("RESPONSE") && x[3].equals("SUCCESS")).collect(Collectors.toList());
         orderTestResult.setOrder(true);
         for (String shardingKey : shardingKeys) {
             List<String> enqueueRecords = allRecords.stream().filter(x -> x[1].equals("enqueue") && x[5].equals(shardingKey)).map(x -> x[4]).collect(Collectors.toList());

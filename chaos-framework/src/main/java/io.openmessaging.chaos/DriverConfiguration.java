@@ -22,4 +22,8 @@ public class DriverConfiguration {
     public String driverClass;
 
     public List<String> nodes;
+
+    public boolean isOrderTest;
+
+    public boolean pull;
 }

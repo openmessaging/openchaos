@@ -84,6 +84,12 @@ public class ChaosControl {
 
     private static DriverConfiguration driverConfiguration;
 
+    private static volatile boolean agentMode = false;
+
+    private static boolean isOrderTest;
+
+    private static boolean pull;
+
     static {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
     }
@@ -107,6 +113,17 @@ public class ChaosControl {
             System.exit(-1);
         }
 
+        if (arguments.outputDir != null && !arguments.outputDir.isEmpty()) {
+            if (!judgeOrCreateDir(arguments.outputDir)) {
+                System.err.println("output-dir is not a standard directory name or failed to create directory");
+                System.exit(-1);
+            }
+
+            if (arguments.outputDir.substring(arguments.outputDir.length() - 1).equals(File.separator)) {
+                arguments.outputDir = arguments.outputDir.substring(0, arguments.outputDir.length() - 1);
+            }
+        }
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override public void run() {
                 clearAfterException();
@@ -119,12 +136,19 @@ public class ChaosControl {
             driverConfiguration = MAPPER.readValue(driverConfigFile,
                 DriverConfiguration.class);
 
+            isOrderTest = driverConfiguration.isOrderTest;
+            pull = driverConfiguration.pull;
+
             if (arguments.agent) {
+
+                agentMode = true;
 
                 log.info("Start ChaosControl HTTP Agent...");
                 Agent.startAgent(arguments.port);
 
             } else {
+
+                agentMode = false;
 
                 ready(arguments);
 
@@ -177,20 +201,25 @@ public class ChaosControl {
             }
 
             List<String> faultNodeList = new ArrayList<>();
-            if (arguments.fault.startsWith("fixed-")) {
-                if (arguments.faultNodes == null || arguments.faultNodes.isEmpty()) {
-                    throw new IllegalArgumentException("fault-nodes parameter can not be null or empty when inject fixed-xxx fault to system.");
-                } else if (driverConfiguration.nodes == null || driverConfiguration.nodes.isEmpty()) {
-                    throw new IllegalArgumentException("the nodes in configure file can not be null or empty when inject fixed-xxx fault to system.");
-                } else {
-                    String[] faultNodeArray = arguments.faultNodes.split(";");
-                    for (String faultNode : faultNodeArray) {
-                        if (!driverConfiguration.nodes.contains(faultNode)) {
-                            throw new IllegalArgumentException(String.format("fault-node %s is not in current config file.", faultNode));
+
+            if (!agentMode) {
+
+                if (arguments.fault.startsWith("fixed-")) {
+                    if (arguments.faultNodes == null || arguments.faultNodes.isEmpty()) {
+                        throw new IllegalArgumentException("fault-nodes parameter can not be null or empty when inject fixed-xxx fault to system.");
+                    } else if (driverConfiguration.nodes == null || driverConfiguration.nodes.isEmpty()) {
+                        throw new IllegalArgumentException("the nodes in configure file can not be null or empty when inject fixed-xxx fault to system.");
+                    } else {
+                        String[] faultNodeArray = arguments.faultNodes.split(";");
+                        for (String faultNode : faultNodeArray) {
+                            if (!driverConfiguration.nodes.contains(faultNode)) {
+                                throw new IllegalArgumentException(String.format("fault-node %s is not in current config file.", faultNode));
+                            }
                         }
+                        faultNodeList.addAll(Arrays.asList(faultNodeArray));
                     }
-                    faultNodeList.addAll(Arrays.asList(faultNodeArray));
                 }
+
             }
 
             SshUtil.init(arguments.username, driverConfiguration.nodes);
@@ -201,12 +230,17 @@ public class ChaosControl {
 
             RateLimiter rateLimiter = RateLimiter.create(arguments.rate);
 
-            recorder = Recorder.newRecorder(historyFile);
+            if (arguments.outputDir != null && !arguments.outputDir.isEmpty()) {
+                recorder = Recorder.newRecorder(arguments.outputDir + File.separator + historyFile);
+            } else {
+                recorder = Recorder.newRecorder(historyFile);
+            }
 
             if (recorder == null) {
                 System.err.printf("Create %s failed", historyFile);
                 System.exit(-1);
             }
+
             shardingKeys = new ArrayList<>();
             for (int i = 0; i < 2 * arguments.concurrency; i++) {
                 shardingKeys.add("shardingKey" + i);
@@ -215,7 +249,7 @@ public class ChaosControl {
             //Currently only queue model is supported
             switch (arguments.model) {
                 case "queue":
-                    model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile, arguments.isOrderTest, arguments.pull, shardingKeys);
+                    model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile, isOrderTest, pull, shardingKeys);
                     break;
                 default:
                     throw new RuntimeException("model not recognized.");
@@ -230,7 +264,6 @@ public class ChaosControl {
             model.setupClient();
 
             //Initial fault
-
             if (map == null || map.isEmpty()) {
                 log.warn("Configure file does not contain nodes, use noop fault");
                 fault = new NoopFault();
@@ -342,23 +375,21 @@ public class ChaosControl {
 
     public static void check(Arguments arguments) {
 
-        ChaosControl.status = Status.CHECK_ING;
-
         log.info("Start check...");
         ChaosControl.status = Status.CHECK_ING;
 
         List<Checker> checkerList = new ArrayList<>();
 
-        checkerList.add(new MQChecker(historyFile));
-        checkerList.add(new PerfChecker(historyFile, testStartTimeStamp, testEndTimestamp));
+        checkerList.add(new MQChecker(arguments.outputDir, historyFile));
+        checkerList.add(new PerfChecker(arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp));
         if (arguments.rto) {
-            checkerList.add(new RTOChecker(historyFile));
+            checkerList.add(new RTOChecker(arguments.outputDir, historyFile));
         }
         if (arguments.recovery) {
-            checkerList.add(new RecoveryChecker(historyFile));
+            checkerList.add(new RecoveryChecker(arguments.outputDir, historyFile));
         }
-        if (arguments.isOrderTest) {
-            checkerList.add(new OrderChecker(historyFile, shardingKeys));
+        if (isOrderTest) {
+            checkerList.add(new OrderChecker(arguments.outputDir, historyFile, shardingKeys));
         }
 
         resultList = new ArrayList<>();
@@ -447,4 +478,15 @@ public class ChaosControl {
         COMPLETE,
     }
 
+    public static boolean judgeOrCreateDir(String path) {
+        File file = new File(path);
+        if (!file.exists()) {
+            return file.mkdirs();
+        } else if (!file.isDirectory()) {
+            log.error("output-dir is not a directory");
+            return false;
+        } else {
+            return true;
+        }
+    }
 }
