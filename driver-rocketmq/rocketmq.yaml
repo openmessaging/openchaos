@@ -19,6 +19,9 @@
 
 name: RocketMQ
 driverClass: io.openmessaging.chaos.driver.rocketmq.RocketMQChaosDriver
+pull: true
+isOrderTest: true
+
 
 # RocketMQ cluster configuration
 nodes:

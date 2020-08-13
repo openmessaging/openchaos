@@ -85,7 +85,7 @@ public class QueueModel implements Model {
         this.shardingKeys = shardingKeys;
     }
 
-    private static MQChaosDriver createChaosMQDriver(File driverConfigFile) throws IOException {
+    private static MQChaosDriver createChaosDriver(File driverConfigFile) throws IOException {
 
         DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile, DriverConfiguration.class);
         log.info("Initial driver: {}", WRITER.writeValueAsString(driverConfiguration));
@@ -106,7 +106,7 @@ public class QueueModel implements Model {
     public Map<String, MQChaosNode> setupCluster(List<String> nodes, boolean isInstall) {
         try {
             if (mqChaosDriver == null) {
-                mqChaosDriver = createChaosMQDriver(driverConfigFile);
+                mqChaosDriver = createChaosDriver(driverConfigFile);
             }
 
             if (nodes != null) {
@@ -146,7 +146,7 @@ public class QueueModel implements Model {
     public void setupClient() {
         try {
             if (mqChaosDriver == null) {
-                mqChaosDriver = createChaosMQDriver(driverConfigFile);
+                mqChaosDriver = createChaosDriver(driverConfigFile);
             }
 
             log.info("Create chaos topic : {}", chaosTopic);

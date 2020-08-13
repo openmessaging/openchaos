@@ -51,5 +51,5 @@ consumerConfig: |
 
 # Kafka broker configuration
 installDir: kafka_chaos
-zookeeperConnect: IP:Port
+zookeeperConnect: n4:2181
 logDirs: /tmp/kafka-logs

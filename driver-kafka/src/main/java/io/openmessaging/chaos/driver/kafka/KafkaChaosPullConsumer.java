@@ -27,6 +27,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * There may be issues during operation, KafkaChaosPushConsumer is recommended
+ */
+@Deprecated
 public class KafkaChaosPullConsumer implements MQChaosPullConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosPullConsumer.class);

@@ -41,8 +41,11 @@ public class PerfChecker implements Checker {
     private long testEndTimestamp;
     private String filePath;
     private String originFilePath;
+    private List<String> points;
 
-    public PerfChecker(String outputDir, String fileName, long testStartTimestamp, long testEndTimestamp) {
+    public PerfChecker(List<String> points, String outputDir, String fileName, long testStartTimestamp,
+        long testEndTimestamp) {
+        this.points = points;
         this.outputDir = outputDir;
         this.fileName = fileName;
         this.testStartTimestamp = testStartTimestamp;
@@ -98,9 +101,9 @@ public class PerfChecker implements Checker {
         p.setKey(JavaPlot.Key.TOP_RIGHT);
 
         List<Point> faultIntervalList = new ArrayList<>();
-        List<Point> enqueueSuccessList = new ArrayList<>();
-        List<Point> enqueueFailureList = new ArrayList<>();
-        List<Point> enqueueUnknownList = new ArrayList<>();
+        List<Point> invokeSuccessList = new ArrayList<>();
+        List<Point> invokeFailureList = new ArrayList<>();
+        List<Point> invokeUnknownList = new ArrayList<>();
 
         //Fault interval
         List<String[]> faultLines = Files.lines(Paths.get(originFilePath)).
@@ -137,34 +140,42 @@ public class PerfChecker implements Checker {
             p.addPlot(faultSet);
         }
 
-        Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> !x[0].equals("fault")).filter(x -> x[2].equals("RESPONSE")).filter(x -> Long.parseLong(x[7]) >= 0).forEach(line -> {
-            if (line[1].equals("enqueue")) {
-                switch (line[3]) {
-                    case "SUCCESS":
-                        enqueueSuccessList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
-                        break;
-                    case "FAILURE":
-                        enqueueFailureList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
-                        break;
-                    case "UNKNOWN":
-                        enqueueUnknownList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
-                        break;
-                    default:
-                        log.error("Error data in enqueue");
+        for (String point : points) {
+
+            Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> !x[0].equals("fault")).filter(x -> x[2].equals("RESPONSE")).filter(x -> Long.parseLong(x[7]) >= 0).forEach(line -> {
+                if (line[1].equals(point)) {
+                    switch (line[3]) {
+                        case "SUCCESS":
+                            invokeSuccessList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
+                            break;
+                        case "FAILURE":
+                            invokeFailureList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
+                            break;
+                        case "UNKNOWN":
+                            invokeUnknownList.add(new Point((Long.parseLong(line[6]) - testStartTimestamp) / 1000, Long.parseLong(line[7])));
+                            break;
+                        default:
+                            log.error("Error data in invoke");
+                    }
                 }
+            });
+
+            if (invokeSuccessList.size() != 0) {
+                renderPoint(p, invokeSuccessList, point + " success", 4, NamedPlotColor.GREEN);
             }
-        });
 
-        if (enqueueSuccessList.size() != 0) {
-            renderPoint(p, enqueueSuccessList, "enqueue success", 4, NamedPlotColor.GREEN);
-        }
+            if (invokeFailureList.size() != 0) {
+                renderPoint(p, invokeFailureList, point + " failure", 4, NamedPlotColor.RED);
+            }
 
-        if (enqueueFailureList.size() != 0) {
-            renderPoint(p, enqueueFailureList, "enqueue failure", 4, NamedPlotColor.RED);
-        }
+            if (invokeUnknownList.size() != 0) {
+                renderPoint(p, invokeUnknownList, point + " unknown", 4, NamedPlotColor.BLUE);
+            }
 
-        if (enqueueUnknownList.size() != 0) {
-            renderPoint(p, enqueueUnknownList, "enqueue unknown", 4, NamedPlotColor.BLUE);
+            invokeSuccessList.clear();
+            invokeFailureList.clear();
+            invokeUnknownList.clear();
+
         }
 
         p.setKey(JavaPlot.Key.BELOW);
@@ -194,7 +205,7 @@ public class PerfChecker implements Checker {
         return res;
     }
 
-    class Point {
+    static class Point {
         long x;
         long y;
 

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
+import io.openmessaging.chaos.checker.CacheChecker;
 import io.openmessaging.chaos.checker.Checker;
 import io.openmessaging.chaos.checker.MQChecker;
 import io.openmessaging.chaos.checker.OrderChecker;
@@ -43,8 +44,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -380,8 +383,23 @@ public class ChaosControl {
 
         List<Checker> checkerList = new ArrayList<>();
 
-        checkerList.add(new MQChecker(arguments.outputDir, historyFile));
-        checkerList.add(new PerfChecker(arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp));
+        List<String> points;
+
+        switch (arguments.model) {
+            case "queue":
+                checkerList.add(new MQChecker(arguments.outputDir, historyFile));
+                points = Collections.singletonList("enqueue");
+                checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp));
+                break;
+            case "cache":
+                checkerList.add(new CacheChecker(arguments.outputDir, historyFile));
+                points = Collections.singletonList("put");
+                checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp));
+                break;
+            default:
+                break;
+        }
+
         if (arguments.rto) {
             checkerList.add(new RTOChecker(arguments.outputDir, historyFile));
         }
