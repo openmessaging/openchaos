@@ -35,6 +35,7 @@ import io.openmessaging.chaos.fault.NetFault;
 import io.openmessaging.chaos.fault.NoopFault;
 import io.openmessaging.chaos.fault.PauseFault;
 import io.openmessaging.chaos.http.Agent;
+import io.openmessaging.chaos.model.CacheModel;
 import io.openmessaging.chaos.model.Model;
 import io.openmessaging.chaos.model.QueueModel;
 import io.openmessaging.chaos.recorder.Recorder;
@@ -47,7 +48,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -253,6 +253,9 @@ public class ChaosControl {
             switch (arguments.model) {
                 case "queue":
                     model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile, isOrderTest, pull, shardingKeys);
+                    break;
+                case "cache":
+                    model = new CacheModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
                     break;
                 default:
                     throw new RuntimeException("model not recognized.");

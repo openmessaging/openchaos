@@ -184,14 +184,18 @@ public class QueueModel implements Model {
 
     @Override
     public void afterStop() {
-        clients.forEach(Client::lastInvoke);
+        if (clients.isEmpty()) {
+            throw new IllegalArgumentException("clients is empty");
+        } else {
+            clients.get(0).lastInvoke();
+        }
     }
 
     @Override
     public void shutdown() {
-        log.info("Teardown mq client");
+        log.info("Teardown client");
         clients.forEach(Client::teardown);
-        log.info("Stop mq cluster");
+        log.info("Stop cluster");
         cluster.values().forEach(MQChaosNode::stop);
         if (mqChaosDriver != null) {
             mqChaosDriver.shutdown();

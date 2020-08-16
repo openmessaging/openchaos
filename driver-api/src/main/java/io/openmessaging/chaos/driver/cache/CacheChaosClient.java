@@ -27,5 +27,5 @@ public interface CacheChaosClient extends ChaosClient {
 
     InvokeResult put(Optional<String> key, String value);
 
-    List<String> read(Optional<String> key);
+    List<String> getAll(Optional<String> key);
 }

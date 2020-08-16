@@ -20,8 +20,8 @@ import io.openmessaging.chaos.driver.mq.MQChaosDriver;
 import io.openmessaging.chaos.driver.mq.MQChaosProducer;
 import io.openmessaging.chaos.driver.mq.MQChaosPullConsumer;
 import io.openmessaging.chaos.driver.mq.MQChaosPushConsumer;
-import io.openmessaging.chaos.generator.QueueGenerator;
-import io.openmessaging.chaos.generator.QueueOperation;
+import io.openmessaging.chaos.generator.SequenceGenerator;
+import io.openmessaging.chaos.generator.Operation;
 import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.recorder.RequestLogEntry;
 import io.openmessaging.chaos.recorder.ResponseLogEntry;
@@ -85,7 +85,7 @@ public class QueueClient implements Client, ConsumerCallback {
     }
 
     public void nextInvoke() {
-        QueueOperation op = QueueGenerator.generate(isUsePull);
+        Operation op = SequenceGenerator.generateQueueOperation(isUsePull);
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, op.getInvokeOperation(), op.getValue(), System.currentTimeMillis());
         if (op.getInvokeOperation().equals("enqueue")) {
             InvokeResult invokeResult;

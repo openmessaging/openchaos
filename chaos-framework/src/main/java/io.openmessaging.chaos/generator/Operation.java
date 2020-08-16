@@ -13,16 +13,16 @@
 
 package io.openmessaging.chaos.generator;
 
-public class QueueOperation {
+public class Operation {
 
     private String invokeOperation;
     private String value;
 
-    public QueueOperation(String invokeOperation) {
+    public Operation(String invokeOperation) {
         this.invokeOperation = invokeOperation;
     }
 
-    public QueueOperation(String invokeOperation, String value) {
+    public Operation(String invokeOperation, String value) {
         this.invokeOperation = invokeOperation;
         this.value = value;
     }
@@ -44,7 +44,7 @@ public class QueueOperation {
     }
 
     @Override public String toString() {
-        return "QueueOperation{" +
+        return "Operation{" +
             "invokeOperation='" + invokeOperation + '\'' +
             ", value='" + value + '\'' +
             '}';

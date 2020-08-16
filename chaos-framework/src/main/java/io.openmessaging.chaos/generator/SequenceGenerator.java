@@ -16,21 +16,25 @@ package io.openmessaging.chaos.generator;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class QueueGenerator {
+public class SequenceGenerator {
 
     private static AtomicLong stagger = new AtomicLong(0);
 
     private static Random random = new Random();
 
-    public static QueueOperation generate(boolean isUsePull) {
+    public static Operation generateQueueOperation(boolean isUsePull) {
         if (isUsePull) {
             if (random.nextDouble() < 0.5) {
-                return new QueueOperation("enqueue", String.valueOf(stagger.getAndIncrement()));
+                return new Operation("enqueue", String.valueOf(stagger.getAndIncrement()));
             } else {
-                return new QueueOperation("dequeue");
+                return new Operation("dequeue");
             }
         } else {
-            return new QueueOperation("enqueue", String.valueOf(stagger.getAndIncrement()));
+            return new Operation("enqueue", String.valueOf(stagger.getAndIncrement()));
         }
+    }
+
+    public static Operation generateCacheOperation() {
+        return new Operation("put", String.valueOf(stagger.getAndIncrement()));
     }
 }
