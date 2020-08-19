@@ -13,7 +13,6 @@
 
 package io.openmessaging.chaos.driver;
 
-import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -41,5 +40,5 @@ public interface ChaosDriver {
      * @param node current node
      * @param nodes all the nodes of the distributed system to be tested
      */
-    MQChaosNode createChaosNode(String node, List<String> nodes);
+    ChaosNode createChaosNode(String node, List<String> nodes);
 }

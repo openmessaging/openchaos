@@ -20,8 +20,8 @@ import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.DriverConfiguration;
 import io.openmessaging.chaos.client.CacheClient;
 import io.openmessaging.chaos.client.Client;
+import io.openmessaging.chaos.driver.ChaosNode;
 import io.openmessaging.chaos.driver.cache.CacheChaosDriver;
-import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.worker.ClientWorker;
 import io.openmessaging.chaos.worker.Worker;
@@ -54,7 +54,7 @@ public class CacheModel implements Model {
     private List<Client> clients;
     private Optional<String> key;
     private List<ClientWorker> workers;
-    private Map<String, MQChaosNode> cluster;
+    private Map<String, ChaosNode> cluster;
     private RateLimiter rateLimiter;
     private int concurrency;
     private Recorder recorder;
@@ -69,7 +69,7 @@ public class CacheModel implements Model {
         this.rateLimiter = rateLimiter;
         this.recorder = recorder;
         this.driverConfigFile = driverConfigFile;
-        this.key = Optional.ofNullable(String.format("%s-chaos-topic", DATE_FORMAT.format(new Date())));
+        this.key = Optional.ofNullable(String.format("%s-chaos-key", DATE_FORMAT.format(new Date())));
     }
 
     private static CacheChaosDriver createCacheChaosDriver(File driverConfigFile) throws IOException {
@@ -83,6 +83,7 @@ public class CacheModel implements Model {
             cacheChaosDriver = (CacheChaosDriver) Class.forName(driverConfiguration.driverClass).newInstance();
             cacheChaosDriver.initialize(driverConfigFile, driverConfiguration.nodes);
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            log.error("Create Cache Chaos Driver fail", e);
             throw new RuntimeException(e);
         }
 
@@ -113,7 +114,7 @@ public class CacheModel implements Model {
         }
     }
 
-    @Override public Map<String, MQChaosNode> setupCluster(List<String> nodes, boolean isInstall) {
+    @Override public Map<String, ChaosNode> setupCluster(List<String> nodes, boolean isInstall) {
         try {
             if (cacheChaosDriver == null) {
                 cacheChaosDriver = createCacheChaosDriver(driverConfigFile);
@@ -124,11 +125,11 @@ public class CacheModel implements Model {
             }
 
             if (isInstall) {
-                cluster.values().forEach(MQChaosNode::setup);
+                cluster.values().forEach(ChaosNode::setup);
             }
 
             log.info("Cluster shutdown");
-            cluster.values().forEach(MQChaosNode::stop);
+            cluster.values().forEach(ChaosNode::stop);
             log.info("Wait for all nodes to shutdown...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(10));
@@ -137,7 +138,7 @@ public class CacheModel implements Model {
             }
 
             log.info("Cluster start...");
-            cluster.values().forEach(MQChaosNode::start);
+            cluster.values().forEach(ChaosNode::start);
             log.info("Wait for all nodes to start...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(20));
@@ -167,14 +168,18 @@ public class CacheModel implements Model {
     }
 
     @Override public void afterStop() {
-        clients.forEach(Client::lastInvoke);
+        if (clients.isEmpty()) {
+            throw new IllegalArgumentException("clients is empty");
+        } else {
+            clients.get(0).lastInvoke();
+        }
     }
 
     @Override public void shutdown() {
         log.info("Teardown client");
         clients.forEach(Client::teardown);
         log.info("Stop cluster");
-        cluster.values().forEach(MQChaosNode::stop);
+        cluster.values().forEach(ChaosNode::stop);
         if (cacheChaosDriver != null) {
             cacheChaosDriver.shutdown();
         }

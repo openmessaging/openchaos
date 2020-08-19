@@ -90,7 +90,7 @@ public class CacheChecker implements Checker {
 
         cacheTestResult.putSuccessCount = putSuccessSet.size();
         cacheTestResult.getSuccessCount = getSuccessSet.size();
-        putSuccessSet.removeAll(putSuccessSet);
+        putSuccessSet.removeAll(getSuccessSet);
         cacheTestResult.lostValues = putSuccessSet;
         cacheTestResult.lostValueCount = putSuccessSet.size();
         return cacheTestResult;

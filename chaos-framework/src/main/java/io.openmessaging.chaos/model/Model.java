@@ -13,7 +13,7 @@
 
 package io.openmessaging.chaos.model;
 
-import io.openmessaging.chaos.driver.mq.MQChaosNode;
+import io.openmessaging.chaos.driver.ChaosNode;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +31,7 @@ public interface Model {
      * @param isInstall whether to reinstall the program on each node
      * @return
      */
-    Map<String, MQChaosNode> setupCluster(List<String> nodes, boolean isInstall);
+    Map<String, ChaosNode> setupCluster(List<String> nodes, boolean isInstall);
 
     /**
      * Ensure cluster are ready

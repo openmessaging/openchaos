@@ -14,7 +14,7 @@
 package io.openmessaging.chaos.fault;
 
 import io.openmessaging.chaos.ChaosControl;
-import io.openmessaging.chaos.driver.mq.MQChaosNode;
+import io.openmessaging.chaos.driver.ChaosNode;
 import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
 import io.openmessaging.chaos.recorder.FaultLogEntry;
@@ -31,18 +31,18 @@ public class KillFault implements Fault {
 
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
     private volatile List<FaultOperation> faultOperations;
-    private Map<String, MQChaosNode> nodesMap;
+    private Map<String, ChaosNode> nodesMap;
     private List<String> faultNodes;
     private String mode;
     private Recorder recorder;
 
-    public KillFault(Map<String, MQChaosNode> nodesMap, String mode, Recorder recorder) {
+    public KillFault(Map<String, ChaosNode> nodesMap, String mode, Recorder recorder) {
         this.nodesMap = nodesMap;
         this.mode = mode;
         this.recorder = recorder;
     }
 
-    public KillFault(Map<String, MQChaosNode> nodesMap, String mode, Recorder recorder, List<String> faultNodes) {
+    public KillFault(Map<String, ChaosNode> nodesMap, String mode, Recorder recorder, List<String> faultNodes) {
         this.nodesMap = nodesMap;
         this.mode = mode;
         this.recorder = recorder;
@@ -60,8 +60,8 @@ public class KillFault implements Fault {
         }
         for (FaultOperation operation : faultOperations) {
             log.info("Kill node {} processes...", operation.getNode());
-            MQChaosNode mqChaosNode = nodesMap.get(operation.getNode());
-            mqChaosNode.kill();
+            ChaosNode chaosNode = nodesMap.get(operation.getNode());
+            chaosNode.kill();
         }
     }
 
@@ -73,8 +73,8 @@ public class KillFault implements Fault {
         recorder.recordFault(new FaultLogEntry(mode,"end", System.currentTimeMillis()));
         for (FaultOperation operation : faultOperations) {
             log.info("Restart node {} processes...", operation.getNode());
-            MQChaosNode mqChaosNode = nodesMap.get(operation.getNode());
-            mqChaosNode.start();
+            ChaosNode chaosNode = nodesMap.get(operation.getNode());
+            chaosNode.start();
         }
         faultOperations = null;
     }

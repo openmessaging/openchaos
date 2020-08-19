@@ -10,30 +10,11 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package io.openmessaging.chaos.checker.result;
+package io.openmessaging.chaos.driver.dledger.config;
 
-import java.util.Set;
-
-public class CacheTestResult extends TestResult {
-
-    public long putInvokeCount;
-    public long putSuccessCount;
-    public long getSuccessCount;
-    public long lostValueCount;
-    public Set<String> lostValues;
-
-    public CacheTestResult() {
-        super("CacheTestResult");
-    }
-
-    @Override public String toString() {
-        return "\n" + name + "{" +
-            "\n\tputInvokeCount=" + putInvokeCount +
-            "\n\tputSuccessCount=" + putSuccessCount +
-            "\n\tgetSuccessCount=" + getSuccessCount +
-            "\n\tlostValueCount=" + lostValueCount +
-            "\n\tlostValues=" + lostValues +
-            "\n\tisValid=" + isValid +
-            "\n}";
-    }
+public class DLedgerConfig {
+    public String storeBaseDir;
+    public String preferredLeaderId;
+    public String peers;
+    public String group;
 }

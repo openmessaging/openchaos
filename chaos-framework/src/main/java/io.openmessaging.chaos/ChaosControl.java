@@ -28,7 +28,7 @@ import io.openmessaging.chaos.checker.RTOChecker;
 import io.openmessaging.chaos.checker.RecoveryChecker;
 import io.openmessaging.chaos.checker.result.TestResult;
 import io.openmessaging.chaos.common.utils.SshUtil;
-import io.openmessaging.chaos.driver.mq.MQChaosNode;
+import io.openmessaging.chaos.driver.ChaosNode;
 import io.openmessaging.chaos.fault.Fault;
 import io.openmessaging.chaos.fault.KillFault;
 import io.openmessaging.chaos.fault.NetFault;
@@ -261,7 +261,7 @@ public class ChaosControl {
                     throw new RuntimeException("model not recognized.");
             }
 
-            Map<String, MQChaosNode> map = null;
+            Map<String, ChaosNode> map = null;
 
             if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
                 map = model.setupCluster(driverConfiguration.nodes, arguments.install);

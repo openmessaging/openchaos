@@ -22,8 +22,8 @@ import io.openmessaging.chaos.DriverConfiguration;
 import io.openmessaging.chaos.client.Client;
 import io.openmessaging.chaos.client.QueueClient;
 import io.openmessaging.chaos.common.utils.Utils;
+import io.openmessaging.chaos.driver.ChaosNode;
 import io.openmessaging.chaos.driver.mq.MQChaosDriver;
-import io.openmessaging.chaos.driver.mq.MQChaosNode;
 import io.openmessaging.chaos.recorder.Recorder;
 import io.openmessaging.chaos.worker.ClientWorker;
 import io.openmessaging.chaos.worker.Worker;
@@ -58,7 +58,7 @@ public class QueueModel implements Model {
 
     private List<Client> clients;
     private List<ClientWorker> workers;
-    private Map<String, MQChaosNode> cluster;
+    private Map<String, ChaosNode> cluster;
     private Recorder recorder;
     private File driverConfigFile;
     private int concurrency;
@@ -103,7 +103,7 @@ public class QueueModel implements Model {
     }
 
     @Override
-    public Map<String, MQChaosNode> setupCluster(List<String> nodes, boolean isInstall) {
+    public Map<String, ChaosNode> setupCluster(List<String> nodes, boolean isInstall) {
         try {
             if (mqChaosDriver == null) {
                 mqChaosDriver = createChaosDriver(driverConfigFile);
@@ -114,11 +114,11 @@ public class QueueModel implements Model {
             }
 
             if (isInstall) {
-                cluster.values().forEach(MQChaosNode::setup);
+                cluster.values().forEach(ChaosNode::setup);
             }
 
             log.info("Cluster shutdown");
-            cluster.values().forEach(MQChaosNode::stop);
+            cluster.values().forEach(ChaosNode::stop);
             log.info("Wait for all nodes to shutdown...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(10));
@@ -127,7 +127,7 @@ public class QueueModel implements Model {
             }
 
             log.info("Cluster start...");
-            cluster.values().forEach(MQChaosNode::start);
+            cluster.values().forEach(ChaosNode::start);
             log.info("Wait for all nodes to start...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(20));
@@ -184,11 +184,7 @@ public class QueueModel implements Model {
 
     @Override
     public void afterStop() {
-        if (clients.isEmpty()) {
-            throw new IllegalArgumentException("clients is empty");
-        } else {
-            clients.get(0).lastInvoke();
-        }
+        clients.forEach(Client::lastInvoke);
     }
 
     @Override
@@ -196,7 +192,7 @@ public class QueueModel implements Model {
         log.info("Teardown client");
         clients.forEach(Client::teardown);
         log.info("Stop cluster");
-        cluster.values().forEach(MQChaosNode::stop);
+        cluster.values().forEach(ChaosNode::stop);
         if (mqChaosDriver != null) {
             mqChaosDriver.shutdown();
         }

@@ -70,7 +70,7 @@ public class CacheClient implements Client {
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, "getAll", null, System.currentTimeMillis());
         recorder.recordRequest(requestLogEntry);
         List<String> results = cacheChaosClient.getAll(key);
-        if (results != null && results.isEmpty()) {
+        if (results != null && !results.isEmpty()) {
             recorder.recordResponse(new ResponseLogEntry(clientId, "getAll", InvokeResult.SUCCESS, results.toString(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
         } else {
             recorder.recordResponse(new ResponseLogEntry(clientId, "getAll", InvokeResult.FAILURE, null, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
