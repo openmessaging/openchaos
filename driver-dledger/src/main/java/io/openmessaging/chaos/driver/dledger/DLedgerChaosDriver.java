@@ -31,15 +31,20 @@ public class DLedgerChaosDriver implements CacheChaosDriver {
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private List<String> nodes;
+    private String group = "default";
     private DLedgerConfig dLedgerConfig;
 
+
     @Override public CacheChaosClient createCacheChaosClient() {
-        return new DLedgerChaosClient(dLedgerConfig.group, getPeers());
+        return new DLedgerChaosClient(group, getPeers());
     }
 
     @Override public void initialize(File configurationFile, List<String> nodes) throws IOException {
         this.nodes = nodes;
         this.dLedgerConfig = MAPPER.readValue(configurationFile, DLedgerConfig.class);
+        if (dLedgerConfig.group != null && !dLedgerConfig.group.isEmpty()) {
+            this.group = dLedgerConfig.group;
+        }
     }
 
     @Override public void shutdown() {

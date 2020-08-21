@@ -14,7 +14,8 @@ package io.openmessaging.chaos.driver.dledger.config;
 
 public class DLedgerConfig {
     public String storeBaseDir;
-    public String preferredLeaderId;
     public String peers;
     public String group;
+    public String installDir;
+    public String dledgerVersion;
 }

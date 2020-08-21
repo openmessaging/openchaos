@@ -66,7 +66,7 @@ public class Arguments {
 
     @Parameter(names = {
         "-m",
-        "--model"}, description = "Test model. Currently only queue model is supported.")
+        "--model"}, description = "Test model. Currently queue model and cache model are supported.")
     public String model = "queue";
 
     @Parameter(names = {

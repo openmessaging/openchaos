@@ -1,9 +1,12 @@
+[![Build Status](https://travis-ci.org/openmessaging/openmessaging-chaos.svg?branch=master)](https://travis-ci.org/openmessaging/openmessaging-chaos) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.openmessaging.chaos/messaging-chaos/badge.svg)](http://search.maven.org/#search%7Cga%7C1%7Copenmessaging-chaos) [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
+
 # Goals
 
 The framework proposals a unified API for vendors to provide solutions to various aspects of performing the principles of chaos engineering in a Cloud Native environment, its built-in modules will heavily testify reliability, availability and resilience for distriuted system, especially for messaging and eventing. Currently, the community supported the following platforms：
 
 - [Apache RocketMQ](https://rocketmq.apache.org/)
 - [Apache Kafka](https://kafka.apache.org/)
+- [DLedger](https://github.com/openmessaging/openmessaging-storage-dledger)
 - [Redis](https://redis.io/) -- ongoing
 
 ## Usage
@@ -37,6 +40,9 @@ bin/chaos.sh --driver driver-rocketmq/rocketmq.yaml --install
 ```
 Usage: messaging-chaos [options]
   Options:
+    --agent
+      Run program as a http agent.
+      Default: false
     -c, --concurrency
       The number of clients. eg: 5
       Default: 4
@@ -67,11 +73,16 @@ Usage: messaging-chaos [options]
       time). eg: 60
       Default: 60
     -m, --model
-      Test model. Currently only queue model is supported.
+      Test model. Currently queue model and cache model are supported.
       Default: queue
     --order
       Check the partition order of messaging platform. Just for mq model.
       Default: false
+    --output-dir
+      The directory of history files and the output files
+    -p, --port
+      The listening port of http agent.
+      Default: 8080
     --pull
       Driver use pull consumer, default is push consumer. Just for mq model.
       Default: false

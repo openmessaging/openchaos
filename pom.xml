@@ -30,6 +30,7 @@
         <module>driver-rocketmq</module>
         <module>chaos-common</module>
         <module>driver-kafka</module>
+        <module>driver-dledger</module>
     </modules>
 
     <parent>
@@ -133,6 +134,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>driver-kafka</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>driver-dledger</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

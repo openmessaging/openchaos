@@ -22,13 +22,11 @@ driverClass: io.openmessaging.chaos.driver.dledger.DLedgerChaosDriver
 
 # cluster configuration
 nodes:
-#  - n1
-#  - n2
-#  - n3
+  - n1
+  - n2
+  - n3
 
-storeBaseDir: /tmp/dledgerstore
 preferredLeaderId: n0
 
 # client
-peers: n0-localhost:20911
 group: default

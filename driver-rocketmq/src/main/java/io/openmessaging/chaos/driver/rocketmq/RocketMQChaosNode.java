@@ -59,8 +59,8 @@ public class RocketMQChaosNode implements MQChaosNode {
             log.info("Node {} download rocketmq...", node);
             SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", installDir, installDir));
             SshUtil.execCommandInDir(node, installDir,
-                    String.format("curl https://archive.apache.org/dist/rocketmq/%s/rocketmq-all-%s-bin-release.zip -o rocketmq.zip", rocketmqVersion, rocketmqVersion),
-                    "unzip rocketmq.zip", "rm -f rocketmq.zip", "mv rocketmq-all*/* .", "rmdir rocketmq-all*");
+                String.format("curl https://archive.apache.org/dist/rocketmq/%s/rocketmq-all-%s-bin-release.zip -o rocketmq.zip", rocketmqVersion, rocketmqVersion),
+                "unzip rocketmq.zip", "rm -f rocketmq.zip", "mv rocketmq-all*/* .", "rmdir rocketmq-all*");
             log.info("Node {} download rocketmq success", node);
 
             //For docker test, because the memory of local computer is too small
@@ -81,7 +81,7 @@ public class RocketMQChaosNode implements MQChaosNode {
 
             SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> %s", "dLegerPeers=" + dledgerPeers, configureFilePath));
             SshUtil.execCommandInDir(node, installDir, String.format("echo '%s' >> %s", "dLegerSelfId=n" + nodes.indexOf(node), configureFilePath));
-          
+
         } catch (Exception e) {
             log.error("Node {} setup rocketmq node failed", node, e);
             throw new RuntimeException(e);
@@ -90,12 +90,7 @@ public class RocketMQChaosNode implements MQChaosNode {
 
     @Override
     public void teardown() {
-        try {
-            SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", installDir, installDir));
-        } catch (Exception e) {
-            log.error("Node {} teardown rocketmq node failed", node, e);
-            throw new RuntimeException(e);
-        }
+        stop();
     }
 
     @Override

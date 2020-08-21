@@ -129,7 +129,7 @@ public class CacheModel implements Model {
             }
 
             log.info("Cluster shutdown");
-            cluster.values().forEach(ChaosNode::stop);
+            cluster.values().forEach(ChaosNode::teardown);
             log.info("Wait for all nodes to shutdown...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(10));
@@ -179,7 +179,7 @@ public class CacheModel implements Model {
         log.info("Teardown client");
         clients.forEach(Client::teardown);
         log.info("Stop cluster");
-        cluster.values().forEach(ChaosNode::stop);
+        cluster.values().forEach(ChaosNode::teardown);
         if (cacheChaosDriver != null) {
             cacheChaosDriver.shutdown();
         }
