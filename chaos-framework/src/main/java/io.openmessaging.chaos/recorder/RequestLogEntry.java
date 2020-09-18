@@ -22,6 +22,7 @@ public class RequestLogEntry {
     //only for enqueue
     public String shardingKey;
     public long timestamp;
+    public String extraInfo;
 
     //for enqueue
     public RequestLogEntry(int clientId, String operation, String value, long timestamp) {
@@ -29,6 +30,15 @@ public class RequestLogEntry {
         this.operation = operation;
         this.value = value;
         this.timestamp = timestamp;
+    }
+
+    //for enqueue
+    public RequestLogEntry(int clientId, String operation, String value, long timestamp, String extraInfo) {
+        this.clientId = clientId;
+        this.operation = operation;
+        this.value = value;
+        this.timestamp = timestamp;
+        this.extraInfo = extraInfo;
     }
 
     public RequestLogEntry(int clientId, String operation, String shardingKey, String value,
@@ -40,8 +50,18 @@ public class RequestLogEntry {
         this.timestamp = timestamp;
     }
 
+    public RequestLogEntry(int clientId, String operation, String shardingKey, String value,
+        long timestamp, String extraInfo) {
+        this.clientId = clientId;
+        this.operation = operation;
+        this.value = value;
+        this.shardingKey = shardingKey;
+        this.timestamp = timestamp;
+        this.extraInfo = extraInfo;
+    }
+
     @Override
     public String toString() {
-        return String.format("%d\t%s\t%s\t%s\t%s\t%d\n", clientId, operation, type, value, shardingKey, timestamp);
+        return String.format("%d\t%s\t%s\t%s\t%s\t%d\t%s\n", clientId, operation, type, value, shardingKey, timestamp, extraInfo);
     }
 }

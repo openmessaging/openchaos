@@ -365,8 +365,8 @@ public class ChaosControl {
         log.info("Wait for recovery some time");
 
         try {
-            //Wait for recovery, sleep 20 s
-            Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+            //Wait for recovery, sleep 60 s
+            Thread.sleep(TimeUnit.SECONDS.toMillis(60));
         } catch (Exception e) {
             log.info("", e);
         }

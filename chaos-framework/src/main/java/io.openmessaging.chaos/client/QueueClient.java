@@ -95,12 +95,12 @@ public class QueueClient implements Client, ConsumerCallback {
                 recorder.recordRequest(requestLogEntry);
                 invokeResult = mqChaosProducer.enqueue(shardingKey, op.getValue().getBytes());
                 recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
-                    invokeResult, shardingKey, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
+                    invokeResult, shardingKey, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp, invokeResult.getExtraInfo()));
             } else {
                 recorder.recordRequest(requestLogEntry);
                 invokeResult = mqChaosProducer.enqueue(op.getValue().getBytes());
                 recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
-                    invokeResult, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
+                    invokeResult, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp, invokeResult.getExtraInfo()));
             }
         } else {
             recorder.recordRequest(requestLogEntry);
@@ -112,7 +112,7 @@ public class QueueClient implements Client, ConsumerCallback {
                 for (Message msg : dequeueList) {
                     msgReceivedCount.incrementAndGet();
                     recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
-                        InvokeResult.SUCCESS, msg.shardingKey, new String(msg.payload), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
+                        InvokeResult.SUCCESS, msg.shardingKey, new String(msg.payload), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp, msg.extraInfo));
                 }
             }
         }
@@ -128,7 +128,7 @@ public class QueueClient implements Client, ConsumerCallback {
             while (dequeueList != null && !dequeueList.isEmpty()) {
                 for (Message msg : dequeueList) {
                     msgReceivedCount.incrementAndGet();
-                    recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, msg.shardingKey, new String(msg.payload), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
+                    recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, msg.shardingKey, new String(msg.payload), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp, msg.extraInfo));
                 }
                 requestLogEntry = new RequestLogEntry(clientId, "dequeue", null, System.currentTimeMillis());
                 recorder.recordRequest(requestLogEntry);
@@ -141,6 +141,6 @@ public class QueueClient implements Client, ConsumerCallback {
     @Override
     public void messageReceived(Message message) {
         msgReceivedCount.incrementAndGet();
-        recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, message.shardingKey, new String(message.payload), System.currentTimeMillis(), 0));
+        recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, message.shardingKey, new String(message.payload), System.currentTimeMillis(), 0, message.extraInfo));
     }
 }

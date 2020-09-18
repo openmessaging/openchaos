@@ -14,16 +14,17 @@
 package io.openmessaging.chaos.checker.result;
 
 import com.google.common.collect.Multiset;
-import java.util.Set;
+import java.util.Map;
 
 public class MQTestResult extends TestResult {
     public long enqueueInvokeCount;
     public long enqueueSuccessCount;
     public long dequeueSuccessCount;
     public long lostMessageCount;
-    public Set<String> lostMessages;
+    public Map<String, String> lostMessages;
     public long duplicateMessageCount;
     public Multiset<String> duplicateMessages;
+    public Map<String, String> extraInfoMap;
     public boolean atMostOnce;
     public boolean atLeastOnce;
     public boolean exactlyOnce;
@@ -39,13 +40,35 @@ public class MQTestResult extends TestResult {
             "\n\tenqueueSuccessCount=" + enqueueSuccessCount +
             "\n\tdequeueSuccessCount=" + dequeueSuccessCount +
             "\n\tlostMessageCount=" + lostMessageCount +
-            "\n\tlostMessages=" + lostMessages +
+            "\n\tlostMessages=" + formatLostMessages(lostMessages) +
             "\n\tduplicateMessageCount=" + duplicateMessageCount +
-            "\n\tduplicateMessages=" + duplicateMessages +
+            "\n\tduplicateMessages=" + formatDuplicateMessages(duplicateMessages, extraInfoMap) +
             "\n\tatMostOnce=" + atMostOnce +
             "\n\tatLeastOnce=" + atLeastOnce +
             "\n\texactlyOnce=" + exactlyOnce +
             "\n\tisValid=" + isValid +
             "\n }";
+    }
+
+    public String formatLostMessages(Map<String, String> lostMessages) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("{");
+        for (Map.Entry<String, String> message : lostMessages.entrySet()) {
+            stringBuilder.append("\n\t\t [ lost value = ").append(message.getKey()).append(" , extraInfo = ").append(message.getValue()).append(" ]");
+        }
+        stringBuilder.append("}");
+        return stringBuilder.toString();
+    }
+
+    public String formatDuplicateMessages(Multiset<String> duplicateMessages, Map<String, String> extraInfoMap) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("{");
+        for (Multiset.Entry<String> message : duplicateMessages.entrySet()) {
+            stringBuilder.append("\n\t\t [ duplicate value = ").append(message.getElement()).
+                append(" , duplicate count = ").append(message.getCount()).
+                append(" , extraInfo = ").append(extraInfoMap.get(message.getElement())).append(" ]");
+        }
+        stringBuilder.append("}");
+        return stringBuilder.toString();
     }
 }

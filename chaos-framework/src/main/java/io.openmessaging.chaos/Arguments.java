@@ -78,7 +78,7 @@ public class Arguments {
     public boolean recovery = false;
 
     /**
-     * This property is deprecated and invalid You can set this property in the driver file instead
+     * This property is deprecated and invalid. You can set this property in the driver file instead
      */
     @Deprecated
     @Parameter(names = {
@@ -86,7 +86,7 @@ public class Arguments {
     public boolean isOrderTest = false;
 
     /**
-     * This property is deprecated and invalid You can set this property in the driver file instead
+     * This property is deprecated and invalid. You can set this property in the driver file instead
      */
     @Deprecated
     @Parameter(names = {

@@ -36,7 +36,7 @@ public class RocketMQChaosPullConsumer implements MQChaosPullConsumer {
         List<MessageExt> messages = defaultLitePullConsumer.poll();
         if (!messages.isEmpty()) {
             defaultLitePullConsumer.commitSync();
-            return Lists.transform(messages, messageExt -> new io.openmessaging.chaos.common.Message(messageExt.getKeys(), messageExt.getBody()));
+            return Lists.transform(messages, messageExt -> new io.openmessaging.chaos.common.Message(messageExt.getKeys(), messageExt.getBody(), buildExtraInfo(messageExt, defaultLitePullConsumer.getConsumerGroup())));
         } else {
             return null;
         }
@@ -56,5 +56,11 @@ public class RocketMQChaosPullConsumer implements MQChaosPullConsumer {
         if (defaultLitePullConsumer != null) {
             defaultLitePullConsumer.shutdown();
         }
+    }
+
+    private String buildExtraInfo(MessageExt message, String group) {
+        return "receive status [ msgId = " + message.getMsgId() +
+            ", topic = " + message.getTopic() + ", group = " + group + ", queueId = "
+            + message.getQueueId() + ", queueOffset = " + message.getQueueOffset() + "]";
     }
 }

@@ -20,6 +20,7 @@ import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.exception.RemotingConnectException;
@@ -42,8 +43,9 @@ public class RocketMQChaosProducer implements MQChaosProducer {
     @Override
     public InvokeResult enqueue(byte[] payload) {
         Message message = new Message(chaosTopic, payload);
+        SendResult sendResult = null;
         try {
-            defaultMQProducer.send(message);
+            sendResult = defaultMQProducer.send(message);
         } catch (RemotingException e) {
             if (e instanceof RemotingConnectException || e instanceof RemotingSendRequestException) {
                 log.warn("Enqueue fail", e);
@@ -59,15 +61,16 @@ public class RocketMQChaosProducer implements MQChaosProducer {
             log.warn("Enqueue unknown", e);
             return InvokeResult.UNKNOWN;
         }
-        return InvokeResult.SUCCESS;
+        return InvokeResult.SUCCESS.setExtraInfoAndReturnSelf(sendResult.toString());
     }
 
     @Override
     public InvokeResult enqueue(String shardingKey, byte[] payload) {
         Message message = new Message(chaosTopic, payload);
         message.setKeys(shardingKey);
+        SendResult sendResult = null;
         try {
-            defaultMQProducer.send(message, new MessageQueueSelector() {
+            sendResult = defaultMQProducer.send(message, new MessageQueueSelector() {
                 @Override
                 public MessageQueue select(List<MessageQueue> mqs, Message msg, Object arg) {
                     String key = (String) arg;
@@ -90,7 +93,7 @@ public class RocketMQChaosProducer implements MQChaosProducer {
             log.warn("Enqueue unknown", e);
             return InvokeResult.UNKNOWN;
         }
-        return InvokeResult.SUCCESS;
+        return InvokeResult.SUCCESS.setExtraInfoAndReturnSelf(sendResult.toString());
     }
 
     @Override

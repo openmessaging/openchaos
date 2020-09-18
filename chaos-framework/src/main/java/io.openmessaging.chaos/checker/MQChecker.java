@@ -23,8 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,8 @@ public class MQChecker implements Checker {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
     }
 
-    private Set<String> lostSet = new HashSet<>();
+    private Map<String, String> lostMap = new HashMap<>();
+    private Map<String, String> extraInfoMap = new HashMap<>();
     private Multiset<String> duplicateSet = HashMultiset.create();
     private AtomicLong enqueueInvokeCount = new AtomicLong();
     private AtomicLong enqueueSuccessCount = new AtomicLong();
@@ -93,25 +94,28 @@ public class MQChecker implements Checker {
                     } else if (line[3].equals("SUCCESS")) {
                         if (line[1].equals("enqueue")) {
                             enqueueSuccessCount.incrementAndGet();
-                            lostSet.add(line[4]);
+                            lostMap.put(line[4], line[8]);
                         } else if (line[1].equals("dequeue")) {
                             dequeueSuccessCount.getAndIncrement();
-                            if (lostSet.contains(line[4])) {
-                                lostSet.remove(line[4]);
+                            if (lostMap.containsKey(line[4])) {
+                                lostMap.remove(line[4]);
                             } else {
                                 duplicateSet.add(line[4]);
+                                if (!extraInfoMap.containsKey(line[4])) {
+                                    extraInfoMap.put(line[4], line[8]);
+                                }
                             }
                         }
                     }
                 });
-        checkDuplicateSet(lostSet, duplicateSet);
+        checkDuplicateSet();
     }
 
-    private void checkDuplicateSet(Set<String> lostSet, Multiset<String> duplicateSet) {
+    private void checkDuplicateSet() {
         duplicateSet.removeIf(x -> {
-            boolean exist = lostSet.contains(x);
+            boolean exist = lostMap.containsKey(x);
             if (exist) {
-                lostSet.remove(x);
+                lostMap.remove(x);
             }
             return exist;
         });
@@ -122,14 +126,19 @@ public class MQChecker implements Checker {
         mQTestResult.enqueueInvokeCount = enqueueInvokeCount.get();
         mQTestResult.enqueueSuccessCount = enqueueSuccessCount.get();
         mQTestResult.dequeueSuccessCount = dequeueSuccessCount.get();
-        mQTestResult.lostMessageCount = lostSet.size();
-        mQTestResult.lostMessages = lostSet;
+        mQTestResult.lostMessageCount = lostMap.size();
+        mQTestResult.lostMessages = lostMap;
         mQTestResult.duplicateMessageCount = duplicateSet.size();
         mQTestResult.duplicateMessages = duplicateSet;
+        mQTestResult.extraInfoMap = extraInfoMap;
         mQTestResult.atMostOnce = duplicateSet.isEmpty();
-        mQTestResult.atLeastOnce = lostSet.isEmpty();
-        mQTestResult.exactlyOnce = lostSet.isEmpty() && duplicateSet.isEmpty();
+        mQTestResult.atLeastOnce = lostMap.isEmpty();
+        mQTestResult.exactlyOnce = lostMap.isEmpty() && duplicateSet.isEmpty();
         mQTestResult.isValid = true;
         return mQTestResult;
+    }
+
+    public static void main(String[] args) {
+
     }
 }

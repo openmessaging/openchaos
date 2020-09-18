@@ -24,6 +24,7 @@ public class ResponseLogEntry {
     public String shardingKey;
     public long timestamp;
     public long latency;
+    public String extraInfo;
 
     public ResponseLogEntry(int clientId, String operation, InvokeResult result, String value, long timestamp,
         long latency) {
@@ -33,6 +34,17 @@ public class ResponseLogEntry {
         this.value = value;
         this.timestamp = timestamp;
         this.latency = latency;
+    }
+
+    public ResponseLogEntry(int clientId, String operation, InvokeResult result, String value, long timestamp,
+        long latency, String extraInfo) {
+        this.clientId = clientId;
+        this.operation = operation;
+        this.result = result;
+        this.value = value;
+        this.timestamp = timestamp;
+        this.latency = latency;
+        this.extraInfo = extraInfo;
     }
 
     public ResponseLogEntry(int clientId, String operation, InvokeResult result, String shardingKey, String value,
@@ -46,8 +58,20 @@ public class ResponseLogEntry {
         this.latency = latency;
     }
 
+    public ResponseLogEntry(int clientId, String operation, InvokeResult result, String shardingKey, String value,
+        long timestamp, long latency, String extraInfo) {
+        this.clientId = clientId;
+        this.operation = operation;
+        this.result = result;
+        this.value = value;
+        this.shardingKey = shardingKey;
+        this.timestamp = timestamp;
+        this.latency = latency;
+        this.extraInfo = extraInfo;
+    }
+
     @Override
     public String toString() {
-        return String.format("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d\n", clientId, operation, type, result, value, shardingKey, timestamp, latency);
+        return String.format("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\n", clientId, operation, type, result, value, shardingKey, timestamp, latency, extraInfo);
     }
 }
