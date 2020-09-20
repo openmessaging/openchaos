@@ -24,7 +24,7 @@ RUN apt install -y apt-transport-https
 RUN apt install -y software-properties-common
 
 RUN apt-get install -y \
-        sudo net-tools wget \
+        sudo net-tools wget maven \
         curl vim man faketime unzip less \
         iptables iputils-ping logrotate && \
     apt-get remove -y --purge --auto-remove systemd
