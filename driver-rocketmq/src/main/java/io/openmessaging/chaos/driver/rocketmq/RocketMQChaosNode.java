@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 
 public class RocketMQChaosNode implements MQChaosNode {
 
-    private static final String BROKER_PROCESS_NAME = "org.apache.rocketmq.broker.BrokerStartup";
-    private static final String NAMESERVER_PROCESS_NAME = "org.apache.rocketmq.namesrv.NamesrvStartup";
+    private static final String BROKER_PROCESS_NAME = "BrokerStartup";
+    private static final String NAMESERVER_PROCESS_NAME = "NamesrvStartup";
     private static final Logger log = LoggerFactory.getLogger(RocketMQChaosNode.class);
     private String node;
     private List<String> nodes;
