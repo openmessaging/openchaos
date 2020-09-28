@@ -48,12 +48,12 @@ public class PauseFault implements Fault {
     @Override
     public synchronized void invoke() {
         log.info("Invoke {} fault....", mode);
-        recorder.recordFault(new FaultLogEntry(mode,"start", System.currentTimeMillis()));
         if (faultNodes != null) {
             faultOperations = FaultGenerator.generate(nodesMap.keySet(), faultNodes, mode);
         } else {
             faultOperations = FaultGenerator.generate(nodesMap.keySet(), mode);
         }
+        recorder.recordFault(new FaultLogEntry(mode,"start", System.currentTimeMillis(), faultOperations == null ? null : faultOperations.toString()));
         for (FaultOperation operation : faultOperations) {
             log.info("Suspend node {} processes...", operation.getNode());
             ChaosNode chaosNode = nodesMap.get(operation.getNode());
@@ -66,12 +66,12 @@ public class PauseFault implements Fault {
         if (faultOperations == null)
             return;
         log.info("Recover {} fault....", mode);
-        recorder.recordFault(new FaultLogEntry(mode,"end", System.currentTimeMillis()));
         for (FaultOperation operation : faultOperations) {
             log.info("Recovery node {} processes...", operation.getNode());
             ChaosNode chaosNode = nodesMap.get(operation.getNode());
             chaosNode.resume();
         }
+        recorder.recordFault(new FaultLogEntry(mode,"end", System.currentTimeMillis(), faultOperations == null ? null : faultOperations.toString()));
         faultOperations = null;
     }
 }

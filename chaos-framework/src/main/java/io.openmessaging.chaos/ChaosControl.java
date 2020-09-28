@@ -318,11 +318,11 @@ public class ChaosControl {
             }
 
             //Ensure cluster and clients are ready
-            log.info("Probe cluster, ensure cluster and clients are ready...");
-            boolean isReady = model.probeCluster();
-            if (!isReady) {
-                throw new RuntimeException("Cluster and clients are not ready, please check.");
-            }
+//            log.info("Probe cluster, ensure cluster and clients are ready...");
+//            boolean isReady = model.probeCluster();
+//            if (!isReady) {
+//                throw new RuntimeException("Cluster and clients are not ready, please check.");
+//            }
             log.info("Cluster and clients are ready.");
 
             ChaosControl.status = Status.READY_COMPLETE;

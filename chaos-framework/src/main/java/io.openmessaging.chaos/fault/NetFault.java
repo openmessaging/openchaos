@@ -54,12 +54,13 @@ public class NetFault implements Fault {
     @Override
     public synchronized void invoke() {
         log.info("Invoke {} fault", mode);
-        recorder.recordFault(new FaultLogEntry(mode,"start", System.currentTimeMillis()));
+
         if (faultNodes != null) {
             faultOperations = FaultGenerator.generate(nodes, faultNodes, mode);
         } else {
             faultOperations = FaultGenerator.generate(nodes, mode);
         }
+        recorder.recordFault(new FaultLogEntry(mode, "start", System.currentTimeMillis(), faultOperations == null ? null : faultOperations.toString()));
         for (FaultOperation operation : faultOperations) {
             log.info("Invoke node {} fault, fault is {}, invoke args is {}",
                 operation.getNode(), operation.getName(), operation.getInvokeArgs());
@@ -107,7 +108,6 @@ public class NetFault implements Fault {
         if (faultOperations == null)
             return;
         log.info("Recover {} fault", mode);
-        recorder.recordFault(new FaultLogEntry(mode,"end", System.currentTimeMillis()));
         for (FaultOperation operation : faultOperations) {
             try {
                 log.info("Recover node {} fault, fault is {}, recover args is {}",
@@ -140,6 +140,7 @@ public class NetFault implements Fault {
                 log.error("Recover fault {} failed", operation.getName(), e);
             }
         }
+        recorder.recordFault(new FaultLogEntry(mode, "end", System.currentTimeMillis(), faultOperations == null ? null : faultOperations.toString()));
         faultOperations = null;
     }
 }

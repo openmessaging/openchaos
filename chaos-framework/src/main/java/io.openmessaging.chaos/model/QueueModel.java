@@ -130,7 +130,7 @@ public class QueueModel implements Model {
             cluster.values().forEach(ChaosNode::start);
             log.info("Wait for all nodes to start...");
             try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+                Thread.sleep(TimeUnit.SECONDS.toMillis(40));
             } catch (InterruptedException e) {
                 log.error("", e);
             }

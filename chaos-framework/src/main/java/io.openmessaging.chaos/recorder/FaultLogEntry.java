@@ -21,9 +21,19 @@ public class FaultLogEntry {
 
     public long timestamp;
 
+    public String extraInfo;
+
     public FaultLogEntry(String faultName, String operation, long timestamp) {
         this.faultName = faultName;
         this.operation = operation;
         this.timestamp = timestamp;
+    }
+
+
+    public FaultLogEntry(String faultName, String operation, long timestamp, String extraInfo) {
+        this.faultName = faultName;
+        this.operation = operation;
+        this.timestamp = timestamp;
+        this.extraInfo = extraInfo;
     }
 }
