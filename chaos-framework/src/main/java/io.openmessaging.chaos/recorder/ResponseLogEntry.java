@@ -23,55 +23,69 @@ public class ResponseLogEntry {
     public String value;
     public String shardingKey;
     public long timestamp;
-    public long latency;
+    public long sendLatency;
+    public long endToEndLatency;
     public String extraInfo;
 
     public ResponseLogEntry(int clientId, String operation, InvokeResult result, String value, long timestamp,
-        long latency) {
+        long sendLatency) {
         this.clientId = clientId;
         this.operation = operation;
         this.result = result;
         this.value = value;
         this.timestamp = timestamp;
-        this.latency = latency;
+        this.sendLatency = sendLatency;
     }
 
     public ResponseLogEntry(int clientId, String operation, InvokeResult result, String value, long timestamp,
-        long latency, String extraInfo) {
+        long sendLatency, String extraInfo) {
         this.clientId = clientId;
         this.operation = operation;
         this.result = result;
         this.value = value;
         this.timestamp = timestamp;
-        this.latency = latency;
+        this.sendLatency = sendLatency;
         this.extraInfo = extraInfo;
     }
 
     public ResponseLogEntry(int clientId, String operation, InvokeResult result, String shardingKey, String value,
-        long timestamp, long latency) {
+        long timestamp, long sendLatency) {
         this.clientId = clientId;
         this.operation = operation;
         this.result = result;
         this.value = value;
         this.shardingKey = shardingKey;
         this.timestamp = timestamp;
-        this.latency = latency;
+        this.sendLatency = sendLatency;
     }
 
     public ResponseLogEntry(int clientId, String operation, InvokeResult result, String shardingKey, String value,
-        long timestamp, long latency, String extraInfo) {
+        long timestamp, long sendLatency, String extraInfo) {
         this.clientId = clientId;
         this.operation = operation;
         this.result = result;
         this.value = value;
         this.shardingKey = shardingKey;
         this.timestamp = timestamp;
-        this.latency = latency;
+        this.sendLatency = sendLatency;
         this.extraInfo = extraInfo;
+    }
+
+    public ResponseLogEntry(int clientId, String operation, InvokeResult result, String shardingKey, String value,
+        long timestamp, long sendLatency, String extraInfo, long endToEndLatency) {
+        this.clientId = clientId;
+        this.operation = operation;
+        this.result = result;
+        this.value = value;
+        this.shardingKey = shardingKey;
+        this.timestamp = timestamp;
+        this.sendLatency = sendLatency;
+        this.extraInfo = extraInfo;
+        this.endToEndLatency = endToEndLatency;
     }
 
     @Override
     public String toString() {
-        return String.format("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\n", clientId, operation, type, result, value, shardingKey, timestamp, latency, extraInfo);
+        return String.format("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\n", clientId, operation, type, result, value, shardingKey, timestamp, sendLatency, extraInfo, endToEndLatency);
     }
 }

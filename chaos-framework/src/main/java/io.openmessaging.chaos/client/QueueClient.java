@@ -112,7 +112,8 @@ public class QueueClient implements Client, ConsumerCallback {
                 for (Message msg : dequeueList) {
                     msgReceivedCount.incrementAndGet();
                     recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
-                        InvokeResult.SUCCESS, msg.shardingKey, new String(msg.payload), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp, msg.extraInfo));
+                        InvokeResult.SUCCESS, msg.shardingKey, new String(msg.payload), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp,
+                        msg.extraInfo, msg.receiveTimestamp - msg.sendTimestamp));
                 }
             }
         }
@@ -128,7 +129,8 @@ public class QueueClient implements Client, ConsumerCallback {
             while (dequeueList != null && !dequeueList.isEmpty()) {
                 for (Message msg : dequeueList) {
                     msgReceivedCount.incrementAndGet();
-                    recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, msg.shardingKey, new String(msg.payload), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp, msg.extraInfo));
+                    recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, msg.shardingKey, new String(msg.payload),
+                        System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp, msg.extraInfo, msg.receiveTimestamp - msg.sendTimestamp));
                 }
                 requestLogEntry = new RequestLogEntry(clientId, "dequeue", null, System.currentTimeMillis());
                 recorder.recordRequest(requestLogEntry);
@@ -141,6 +143,7 @@ public class QueueClient implements Client, ConsumerCallback {
     @Override
     public void messageReceived(Message message) {
         msgReceivedCount.incrementAndGet();
-        recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, message.shardingKey, new String(message.payload), System.currentTimeMillis(), 0, message.extraInfo));
+        recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.SUCCESS, message.shardingKey, new String(message.payload), System.currentTimeMillis(), 0,
+            message.extraInfo, message.receiveTimestamp - message.sendTimestamp));
     }
 }

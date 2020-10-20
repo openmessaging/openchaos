@@ -11,25 +11,11 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.driver;
 
-import java.util.List;
-
-public class DriverConfiguration {
-
-    public String name;
-
-    public String driverClass;
-
-    public List<String> nodes;
-    
-    public List<String> preNodes;
-
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean preNodesParticipateInFault;
+/**
+ * PreChaosNode represents one of the auxiliary nodes of the cluster to be tested. eg: Zookeeper for Kafka, Nameserver
+ * for RocketMQ
+ */
+public interface PreChaosNode extends ChaosNode {
 }

@@ -19,15 +19,21 @@
 
 name: RocketMQ
 driverClass: io.openmessaging.chaos.driver.rocketmq.RocketMQChaosDriver
-pull: true
-isOrderTest: true
 
+
+endToEndLatencyCheck: true
 
 # RocketMQ cluster configuration
+
+# Nodes for broker
 nodes:
 - n1
 - n2
 - n3
+
+# Nodes for nameserver
+preNodes:
+- n4
 
 # RocketMQ configuration
 rocketmqVersion: 4.6.0

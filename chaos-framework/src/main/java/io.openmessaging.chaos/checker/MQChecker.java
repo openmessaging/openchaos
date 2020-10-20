@@ -129,13 +129,21 @@ public class MQChecker implements Checker {
         mQTestResult.lostMessageCount = lostMap.size();
         mQTestResult.lostMessages = lostMap;
         mQTestResult.duplicateMessageCount = duplicateSet.size();
-        mQTestResult.duplicateMessages = duplicateSet;
-        mQTestResult.extraInfoMap = extraInfoMap;
+        mQTestResult.duplicateMessages = generateDuplicateMessagesMap();
         mQTestResult.atMostOnce = duplicateSet.isEmpty();
         mQTestResult.atLeastOnce = lostMap.isEmpty();
         mQTestResult.exactlyOnce = lostMap.isEmpty() && duplicateSet.isEmpty();
         mQTestResult.isValid = true;
         return mQTestResult;
+    }
+
+    private Map<String, String> generateDuplicateMessagesMap() {
+        Map<String, String> res = new HashMap<>();
+        for (Multiset.Entry<String> message : duplicateSet.entrySet()) {
+            res.put(message.getElement(), "duplicate count = " + message.getCount() +
+                ", info = " + extraInfoMap.get(message.getElement()));
+        }
+        return res;
     }
 
     public static void main(String[] args) {

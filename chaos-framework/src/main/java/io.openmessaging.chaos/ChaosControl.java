@@ -21,6 +21,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
 import io.openmessaging.chaos.checker.CacheChecker;
 import io.openmessaging.chaos.checker.Checker;
+import io.openmessaging.chaos.checker.EndToEndLatencyChecker;
 import io.openmessaging.chaos.checker.MQChecker;
 import io.openmessaging.chaos.checker.OrderChecker;
 import io.openmessaging.chaos.checker.PerfChecker;
@@ -91,6 +92,8 @@ public class ChaosControl {
 
     private static boolean isOrderTest;
 
+    private static boolean endToEndLatencyCheck;
+
     private static boolean pull;
 
     static {
@@ -141,6 +144,7 @@ public class ChaosControl {
 
             isOrderTest = driverConfiguration.isOrderTest;
             pull = driverConfiguration.pull;
+            endToEndLatencyCheck = driverConfiguration.endToEndLatencyCheck;
 
             if (arguments.agent) {
 
@@ -225,7 +229,9 @@ public class ChaosControl {
 
             }
 
-            SshUtil.init(arguments.username, driverConfiguration.nodes);
+            List<String> allNodes = new ArrayList<>(driverConfiguration.nodes);
+            allNodes.addAll(driverConfiguration.preNodes);
+            SshUtil.init(arguments.username, allNodes);
 
             log.info("--------------- CHAOS TEST --- DRIVER : {}---------------", driverConfiguration.name);
 
@@ -264,7 +270,7 @@ public class ChaosControl {
             Map<String, ChaosNode> map = null;
 
             if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
-                map = model.setupCluster(driverConfiguration.nodes, arguments.install);
+                map = model.setupCluster(driverConfiguration, arguments.install);
             }
 
             model.setupClient();
@@ -289,20 +295,20 @@ public class ChaosControl {
                     case "random-partition":
                     case "random-delay":
                     case "random-loss":
-                        fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                        fault = new NetFault(map.keySet(), arguments.fault, recorder);
                         break;
                     case "fixed-partition":
-                        fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder, faultNodeList);
+                        fault = new NetFault(map.keySet(), arguments.fault, recorder, faultNodeList);
                         break;
                     case "partition-majorities-ring":
                         if (driverConfiguration.nodes.size() <= 3)
                             throw new IllegalArgumentException("The number of nodes less than or equal to 3, unable to form partition-majorities-ring");
-                        fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                        fault = new NetFault(map.keySet(), arguments.fault, recorder);
                         break;
                     case "bridge":
                         if (driverConfiguration.nodes.size() != 5)
                             throw new IllegalArgumentException("The number of nodes is not equal to 5, unable to form bridge");
-                        fault = new NetFault(driverConfiguration.nodes, arguments.fault, recorder);
+                        fault = new NetFault(map.keySet(), arguments.fault, recorder);
                         break;
                     case "minor-suspend":
                     case "major-suspend":
@@ -327,7 +333,7 @@ public class ChaosControl {
 
             ChaosControl.status = Status.READY_COMPLETE;
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
 
             ChaosControl.status = Status.READY_FAILED;
             log.error("Failed to ready chaos test.", e);
@@ -411,6 +417,10 @@ public class ChaosControl {
         }
         if (isOrderTest) {
             checkerList.add(new OrderChecker(arguments.outputDir, historyFile, shardingKeys));
+        }
+
+        if (endToEndLatencyCheck) {
+            checkerList.add(new EndToEndLatencyChecker(arguments.outputDir, historyFile));
         }
 
         resultList = new ArrayList<>();

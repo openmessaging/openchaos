@@ -16,7 +16,13 @@ package io.openmessaging.chaos.common;
 public class Message {
     public String shardingKey;
     public byte[] payload;
+    public long sendTimestamp;
+    public long receiveTimestamp;
     public String extraInfo;
+
+    public Message(byte[] payload) {
+        this.payload = payload;
+    }
 
     public Message(String shardingKey, byte[] payload) {
         this.shardingKey = shardingKey;
@@ -29,7 +35,12 @@ public class Message {
         this.extraInfo = extraInfo;
     }
 
-    public Message(byte[] payload) {
+    public Message(String shardingKey, byte[] payload, long sendTimestamp, long receiveTimestamp,
+        String extraInfo) {
+        this.shardingKey = shardingKey;
         this.payload = payload;
+        this.sendTimestamp = sendTimestamp;
+        this.receiveTimestamp = receiveTimestamp;
+        this.extraInfo = extraInfo;
     }
 }

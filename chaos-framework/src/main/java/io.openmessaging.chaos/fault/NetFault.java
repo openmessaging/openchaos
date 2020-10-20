@@ -19,6 +19,7 @@ import io.openmessaging.chaos.generator.FaultGenerator;
 import io.openmessaging.chaos.generator.FaultOperation;
 import io.openmessaging.chaos.recorder.FaultLogEntry;
 import io.openmessaging.chaos.recorder.Recorder;
+import java.util.Set;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -33,18 +34,18 @@ public class NetFault implements Fault {
     private volatile List<FaultOperation> faultOperations;
     private String mode;
 
-    private List<String> nodes;
+    private Set<String> nodes;
     private List<String> faultNodes;
 
     private Recorder recorder;
 
-    public NetFault(List<String> nodes, String mode, Recorder recorder) {
+    public NetFault(Set<String> nodes, String mode, Recorder recorder) {
         this.mode = mode;
         this.nodes = nodes;
         this.recorder = recorder;
     }
 
-    public NetFault(List<String> nodes, String mode, Recorder recorder, List<String> faultNodes) {
+    public NetFault(Set<String> nodes, String mode, Recorder recorder, List<String> faultNodes) {
         this.mode = mode;
         this.nodes = nodes;
         this.recorder = recorder;

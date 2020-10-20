@@ -67,13 +67,14 @@ public class FaultGenerator {
             case "partition-majorities-ring":
                 return partitionMajoritiesRing(nodes, faultName);
             case "bridge":
-                return bridge(nodes,faultName);
+                return bridge(nodes, faultName);
             default:
                 throw new IllegalArgumentException("Fault cannot be recognized");
         }
     }
 
-    public static List<FaultOperation> generate(Collection<String> nodes, Collection<String> faultNodes, String faultName) {
+    public static List<FaultOperation> generate(Collection<String> nodes, Collection<String> faultNodes,
+        String faultName) {
         if (nodes == null || nodes.isEmpty()) {
             throw new IllegalArgumentException("Nodes cannot be null or empty");
         }
@@ -92,9 +93,10 @@ public class FaultGenerator {
                 nodes.forEach(node -> {
                     if (partition1.contains(node)) {
                         operations.add(getPartitionOperation(faultName, node, partition2));
-                    } else {
-                        operations.add(getPartitionOperation(faultName, node, partition1));
                     }
+//                    else {
+//                        operations.add(getPartitionOperation(faultName, node, partition1));
+//                    }
                 });
                 break;
             default:
@@ -121,9 +123,10 @@ public class FaultGenerator {
         nodes.forEach(node -> {
             if (partition1.contains(node)) {
                 operations.add(getPartitionOperation(faultName, node, partition2));
-            } else {
-                operations.add(getPartitionOperation(faultName, node, partition1));
             }
+//            else {
+//                operations.add(getPartitionOperation(faultName, node, partition1));
+//            }
         });
 
         return operations;
@@ -170,9 +173,10 @@ public class FaultGenerator {
                 break;
             } else if (i < 2) {
                 operations.add(getPartitionOperation(faultName, shuffleNodes.get(i), partitionSet2));
-            } else {
-                operations.add(getPartitionOperation(faultName, shuffleNodes.get(i), partitionSet1));
             }
+//            else {
+//                operations.add(getPartitionOperation(faultName, shuffleNodes.get(i), partitionSet1));
+//            }
         }
         return operations;
     }

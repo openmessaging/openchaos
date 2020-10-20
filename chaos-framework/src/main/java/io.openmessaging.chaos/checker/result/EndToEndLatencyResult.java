@@ -11,25 +11,20 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.checker.result;
 
-import java.util.List;
+public class EndToEndLatencyResult extends TestResult {
+    public long e2eIn1msLatencyCount;
+    public long e2eIn5msLatencyCount;
+    public long e2eIn10msLatencyCount;
+    public long e2eIn100msLatencyCount;
+    public long e2eIn1000msLatencyCount;
+    public long e2eIn3000msLatencyCount;
+    public long e2eExceed3000msLatencyCount;
 
-public class DriverConfiguration {
+    public EndToEndLatencyResult() {
+        super("EndToEndLatencyResult");
+    }
 
-    public String name;
 
-    public String driverClass;
-
-    public List<String> nodes;
-    
-    public List<String> preNodes;
-
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean preNodesParticipateInFault;
 }

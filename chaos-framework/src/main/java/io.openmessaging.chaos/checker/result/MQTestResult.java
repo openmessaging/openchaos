@@ -13,7 +13,6 @@
 
 package io.openmessaging.chaos.checker.result;
 
-import com.google.common.collect.Multiset;
 import java.util.Map;
 
 public class MQTestResult extends TestResult {
@@ -23,8 +22,7 @@ public class MQTestResult extends TestResult {
     public long lostMessageCount;
     public Map<String, String> lostMessages;
     public long duplicateMessageCount;
-    public Multiset<String> duplicateMessages;
-    public Map<String, String> extraInfoMap;
+    public Map<String, String> duplicateMessages;
     public boolean atMostOnce;
     public boolean atLeastOnce;
     public boolean exactlyOnce;
@@ -42,7 +40,7 @@ public class MQTestResult extends TestResult {
             "\n\tlostMessageCount=" + lostMessageCount +
             "\n\tlostMessages=" + formatLostMessages(lostMessages) +
             "\n\tduplicateMessageCount=" + duplicateMessageCount +
-            "\n\tduplicateMessages=" + formatDuplicateMessages(duplicateMessages, extraInfoMap) +
+            "\n\tduplicateMessages=" + formatDuplicateMessages(duplicateMessages) +
             "\n\tatMostOnce=" + atMostOnce +
             "\n\tatLeastOnce=" + atLeastOnce +
             "\n\texactlyOnce=" + exactlyOnce +
@@ -54,21 +52,20 @@ public class MQTestResult extends TestResult {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("{");
         for (Map.Entry<String, String> message : lostMessages.entrySet()) {
-            stringBuilder.append("\n\t\t [ lost value = ").append(message.getKey()).append(" , extraInfo = ").append(message.getValue()).append(" ]");
+            stringBuilder.append("\n\t\t [ lost value = ").append(message.getKey()).append(" , info = ").append(message.getValue()).append(" ]");
         }
         stringBuilder.append("}");
         return stringBuilder.toString();
     }
 
-    public String formatDuplicateMessages(Multiset<String> duplicateMessages, Map<String, String> extraInfoMap) {
+    public String formatDuplicateMessages(Map<String, String> duplicateMessages) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("{");
-        for (Multiset.Entry<String> message : duplicateMessages.entrySet()) {
-            stringBuilder.append("\n\t\t [ duplicate value = ").append(message.getElement()).
-                append(" , duplicate count = ").append(message.getCount()).
-                append(" , extraInfo = ").append(extraInfoMap.get(message.getElement())).append(" ]");
+        for (Map.Entry<String, String> message : duplicateMessages.entrySet()) {
+            stringBuilder.append("\n\t\t [ duplicate value = ").append(message.getKey()).append(" , ").append(message.getValue()).append(" ]");
         }
         stringBuilder.append("}");
         return stringBuilder.toString();
     }
+
 }

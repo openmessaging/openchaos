@@ -56,19 +56,20 @@ public class QueueModel implements Model {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
     }
 
-    private List<Client> clients;
-    private List<ClientWorker> workers;
-    private Map<String, ChaosNode> cluster;
-    private Recorder recorder;
-    private File driverConfigFile;
-    private int concurrency;
-    private RateLimiter rateLimiter;
+    private final List<Client> clients;
+    private final List<ClientWorker> workers;
+    private final Map<String, ChaosNode> cluster;
+    private Map<String, ChaosNode> preNodesMap;
+    private final Recorder recorder;
+    private final File driverConfigFile;
+    private final int concurrency;
+    private final RateLimiter rateLimiter;
     private MQChaosDriver mqChaosDriver;
-    private String chaosTopic;
-    private boolean isOrderTest;
-    private boolean isUsePull;
-    private List<String> shardingKeys;
-    private AtomicLong msgReceivedCount = new AtomicLong(0);
+    private final String chaosTopic;
+    private final boolean isOrderTest;
+    private final boolean isUsePull;
+    private final List<String> shardingKeys;
+    private final AtomicLong msgReceivedCount = new AtomicLong(0);
 
     public QueueModel(int concurrency, RateLimiter rateLimiter, Recorder recorder, File driverConfigFile,
         boolean isOrderTest, boolean isUsePull, List<String> shardingKeys) {
@@ -79,6 +80,7 @@ public class QueueModel implements Model {
         clients = new ArrayList<>();
         workers = new ArrayList<>();
         cluster = new HashMap<>();
+        preNodesMap = new HashMap<>();
         chaosTopic = String.format("%s-chaos-topic", DATE_FORMAT.format(new Date()));
         this.isOrderTest = isOrderTest;
         this.isUsePull = isUsePull;
@@ -103,22 +105,28 @@ public class QueueModel implements Model {
     }
 
     @Override
-    public Map<String, ChaosNode> setupCluster(List<String> nodes, boolean isInstall) {
+    public Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall) {
         try {
             if (mqChaosDriver == null) {
                 mqChaosDriver = createChaosDriver(driverConfigFile);
             }
 
-            if (nodes != null) {
-                nodes.forEach(node -> cluster.put(node, mqChaosDriver.createChaosNode(node, nodes)));
+            if (driverConfiguration.preNodes != null) {
+                driverConfiguration.preNodes.forEach(node -> preNodesMap.put(node, mqChaosDriver.createPreChaosNode(node, driverConfiguration.preNodes)));
+            }
+
+            if (driverConfiguration.nodes != null) {
+                driverConfiguration.nodes.forEach(node -> cluster.put(node, mqChaosDriver.createChaosNode(node, driverConfiguration.nodes)));
             }
 
             if (isInstall) {
+                preNodesMap.values().forEach(ChaosNode::setup);
                 cluster.values().forEach(ChaosNode::setup);
             }
 
             log.info("Cluster shutdown");
             cluster.values().forEach(ChaosNode::stop);
+            preNodesMap.values().forEach(ChaosNode::stop);
             log.info("Wait for all nodes to shutdown...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(10));
@@ -127,15 +135,28 @@ public class QueueModel implements Model {
             }
 
             log.info("Cluster start...");
-            cluster.values().forEach(ChaosNode::start);
             log.info("Wait for all nodes to start...");
+
+            preNodesMap.values().forEach(ChaosNode::start);
+            try {
+                Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+            } catch (InterruptedException e) {
+                log.error("", e);
+            }
+            cluster.values().forEach(ChaosNode::start);
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(40));
             } catch (InterruptedException e) {
                 log.error("", e);
             }
 
-            return cluster;
+            if (driverConfiguration.preNodesParticipateInFault) {
+                Map<String, ChaosNode> allNodes = new HashMap<>(preNodesMap);
+                allNodes.putAll(cluster);
+                return allNodes;
+            } else {
+                return cluster;
+            }
         } catch (Exception e) {
             log.error("Queue model setupCluster fail", e);
             throw new RuntimeException(e);
@@ -193,6 +214,7 @@ public class QueueModel implements Model {
         clients.forEach(Client::teardown);
         log.info("Stop cluster");
         cluster.values().forEach(ChaosNode::stop);
+        preNodesMap.values().forEach(ChaosNode::stop);
         if (mqChaosDriver != null) {
             mqChaosDriver.shutdown();
         }

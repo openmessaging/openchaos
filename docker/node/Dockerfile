@@ -22,9 +22,10 @@ RUN dos2unix /run.sh \
 RUN apt-get update
 RUN apt install -y apt-transport-https
 RUN apt install -y software-properties-common
+RUN apt-get update && apt-get install -y maven
 
 RUN apt-get install -y \
-        sudo net-tools wget maven \
+        sudo net-tools wget \
         curl vim man faketime unzip less \
         iptables iputils-ping logrotate && \
     apt-get remove -y --purge --auto-remove systemd

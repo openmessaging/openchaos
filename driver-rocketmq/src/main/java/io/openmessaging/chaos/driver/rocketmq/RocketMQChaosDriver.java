@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.io.BaseEncoding;
 import io.openmessaging.chaos.common.Message;
+import io.openmessaging.chaos.driver.PreChaosNode;
 import io.openmessaging.chaos.driver.rocketmq.config.RocketMQClientConfig;
 import io.openmessaging.chaos.driver.mq.ConsumerCallback;
 import io.openmessaging.chaos.driver.mq.MQChaosDriver;
@@ -56,6 +57,7 @@ public class RocketMQChaosDriver implements MQChaosDriver {
     private RocketMQBrokerConfig rmqBrokerConfig;
     private RocketMQConfig rmqConfig;
     private List<String> nodes;
+    private List<String> preNodes;
 
     private static RocketMQClientConfig readConfigForClient(File configurationFile) throws IOException {
         return MAPPER.readValue(configurationFile, RocketMQClientConfig.class);
@@ -85,7 +87,8 @@ public class RocketMQChaosDriver implements MQChaosDriver {
 
     @Override
     public MQChaosNode createChaosNode(String node, List<String> nodes) {
-        return new RocketMQChaosNode(node, nodes, rmqConfig, rmqBrokerConfig);
+        this.nodes = nodes;
+        return new RocketMQChaosNode(node, nodes, preNodes, rmqConfig, rmqBrokerConfig);
     }
 
     @Override
@@ -107,7 +110,7 @@ public class RocketMQChaosDriver implements MQChaosDriver {
             defaultMQPushConsumer.subscribe(topic, "*");
             defaultMQPushConsumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
                 for (MessageExt message : msgs) {
-                    consumerCallback.messageReceived(new Message(message.getKeys(), message.getBody(), buildExtraInfo(message, subscriptionName)));
+                    consumerCallback.messageReceived(new Message(message.getKeys(), message.getBody(), message.getBornTimestamp(), System.currentTimeMillis(), buildExtraInfo(message, subscriptionName)));
                 }
                 return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
             });
@@ -168,9 +171,18 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         rmqAdmin.shutdown();
     }
 
+    @Override public PreChaosNode createPreChaosNode(String node, List<String> nodes) {
+        preNodes = nodes;
+        return new RocketMQPreChaosNode(node, nodes, rmqConfig);
+    }
+
     private String getNameserver() {
-        if (rmqClientConfig.namesrvAddr != null && !rmqClientConfig.namesrvAddr.isEmpty()) {
-            return rmqClientConfig.namesrvAddr;
+        if (rmqBrokerConfig.namesrvAddr != null && !rmqBrokerConfig.namesrvAddr.isEmpty()) {
+            return rmqBrokerConfig.namesrvAddr;
+        } else if (preNodes != null) {
+            StringBuilder res = new StringBuilder();
+            preNodes.forEach(node -> res.append(node + ":9876;"));
+            return res.toString();
         } else {
             StringBuilder res = new StringBuilder();
             nodes.forEach(node -> res.append(node + ":9876;"));

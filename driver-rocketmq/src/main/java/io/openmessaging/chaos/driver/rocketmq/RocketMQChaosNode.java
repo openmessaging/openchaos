@@ -31,15 +31,17 @@ public class RocketMQChaosNode implements MQChaosNode {
     private static final Logger log = LoggerFactory.getLogger(RocketMQChaosNode.class);
     private String node;
     private List<String> nodes;
+    private List<String> preNodes;
     private RocketMQBrokerConfig rmqBrokerConfig;
     private String installDir = "rocketmq-chaos-test";
     private String rocketmqVersion = "4.6.0";
     private String configureFilePath = "broker-chaos-test.conf";
 
-    public RocketMQChaosNode(String node, List<String> nodes, RocketMQConfig rmqConfig,
+    public RocketMQChaosNode(String node, List<String> nodes, List<String> preNodes, RocketMQConfig rmqConfig,
         RocketMQBrokerConfig rmqBrokerConfig) {
         this.node = node;
         this.nodes = nodes;
+        this.preNodes = preNodes;
         this.rmqBrokerConfig = rmqBrokerConfig;
         if (rmqConfig.installDir != null && !rmqConfig.installDir.isEmpty()) {
             this.installDir = rmqConfig.installDir;
@@ -97,7 +99,8 @@ public class RocketMQChaosNode implements MQChaosNode {
     public void start() {
         try {
             //Start nameserver
-            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+            if ((preNodes == null || preNodes.isEmpty())
+                && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty())) {
                 log.info("Node {} start nameserver...", node);
                 SshUtil.execCommandInDir(node, installDir, "nohup sh bin/mqnamesrv > nameserver.log 2>&1 &");
             }
@@ -115,7 +118,8 @@ public class RocketMQChaosNode implements MQChaosNode {
     public void stop() {
         try {
             KillProcessUtil.kill(node, BROKER_PROCESS_NAME);
-            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+            if ((preNodes == null || preNodes.isEmpty())
+                && (preNodes == null && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()))) {
                 KillProcessUtil.kill(node, NAMESERVER_PROCESS_NAME);
             }
         } catch (Exception e) {
@@ -128,7 +132,8 @@ public class RocketMQChaosNode implements MQChaosNode {
     public void kill() {
         try {
             KillProcessUtil.forceKill(node, BROKER_PROCESS_NAME);
-            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+            if ((preNodes == null || preNodes.isEmpty())
+                && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty())) {
                 KillProcessUtil.forceKill(node, NAMESERVER_PROCESS_NAME);
             }
         } catch (Exception e) {
@@ -141,7 +146,8 @@ public class RocketMQChaosNode implements MQChaosNode {
     public void pause() {
         try {
             PauseProcessUtil.suspend(node, BROKER_PROCESS_NAME);
-            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+            if ((preNodes == null || preNodes.isEmpty())
+                && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty())) {
                 PauseProcessUtil.suspend(node, NAMESERVER_PROCESS_NAME);
             }
         } catch (Exception e) {
@@ -154,7 +160,8 @@ public class RocketMQChaosNode implements MQChaosNode {
     public void resume() {
         try {
             PauseProcessUtil.resume(node, BROKER_PROCESS_NAME);
-            if (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()) {
+            if ((preNodes == null || preNodes.isEmpty())
+                && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty())) {
                 PauseProcessUtil.resume(node, NAMESERVER_PROCESS_NAME);
             }
         } catch (Exception e) {
@@ -174,10 +181,13 @@ public class RocketMQChaosNode implements MQChaosNode {
     private String getNameserver(List<String> nodes) {
         if (rmqBrokerConfig.namesrvAddr != null && !rmqBrokerConfig.namesrvAddr.isEmpty()) {
             return rmqBrokerConfig.namesrvAddr;
+        } else if (preNodes != null) {
+            StringBuilder res = new StringBuilder();
+            preNodes.forEach(node -> res.append(node + ":9876;"));
+            return res.toString();
         } else {
             StringBuilder res = new StringBuilder();
             nodes.forEach(node -> res.append(node + ":9876;"));
-
             return res.toString();
         }
     }

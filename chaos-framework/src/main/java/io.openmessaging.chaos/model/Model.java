@@ -13,8 +13,8 @@
 
 package io.openmessaging.chaos.model;
 
+import io.openmessaging.chaos.DriverConfiguration;
 import io.openmessaging.chaos.driver.ChaosNode;
-import java.util.List;
 import java.util.Map;
 
 public interface Model {
@@ -27,11 +27,11 @@ public interface Model {
     /**
      * Set up cluster to be tested
      *
-     * @param nodes all the nodes of cluster to be tested
+     * @param driverConfiguration driver configuration
      * @param isInstall whether to reinstall the program on each node
      * @return
      */
-    Map<String, ChaosNode> setupCluster(List<String> nodes, boolean isInstall);
+    Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall);
 
     /**
      * Ensure cluster are ready

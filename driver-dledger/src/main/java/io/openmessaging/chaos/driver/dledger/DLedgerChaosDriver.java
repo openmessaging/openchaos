@@ -15,6 +15,7 @@ package io.openmessaging.chaos.driver.dledger;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.openmessaging.chaos.driver.PreChaosNode;
 import io.openmessaging.chaos.driver.dledger.config.DLedgerConfig;
 import io.openmessaging.chaos.driver.ChaosNode;
 import io.openmessaging.chaos.driver.cache.CacheChaosClient;
@@ -53,6 +54,10 @@ public class DLedgerChaosDriver implements CacheChaosDriver {
 
     @Override public ChaosNode createChaosNode(String node, List<String> nodes) {
         return new DLedgerChaosNode(node, nodes, dLedgerConfig);
+    }
+
+    @Override public PreChaosNode createPreChaosNode(String node, List<String> nodes) {
+        return null;
     }
 
     public String getPeers() {

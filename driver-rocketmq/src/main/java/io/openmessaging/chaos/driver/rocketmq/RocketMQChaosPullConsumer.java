@@ -36,7 +36,8 @@ public class RocketMQChaosPullConsumer implements MQChaosPullConsumer {
         List<MessageExt> messages = defaultLitePullConsumer.poll();
         if (!messages.isEmpty()) {
             defaultLitePullConsumer.commitSync();
-            return Lists.transform(messages, messageExt -> new io.openmessaging.chaos.common.Message(messageExt.getKeys(), messageExt.getBody(), buildExtraInfo(messageExt, defaultLitePullConsumer.getConsumerGroup())));
+            return Lists.transform(messages, messageExt -> new io.openmessaging.chaos.common.Message(messageExt.getKeys(), messageExt.getBody(),
+                messageExt.getBornTimestamp(), System.currentTimeMillis(), buildExtraInfo(messageExt, defaultLitePullConsumer.getConsumerGroup())));
         } else {
             return null;
         }

@@ -41,4 +41,15 @@ public interface ChaosDriver {
      * @param nodes all the nodes of the distributed system to be tested
      */
     ChaosNode createChaosNode(String node, List<String> nodes);
+
+    /**
+     * Create a PreChaosNode. PreChaosNode represents one of the auxiliary nodes of the cluster to be tested. eg:
+     * Zookeeper for Kafka, Nameserver for RocketMQ If it does not exist, can return null
+     *
+     * @param node current node
+     * @param nodes all the nodes of PreChaosNodes
+     */
+    default PreChaosNode createPreChaosNode(String node, List<String> nodes) {
+        return null;
+    }
 }

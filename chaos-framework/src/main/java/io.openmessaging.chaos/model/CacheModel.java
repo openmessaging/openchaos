@@ -51,11 +51,12 @@ public class CacheModel implements Model {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
     }
 
-    private List<Client> clients;
+    private final List<Client> clients;
     private Optional<String> key;
     private List<ClientWorker> workers;
     private Map<String, ChaosNode> cluster;
     private RateLimiter rateLimiter;
+    private Map<String, ChaosNode> preNodesMap;
     private int concurrency;
     private Recorder recorder;
     private CacheChaosDriver cacheChaosDriver;
@@ -68,6 +69,7 @@ public class CacheModel implements Model {
         this.cluster = new HashMap<>();
         this.rateLimiter = rateLimiter;
         this.recorder = recorder;
+        this.preNodesMap = new HashMap<>();
         this.driverConfigFile = driverConfigFile;
         this.key = Optional.ofNullable(String.format("%s-chaos-key", DATE_FORMAT.format(new Date())));
     }
@@ -114,22 +116,28 @@ public class CacheModel implements Model {
         }
     }
 
-    @Override public Map<String, ChaosNode> setupCluster(List<String> nodes, boolean isInstall) {
+    @Override public Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall) {
         try {
             if (cacheChaosDriver == null) {
                 cacheChaosDriver = createCacheChaosDriver(driverConfigFile);
             }
 
-            if (nodes != null) {
-                nodes.forEach(node -> cluster.put(node, cacheChaosDriver.createChaosNode(node, nodes)));
+            if (driverConfiguration.preNodes != null) {
+                driverConfiguration.preNodes.forEach(node -> preNodesMap.put(node, cacheChaosDriver.createPreChaosNode(node, driverConfiguration.preNodes)));
+            }
+
+            if (driverConfiguration.nodes != null) {
+                driverConfiguration.nodes.forEach(node -> cluster.put(node, cacheChaosDriver.createChaosNode(node, driverConfiguration.nodes)));
             }
 
             if (isInstall) {
+                preNodesMap.values().forEach(ChaosNode::setup);
                 cluster.values().forEach(ChaosNode::setup);
             }
 
             log.info("Cluster shutdown");
             cluster.values().forEach(ChaosNode::teardown);
+            preNodesMap.values().forEach(ChaosNode::stop);
             log.info("Wait for all nodes to shutdown...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(10));
@@ -138,15 +146,29 @@ public class CacheModel implements Model {
             }
 
             log.info("Cluster start...");
-            cluster.values().forEach(ChaosNode::start);
             log.info("Wait for all nodes to start...");
+
+            preNodesMap.values().forEach(ChaosNode::start);
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(20));
             } catch (InterruptedException e) {
                 log.error("", e);
             }
+            cluster.values().forEach(ChaosNode::start);
+            try {
+                Thread.sleep(TimeUnit.SECONDS.toMillis(40));
+            } catch (InterruptedException e) {
+                log.error("", e);
+            }
 
-            return cluster;
+            if (driverConfiguration.preNodesParticipateInFault) {
+                Map<String, ChaosNode> allNodes = new HashMap<>(preNodesMap);
+                allNodes.putAll(cluster);
+                return allNodes;
+            } else {
+                return cluster;
+            }
+
         } catch (Exception e) {
             log.error("Queue model setupCluster fail", e);
             throw new RuntimeException(e);
@@ -180,6 +202,7 @@ public class CacheModel implements Model {
         clients.forEach(Client::teardown);
         log.info("Stop cluster");
         cluster.values().forEach(ChaosNode::teardown);
+        preNodesMap.values().forEach(ChaosNode::teardown);
         if (cacheChaosDriver != null) {
             cacheChaosDriver.shutdown();
         }

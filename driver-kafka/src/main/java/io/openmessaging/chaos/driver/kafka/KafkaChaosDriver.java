@@ -16,6 +16,7 @@ package io.openmessaging.chaos.driver.kafka;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.openmessaging.chaos.driver.PreChaosNode;
 import io.openmessaging.chaos.driver.kafka.config.KafkaBrokerConfig;
 import io.openmessaging.chaos.driver.kafka.config.KafkaClientConfig;
 import io.openmessaging.chaos.driver.kafka.config.KafkaConfig;
@@ -138,6 +139,10 @@ public class KafkaChaosDriver implements MQChaosDriver {
     @Override
     public MQChaosNode createChaosNode(String node, List<String> nodes) {
         return new KafkaChaosNode(node, nodes, kafkaConfig, kafkaBrokerConfig);
+    }
+
+    @Override public PreChaosNode createPreChaosNode(String node, List<String> nodes) {
+        return null;
     }
 
     @Override
