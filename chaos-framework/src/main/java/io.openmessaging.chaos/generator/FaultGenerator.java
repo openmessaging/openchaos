@@ -90,14 +90,7 @@ public class FaultGenerator {
                 Set<String> partition1 = new HashSet<>(faultNodes);
                 Set<String> partition2 = new HashSet<>(nodes);
                 partition2.removeAll(partition1);
-                nodes.forEach(node -> {
-                    if (partition1.contains(node)) {
-                        operations.add(getPartitionOperation(faultName, node, partition2));
-                    }
-//                    else {
-//                        operations.add(getPartitionOperation(faultName, node, partition1));
-//                    }
-                });
+                partition1.forEach(node -> operations.add(getPartitionOperation(faultName, node, partition2)));
                 break;
             default:
                 throw new IllegalArgumentException("Fault cannot be recognized");
@@ -120,14 +113,11 @@ public class FaultGenerator {
             }
         }
 
-        nodes.forEach(node -> {
-            if (partition1.contains(node)) {
-                operations.add(getPartitionOperation(faultName, node, partition2));
-            }
-//            else {
-//                operations.add(getPartitionOperation(faultName, node, partition1));
-//            }
-        });
+        if (num <= shuffleNodes.size() - num) {
+            partition1.forEach(node -> operations.add(getPartitionOperation(faultName, node, partition2)));
+        } else {
+            partition2.forEach(node -> operations.add(getPartitionOperation(faultName, node, partition1)));
+        }
 
         return operations;
     }
