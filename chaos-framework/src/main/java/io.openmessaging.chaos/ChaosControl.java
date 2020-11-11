@@ -229,8 +229,14 @@ public class ChaosControl {
 
             }
 
-            List<String> allNodes = new ArrayList<>(driverConfiguration.nodes);
-            allNodes.addAll(driverConfiguration.preNodes);
+            List<String> allNodes = new ArrayList<>();
+            if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
+                allNodes.addAll(driverConfiguration.nodes);
+            }
+            if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
+                allNodes.addAll(driverConfiguration.preNodes);
+            }
+
             SshUtil.init(arguments.username, allNodes);
 
             log.info("--------------- CHAOS TEST --- DRIVER : {}---------------", driverConfiguration.name);

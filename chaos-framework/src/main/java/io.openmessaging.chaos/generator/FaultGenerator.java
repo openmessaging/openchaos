@@ -27,8 +27,13 @@ public class FaultGenerator {
 
     private static List<String> faultList = Arrays.asList(
         "noop", "minor-kill", "major-kill", "random-kill", "fixed-kill", "random-partition",
-        "fixed-partition", "partition-majorities-ring", "bridge", "random-loss",
-        "minor-suspend", "major-suspend", "random-suspend", "fixed-suspend");
+        "fixed-partition", "partition-majorities-ring", "bridge", "minor-loss", "major-loss",
+        "fixed-loss", "random-loss", "minor-delay", "major-delay", "random-delay", "fixed-delay",
+        "minor-suspend", "major-suspend", "random-suspend", "fixed-suspend", "minor-cpu-high",
+        "major-cpu-high", "random-cpu-high", "fixed-cpu-high", "minor-mem-high", "major-mem-high",
+        "random-mem-high", "fixed-mem-high", "minor-disk-error", "major-disk-error",
+        "random-disk-error", "fixed-disk-error", "minor-io-hang", "major-io-hang",
+        "random-io-hang", "fixed-io-hang");
 
     private static Random random = new Random();
 
@@ -50,16 +55,32 @@ public class FaultGenerator {
                 return Collections.EMPTY_LIST;
             case "minor-suspend":
             case "minor-kill":
+            case "minor-cpu-high":
+            case "minor-mem-high":
+            case "minor-disk-error":
+            case "minor-io-hang":
+            case "minor-delay":
+            case "minor-loss":
                 num = nodes.size() % 2 == 0 ? nodes.size() / 2 - 1 : nodes.size() / 2;
                 return faultInRandomNumberNodes(nodes, num, faultName);
             case "major-suspend":
             case "major-kill":
+            case "major-cpu-high":
+            case "major-mem-high":
+            case "major-disk-error":
+            case "major-io-hang":
+            case "major-delay":
+            case "major-loss":
                 num = nodes.size() % 2 == 0 ? nodes.size() / 2 : nodes.size() / 2 + 1;
                 return faultInRandomNumberNodes(nodes, num, faultName);
             case "random-suspend":
             case "random-kill":
             case "random-delay":
             case "random-loss":
+            case "random-cpu-high":
+            case "random-mem-high":
+            case "random-disk-error":
+            case "random-io-hang":
                 num = random.nextInt(nodes.size()) + 1;
                 return faultInRandomNumberNodes(nodes, num, faultName);
             case "random-partition":
@@ -82,6 +103,12 @@ public class FaultGenerator {
         switch (faultName) {
             case "fixed-kill":
             case "fixed-suspend":
+            case "fixed-cpu-high":
+            case "fixed-mem-high":
+            case "fixed-disk-error":
+            case "fixed-io-hang":
+            case "fixed-delay":
+            case "fixed-loss":
                 for (String node : faultNodes) {
                     operations.add(new FaultOperation(faultName, node));
                 }

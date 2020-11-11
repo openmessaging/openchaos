@@ -23,7 +23,7 @@ public class Arguments {
 
     @Parameter(names = {
         "-d",
-        "--driver"}, description = "Driver. eg.: driver-rocketmq/rocketmq.yaml", required = true)
+        "--driver"}, description = "Driver. eg: driver-rocketmq/rocketmq.yaml", required = true)
     public String driver;
 
     @Parameter(names = {
@@ -109,6 +109,6 @@ public class Arguments {
 
     @Parameter(names = {
         "--output-dir"
-                }, description = "The directory of history files and the output files")
+        }, description = "The directory of history files and the output files")
     public String outputDir;
 }
