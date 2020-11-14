@@ -11,35 +11,28 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.openmessaging.chaos;
+package io.openmessaging.chaos.checker.result;
 
-import java.util.List;
+public class PerfTestResult extends TestResult {
 
-public class DriverConfiguration {
+    String ossUrl;
 
-    public String name;
+    public PerfTestResult() {
+        super("PerfResult");
+    }
 
-    public String driverClass;
+    public String getOssUrl() {
+        return ossUrl;
+    }
 
-    public List<String> nodes;
-    
-    public List<String> preNodes;
+    public void setOssUrl(String ossUrl) {
+        this.ossUrl = ossUrl;
+    }
 
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean preNodesParticipateInFault;
-
-    public boolean isUploadImage;
-
-    public String ossEndPoint;
-
-    public String ossAccessKeyId;
-
-    public String ossAccessKeySecret;
-
-    public String bucketName;
+    @Override public String toString() {
+        return "\nPerfTestResult{" +
+            "\n\tossUrl='" + ossUrl + '\'' +
+            "\n\tisValid=" + isValid +
+            "\n}";
+    }
 }

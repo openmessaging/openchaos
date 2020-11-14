@@ -13,27 +13,7 @@
 
 package io.openmessaging.chaos;
 
-import java.util.List;
-
-public class DriverConfiguration {
-
-    public String name;
-
-    public String driverClass;
-
-    public List<String> nodes;
-    
-    public List<String> preNodes;
-
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean preNodesParticipateInFault;
-
-    public boolean isUploadImage;
+public class OssConfig {
 
     public String ossEndPoint;
 
@@ -42,4 +22,5 @@ public class DriverConfiguration {
     public String ossAccessKeySecret;
 
     public String bucketName;
+
 }

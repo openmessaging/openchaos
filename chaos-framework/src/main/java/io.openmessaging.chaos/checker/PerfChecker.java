@@ -13,12 +13,16 @@
 
 package io.openmessaging.chaos.checker;
 
+import com.aliyun.oss.OSS;
+import com.aliyun.oss.OSSClientBuilder;
 import com.panayotis.gnuplot.JavaPlot;
 import com.panayotis.gnuplot.plot.DataSetPlot;
 import com.panayotis.gnuplot.style.NamedPlotColor;
 import com.panayotis.gnuplot.style.PlotStyle;
 import com.panayotis.gnuplot.style.Style;
 import com.panayotis.gnuplot.terminal.ImageTerminal;
+import io.openmessaging.chaos.OssConfig;
+import io.openmessaging.chaos.checker.result.PerfTestResult;
 import io.openmessaging.chaos.checker.result.TestResult;
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,14 +46,18 @@ public class PerfChecker implements Checker {
     private String filePath;
     private String originFilePath;
     private List<String> points;
+    private boolean isUploadImage;
+    private OssConfig ossConfig;
 
     public PerfChecker(List<String> points, String outputDir, String fileName, long testStartTimestamp,
-        long testEndTimestamp) {
+        long testEndTimestamp, boolean isUploadImage, OssConfig ossConfig) {
         this.points = points;
         this.outputDir = outputDir;
         this.fileName = fileName;
         this.testStartTimestamp = testStartTimestamp;
         this.testEndTimestamp = testEndTimestamp;
+        this.isUploadImage = isUploadImage;
+        this.ossConfig = ossConfig;
     }
 
     @Override
@@ -67,7 +75,7 @@ public class PerfChecker implements Checker {
             System.exit(0);
         }
 
-        TestResult testResult = new TestResult("PerfTestResult");
+        PerfTestResult testResult = new PerfTestResult();
         testResult.isValid = true;
         try {
             generateLatencyPointGraph();
@@ -76,7 +84,29 @@ public class PerfChecker implements Checker {
             testResult.isValid = false;
         }
 
+        if (testResult.isValid && isUploadImage) {
+            testResult.setOssUrl(uploadImage2Oss());
+        }
+
         return testResult;
+    }
+
+    private String uploadImage2Oss() {
+        OSS pluginStoreOssClient = new OSSClientBuilder().build(ossConfig.ossEndPoint, ossConfig.ossAccessKeyId,
+            ossConfig.ossAccessKeySecret);
+        try {
+            pluginStoreOssClient.putObject(ossConfig.bucketName, filePath, new FileInputStream(new File(filePath)));
+        } catch (Exception e) {
+            log.error("Upload image to oss failed", e);
+            return null;
+        }
+        String endPoint;
+        if (ossConfig.ossEndPoint.startsWith("http://")) {
+            endPoint = ossConfig.ossEndPoint.substring(7);
+        } else {
+            endPoint = ossConfig.ossEndPoint;
+        }
+        return "http://" + ossConfig.bucketName + "." + endPoint + "/" + filePath;
     }
 
     private void generateLatencyPointGraph() throws Exception {

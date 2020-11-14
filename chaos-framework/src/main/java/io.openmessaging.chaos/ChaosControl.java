@@ -96,6 +96,12 @@ public class ChaosControl {
 
     private static boolean pull;
 
+    private static long recoveryTime;
+
+    public static boolean isUploadImage;
+
+    public static OssConfig ossConfig = new OssConfig();
+
     static {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
     }
@@ -145,6 +151,11 @@ public class ChaosControl {
             isOrderTest = driverConfiguration.isOrderTest;
             pull = driverConfiguration.pull;
             endToEndLatencyCheck = driverConfiguration.endToEndLatencyCheck;
+            isUploadImage = driverConfiguration.isUploadImage;
+            ossConfig.ossEndPoint = driverConfiguration.ossEndPoint;
+            ossConfig.ossAccessKeyId = driverConfiguration.ossAccessKeyId;
+            ossConfig.ossAccessKeySecret = driverConfiguration.ossAccessKeySecret;
+            ossConfig.bucketName = driverConfiguration.bucketName;
 
             if (arguments.agent) {
 
@@ -192,6 +203,8 @@ public class ChaosControl {
     public static void ready(Arguments arguments) {
 
         ChaosControl.status = Status.READY_ING;
+
+        recoveryTime = arguments.recoveryTime;
 
         try {
 
@@ -377,8 +390,8 @@ public class ChaosControl {
         log.info("Wait for recovery some time");
 
         try {
-            //Wait for recovery, sleep 60 s
-            Thread.sleep(TimeUnit.SECONDS.toMillis(60));
+            //Wait for recovery
+            Thread.sleep(TimeUnit.SECONDS.toMillis(recoveryTime));
         } catch (Exception e) {
             log.info("", e);
         }
@@ -404,12 +417,12 @@ public class ChaosControl {
             case "queue":
                 checkerList.add(new MQChecker(arguments.outputDir, historyFile));
                 points = Collections.singletonList("enqueue");
-                checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp));
+                checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));
                 break;
             case "cache":
                 checkerList.add(new CacheChecker(arguments.outputDir, historyFile));
                 points = Collections.singletonList("put");
-                checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp));
+                checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));
                 break;
             default:
                 break;

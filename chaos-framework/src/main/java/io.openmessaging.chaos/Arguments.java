@@ -61,7 +61,7 @@ public class Arguments {
 
     @Parameter(names = {
         "-i",
-        "--fault-interval"}, description = "Fault injection interval. eg: 30", validateWith = PositiveInteger.class)
+        "--fault-interval"}, description = "Fault injection interval (The unit is second). eg: 30", validateWith = PositiveInteger.class)
     public int interval = 30;
 
     @Parameter(names = {
@@ -111,4 +111,9 @@ public class Arguments {
         "--output-dir"
         }, description = "The directory of history files and the output files")
     public String outputDir;
+
+    @Parameter(names = {
+        "--recovery-time"
+        }, description = "Recovery time after stop (the unit is second).")
+    public long recoveryTime  = 30;
 }
