@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/openmessaging/openmessaging-chaos.svg?branch=master)](https://travis-ci.org/openmessaging/openmessaging-chaos) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.openmessaging.chaos/messaging-chaos/badge.svg)](http://search.maven.org/#search%7Cga%7C1%7Copenmessaging-chaos) [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fopenmessaging%2Fopenmessaging-chaos.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fopenmessaging%2Fopenmessaging-chaos?ref=badge_shield)
 
 # Goals
 
@@ -116,3 +117,7 @@ The following fault types are currently supported:
 ## License
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fopenmessaging%2Fopenmessaging-chaos.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fopenmessaging%2Fopenmessaging-chaos?ref=badge_large)
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fopenmessaging%2Fopenmessaging-chaos.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fopenmessaging%2Fopenmessaging-chaos?ref=badge_large)
