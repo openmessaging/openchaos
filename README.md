@@ -3,7 +3,7 @@
 
 # Goals
 
-The framework proposals a unified API for vendors to provide solutions to various aspects of performing the principles of chaos engineering in a Cloud Native environment, its built-in modules will heavily testify reliability, availability and resilience for distriuted system, especially for messaging and eventing. Currently, the community supported the following platforms：
+The framework proposals a unified API for vendors to provide solutions to various aspects of performing the principles of chaos engineering in a Cloud Native environment, its built-in modules will heavily testify reliability, availability and resilience for distriuted system. Currently, the community supported the following platforms：
 
 - [Apache RocketMQ](https://rocketmq.apache.org/)
 - [Apache Kafka](https://kafka.apache.org/)
@@ -14,7 +14,7 @@ The framework proposals a unified API for vendors to provide solutions to variou
 
 Take RocketMQ for example:
 
-1. Prepare one control node and some cluster nodes and ensure that the control node can use SSH to log into a bunch of db nodes
+1. Prepare one control node and some cluster nodes and ensure that the control node can use SSH to log into a bunch of cluster nodes
 2. Edit driver-rocketmq/rocketmq.yaml to set the host name of cluster nodes, client config, broker config.
 3. Install openmessaging-chaos in control node:  `mvn clean install`
 4. Run the test in the control node: `bin/chaos.sh --driver driver-rocketmq/rocketmq.yaml --install` 
