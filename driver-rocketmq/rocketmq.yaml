@@ -27,19 +27,20 @@ endToEndLatencyCheck: true
 
 # Nodes for broker
 nodes:
-- n1
+- n1 # replace with ip or domain name, such as 192.168.0.2
 - n2
 - n3
 
 # Nodes for nameserver
 preNodes:
-- n4
+- n4 # replace with ip or domain name, such as 192.168.0.1
 
 # RocketMQ configuration
-rocketmqVersion: 4.6.0
+rocketmqVersion: 4.8.0
+installDir: /rocketmq-chaos-test # you could set existent location for RocketMQ
 
 # RocketMQ client configuration
-clusterName: DefaultCluster
+clusterName: DefaultCluster # same value as the config in broker.properties
 vipChannelEnabled: false
 
 # RocketMQ broker configuration
