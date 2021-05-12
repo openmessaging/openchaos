@@ -110,7 +110,7 @@ public class ChaosControl {
 
         final Arguments arguments = new Arguments();
         JCommander jc = new JCommander(arguments);
-        jc.setProgramName("messaging-chaos");
+        jc.setProgramName("openchaos");
 
         try {
             jc.parse(args);
