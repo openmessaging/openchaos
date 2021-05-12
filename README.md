@@ -18,7 +18,7 @@ Take RocketMQ for example:
 
 1. Prepare one control node and some cluster nodes and ensure that the control node can use SSH to log into a bunch of cluster nodes (note : you must set secret-free style, do not support to set the paasword).
 2. Edit driver-rocketmq/rocketmq.yaml to set the host name of cluster nodes, client config, broker config.
-3. Install openmessaging-chaos in control node:  `mvn clean install`
+3. Install openchaos in control node:  `mvn clean install`
 4. Run the test in the control node: `bin/chaos.sh --driver driver-rocketmq/rocketmq.yaml --install` 
 5. After the test, you will get yyyy-MM-dd-HH-mm-ss-driver-chaos-result-file and yyyy-MM-dd-HH-mm-ss-driver-latency-point-graph.png (Gnuplot must be installed).
 
@@ -68,7 +68,7 @@ Usage: messaging-chaos [options]
       Help message
     --install
       Whether to install program. It will download the installation package on 
-      each cluster node. When you first use OpenMessaging-Chaos to test a 
+      each cluster node. When you first use OpenChaos to test a 
       distributed system, it should be true.
       Default: false
     -t, --limit-time
