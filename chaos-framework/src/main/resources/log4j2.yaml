@@ -30,8 +30,8 @@ Configuration:
         Pattern: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-4level - %msg%n"
     RollingFile:
       name: ROLLING_FILE
-      fileName: "${sys:user.home}/logs/openmessaging-chaos.log"
-      filePattern: "${sys:user.home}/$${date:yyyy-MM}/openmessaging-chaos-%d{yyyy-MM-dd}-%i.log.gz"
+      fileName: "${sys:user.home}/logs/openchaos.log"
+      filePattern: "${sys:user.home}/$${date:yyyy-MM}/openchaos-%d{yyyy-MM-dd}-%i.log.gz"
       PatternLayout:
         Pattern: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-4level - %msg%n"
       Policies:
