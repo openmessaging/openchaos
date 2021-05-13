@@ -121,7 +121,7 @@ public class PerfChecker implements Checker {
         JavaPlot p = new JavaPlot();
         p.setTerminal(png);
 
-        p.setTitle("OpenMessaging-Chaos Latency Point Graph");
+        p.setTitle("OpenChaos Latency Point Graph");
 
         p.getAxis("x").setLabel("time(s)");
         p.getAxis("x").setBoundaries(0, (testEndTimestamp - testStartTimestamp) / 1000 + 20);
