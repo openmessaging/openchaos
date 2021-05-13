@@ -115,6 +115,7 @@ public class NetFault implements Fault {
                     operation.getNode(), operation.getName(), operation.getRecoverArgs());
                 switch (operation.getName()) {
                     case "random-partition":
+                    case "fixed-partition":
                         NetUtil.healPartition(operation.getNode());
                         break;
                     case "partition-majorities-ring":
