@@ -58,6 +58,7 @@ public class RocketMQChaosDriver implements MQChaosDriver {
     private RocketMQConfig rmqConfig;
     private List<String> nodes;
     private List<String> preNodes;
+    private String nameserverPort = "9876";
 
     private static RocketMQClientConfig readConfigForClient(File configurationFile) throws IOException {
         return MAPPER.readValue(configurationFile, RocketMQClientConfig.class);
@@ -83,6 +84,9 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         this.rmqBrokerConfig = readConfigForBroker(configurationFile);
         this.rmqConfig = readConfigForRMQ(configurationFile);
         this.nodes = nodes;
+        if (rmqConfig.nameserverPort != null && !rmqConfig.nameserverPort.isEmpty()) {
+            this.nameserverPort = rmqConfig.nameserverPort;
+        }
     }
 
     @Override
@@ -181,11 +185,11 @@ public class RocketMQChaosDriver implements MQChaosDriver {
             return rmqBrokerConfig.namesrvAddr;
         } else if (preNodes != null) {
             StringBuilder res = new StringBuilder();
-            preNodes.forEach(node -> res.append(node + ":9876;"));
+            preNodes.forEach(node -> res.append(node + ":" + nameserverPort + ";"));
             return res.toString();
         } else {
             StringBuilder res = new StringBuilder();
-            nodes.forEach(node -> res.append(node + ":9876;"));
+            nodes.forEach(node -> res.append(node + ":" + nameserverPort + ";"));
             return res.toString();
         }
     }
