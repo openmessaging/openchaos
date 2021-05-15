@@ -37,7 +37,8 @@ preNodes:
 
 # RocketMQ configuration
 rocketmqVersion: 4.8.0
-installDir: /rocketmq-chaos-test # you could set existent location for RocketMQ
+installDir: rocketmq-chaos-test # you could set existent location for RocketMQ
+nameserverPort: 9876
 
 # RocketMQ client configuration
 clusterName: DefaultCluster # same value as the config in broker.properties
