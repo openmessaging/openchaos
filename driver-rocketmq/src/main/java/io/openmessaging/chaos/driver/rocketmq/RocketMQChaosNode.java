@@ -36,6 +36,7 @@ public class RocketMQChaosNode implements MQChaosNode {
     private String installDir = "rocketmq-chaos-test";
     private String rocketmqVersion = "4.6.0";
     private String configureFilePath = "broker-chaos-test.conf";
+    private String nameserverPort = "9876";
 
     public RocketMQChaosNode(String node, List<String> nodes, List<String> preNodes, RocketMQConfig rmqConfig,
         RocketMQBrokerConfig rmqBrokerConfig) {
@@ -48,6 +49,9 @@ public class RocketMQChaosNode implements MQChaosNode {
         }
         if (rmqConfig.rocketmqVersion != null && !rmqConfig.rocketmqVersion.isEmpty()) {
             this.rocketmqVersion = rmqConfig.rocketmqVersion;
+        }
+        if (rmqConfig.nameserverPort != null && !rmqConfig.nameserverPort.isEmpty()) {
+            this.nameserverPort = rmqConfig.nameserverPort;
         }
         if (rmqConfig.configureFilePath != null && !rmqConfig.configureFilePath.isEmpty()) {
             this.configureFilePath = rmqConfig.configureFilePath;
@@ -183,11 +187,11 @@ public class RocketMQChaosNode implements MQChaosNode {
             return rmqBrokerConfig.namesrvAddr;
         } else if (preNodes != null) {
             StringBuilder res = new StringBuilder();
-            preNodes.forEach(node -> res.append(node + ":9876;"));
+            preNodes.forEach(node -> res.append(node + ":" + nameserverPort + ";"));
             return res.toString();
         } else {
             StringBuilder res = new StringBuilder();
-            nodes.forEach(node -> res.append(node + ":9876;"));
+            nodes.forEach(node -> res.append(node + ":" + nameserverPort + ";"));
             return res.toString();
         }
     }
