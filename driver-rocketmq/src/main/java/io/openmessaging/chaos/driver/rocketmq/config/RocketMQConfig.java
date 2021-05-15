@@ -17,4 +17,5 @@ public class RocketMQConfig {
     public String installDir;
     public String rocketmqVersion;
     public String configureFilePath;
+    public String nameserverPort;
 }
