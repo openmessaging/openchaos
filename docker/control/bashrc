@@ -11,4 +11,4 @@ To run a test:
    bin/chaos.sh --driver driver-rocketmq/rocketmq.yaml --install
 EOF
 
-cd openmessaging-chaos
+cd openchaos

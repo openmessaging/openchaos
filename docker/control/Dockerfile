@@ -9,8 +9,8 @@ RUN apt-get -y -q update && \
         wget \
         less vim # not required by chaos itself, just for ease of use
 
-# You need to locate openmessaging-chaos in this directory (up.sh does that automatically)
-ADD chaos openmessaging-chaos
+# You need to locate openchaos in this directory (up.sh does that automatically)
+ADD chaos openchaos
 
 ADD ./bashrc /root/.bashrc
 ADD ./init.sh /init.sh
