@@ -56,6 +56,7 @@ public class RocketMQChaosDriver implements MQChaosDriver {
     private RocketMQClientConfig rmqClientConfig;
     private RocketMQBrokerConfig rmqBrokerConfig;
     private RocketMQConfig rmqConfig;
+    private String nameServerPort = "9876";
     private List<String> nodes;
     private List<String> preNodes;
 
@@ -83,6 +84,9 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         this.rmqBrokerConfig = readConfigForBroker(configurationFile);
         this.rmqConfig = readConfigForRMQ(configurationFile);
         this.nodes = nodes;
+        if (rmqConfig.nameServerPort != null && !rmqConfig.nameServerPort.isEmpty()) {
+            this.nameServerPort = rmqConfig.nameServerPort;
+        }
     }
 
     @Override
@@ -181,11 +185,11 @@ public class RocketMQChaosDriver implements MQChaosDriver {
             return rmqBrokerConfig.namesrvAddr;
         } else if (preNodes != null) {
             StringBuilder res = new StringBuilder();
-            preNodes.forEach(node -> res.append(node + ":9876;"));
+            preNodes.forEach(node -> res.append(node + ":" + nameServerPort + ";"));
             return res.toString();
         } else {
             StringBuilder res = new StringBuilder();
-            nodes.forEach(node -> res.append(node + ":9876;"));
+            nodes.forEach(node -> res.append(node + ":" + nameServerPort + ";"));
             return res.toString();
         }
     }
