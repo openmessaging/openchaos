@@ -14,13 +14,13 @@
 package io.openchaos.checker.result;
 
 public class EndToEndLatencyResult extends TestResult {
-    public long e2eIn1msLatencyCount;
-    public long e2eIn5msLatencyCount;
-    public long e2eIn10msLatencyCount;
-    public long e2eIn100msLatencyCount;
-    public long e2eIn1000msLatencyCount;
-    public long e2eIn3000msLatencyCount;
-    public long e2eExceed3000msLatencyCount;
+    public String e2eIn1msLatency;
+    public String e2eIn5msLatency;
+    public String e2eIn10msLatency;
+    public String e2eIn100msLatency;
+    public String e2eIn1000msLatency;
+    public String e2eIn3000msLatency;
+    public String e2eExceed3000msLatency;
 
     public EndToEndLatencyResult() {
         super("EndToEndLatencyResult");

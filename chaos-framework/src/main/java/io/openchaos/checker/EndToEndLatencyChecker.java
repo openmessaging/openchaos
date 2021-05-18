@@ -33,6 +33,7 @@ public class EndToEndLatencyChecker implements Checker {
     public long e2eIn1000msLatencyCount = 0;
     public long e2eIn3000msLatencyCount = 0;
     public long e2eExceed3000msLatencyCount = 0;
+    public long e2eAllCount = 0;
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -84,6 +85,7 @@ public class EndToEndLatencyChecker implements Checker {
             filter(x -> x[2].equals("RESPONSE") && x[1].equals("dequeue")).filter(x -> Long.parseLong(x[9]) >= 0).
             map(x -> x[9]).forEach(x -> {
                 long latency = Long.parseLong(x.trim());
+                e2eAllCount++;
                 if (latency <= 1) {
                     e2eIn1msLatencyCount++;
                 } else if (latency <= 5) {
@@ -104,13 +106,32 @@ public class EndToEndLatencyChecker implements Checker {
 
     private EndToEndLatencyResult generateResult() {
         EndToEndLatencyResult endToEndLatencyResult = new EndToEndLatencyResult();
-        endToEndLatencyResult.e2eIn1msLatencyCount = e2eIn1msLatencyCount;
-        endToEndLatencyResult.e2eIn5msLatencyCount = e2eIn5msLatencyCount;
-        endToEndLatencyResult.e2eIn10msLatencyCount = e2eIn10msLatencyCount;
-        endToEndLatencyResult.e2eIn100msLatencyCount = e2eIn100msLatencyCount;
-        endToEndLatencyResult.e2eIn1000msLatencyCount = e2eIn1000msLatencyCount;
-        endToEndLatencyResult.e2eIn3000msLatencyCount = e2eIn3000msLatencyCount;
-        endToEndLatencyResult.e2eExceed3000msLatencyCount = e2eExceed3000msLatencyCount;
+        
+        if(e2eAllCount == 0){
+            endToEndLatencyResult.e2eIn1msLatency = String.valueOf(e2eIn1msLatencyCount);
+            endToEndLatencyResult.e2eIn5msLatency = String.valueOf(e2eIn5msLatencyCount);
+            endToEndLatencyResult.e2eIn10msLatency = String.valueOf(e2eIn10msLatencyCount);
+            endToEndLatencyResult.e2eIn100msLatency = String.valueOf(e2eIn100msLatencyCount);
+            endToEndLatencyResult.e2eIn1000msLatency = String.valueOf(e2eIn1000msLatencyCount);
+            endToEndLatencyResult.e2eIn3000msLatency = String.valueOf(e2eIn3000msLatencyCount);
+            endToEndLatencyResult.e2eExceed3000msLatency = String.valueOf(e2eExceed3000msLatencyCount);
+        }else{
+            endToEndLatencyResult.e2eIn1msLatency = e2eIn1msLatencyCount + "  " 
+                + String.format("%.2f", e2eIn1msLatencyCount * 100.0 / e2eAllCount) + "%";
+            endToEndLatencyResult.e2eIn5msLatency = e2eIn5msLatencyCount + "  " 
+                + String.format("%.2f", e2eIn5msLatencyCount * 100.0 / e2eAllCount) + "%";
+            endToEndLatencyResult.e2eIn10msLatency = e2eIn10msLatencyCount + "  " 
+                + String.format("%.2f", e2eIn10msLatencyCount * 100.0 / e2eAllCount) + "%";
+            endToEndLatencyResult.e2eIn100msLatency = e2eIn100msLatencyCount + "  " 
+                + String.format("%.2f", e2eIn100msLatencyCount * 100.0 / e2eAllCount) + "%";
+            endToEndLatencyResult.e2eIn1000msLatency = e2eIn1000msLatencyCount + "  " 
+                + String.format("%.2f", e2eIn1000msLatencyCount * 100.0 / e2eAllCount) + "%";
+            endToEndLatencyResult.e2eIn3000msLatency = e2eIn3000msLatencyCount + "  " 
+                + String.format("%.2f", e2eIn3000msLatencyCount * 100.0 / e2eAllCount) + "%";
+            endToEndLatencyResult.e2eExceed3000msLatency = e2eExceed3000msLatencyCount + "  " 
+                + String.format("%.2f", e2eExceed3000msLatencyCount * 100.0 / e2eAllCount) + "%";
+        }
+        
         endToEndLatencyResult.isValid = true;
         return endToEndLatencyResult;
     }
