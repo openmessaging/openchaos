@@ -18,7 +18,7 @@
 #
 
 name: Kafka
-driverClass: io.openmessaging.chaos.driver.kafka.KafkaChaosDriver
+driverClass: io.openchaos.driver.kafka.KafkaChaosDriver
 
 # cluster configuration
 nodes:
