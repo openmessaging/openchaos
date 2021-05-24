@@ -24,3 +24,10 @@ target/
 
 .DS_Store
 nohup.out
+
+# VSCode
+*.project
+*.settings/
+*.classpath
+*.factorypath
+.vscode/
