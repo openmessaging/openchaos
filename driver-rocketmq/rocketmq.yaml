@@ -18,7 +18,7 @@
 #
 
 name: RocketMQ
-driverClass: io.openmessaging.chaos.driver.rocketmq.RocketMQChaosDriver
+driverClass: io.openchaos.driver.rocketmq.RocketMQChaosDriver
 
 
 endToEndLatencyCheck: true
