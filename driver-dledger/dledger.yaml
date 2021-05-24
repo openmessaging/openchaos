@@ -18,7 +18,7 @@
 #
 
 name: dledger
-driverClass: io.openmessaging.chaos.driver.dledger.DLedgerChaosDriver
+driverClass: io.openchaos.driver.dledger.DLedgerChaosDriver
 
 # cluster configuration
 nodes:
