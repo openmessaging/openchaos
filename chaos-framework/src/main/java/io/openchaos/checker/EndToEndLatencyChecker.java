@@ -107,7 +107,7 @@ public class EndToEndLatencyChecker implements Checker {
     private EndToEndLatencyResult generateResult() {
         EndToEndLatencyResult endToEndLatencyResult = new EndToEndLatencyResult();
         
-        if(e2eAllCount == 0){
+        if (e2eAllCount == 0) {
             endToEndLatencyResult.e2eIn1msLatency = String.valueOf(e2eIn1msLatencyCount);
             endToEndLatencyResult.e2eIn5msLatency = String.valueOf(e2eIn5msLatencyCount);
             endToEndLatencyResult.e2eIn10msLatency = String.valueOf(e2eIn10msLatencyCount);
@@ -115,7 +115,7 @@ public class EndToEndLatencyChecker implements Checker {
             endToEndLatencyResult.e2eIn1000msLatency = String.valueOf(e2eIn1000msLatencyCount);
             endToEndLatencyResult.e2eIn3000msLatency = String.valueOf(e2eIn3000msLatencyCount);
             endToEndLatencyResult.e2eExceed3000msLatency = String.valueOf(e2eExceed3000msLatencyCount);
-        }else{
+        } else {
             endToEndLatencyResult.e2eIn1msLatency = e2eIn1msLatencyCount + "  " 
                 + String.format("%.2f", e2eIn1msLatencyCount * 100.0 / e2eAllCount) + "%";
             endToEndLatencyResult.e2eIn5msLatency = e2eIn5msLatencyCount + "  " 
