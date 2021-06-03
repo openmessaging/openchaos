@@ -246,7 +246,7 @@ public class ChaosControl {
             if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
                 allNodes.addAll(driverConfiguration.nodes);
             }
-            if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
+            if (driverConfiguration.preNodes != null && !driverConfiguration.preNodes.isEmpty()) {
                 allNodes.addAll(driverConfiguration.preNodes);
             }
 
