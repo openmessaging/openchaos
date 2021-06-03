@@ -52,7 +52,7 @@ public class KafkaChaosPushConsumer implements MQChaosPushConsumer {
 
                     Map<TopicPartition, OffsetAndMetadata> offsetMap = new HashMap<>();
                     for (ConsumerRecord<String, byte[]> record : records) {
-                        callback.messageReceived(new Message(record.key(), record.value()));
+                        callback.messageReceived(new Message(record.key(), record.value(), record.timestamp(), System.currentTimeMillis(), record.topic()));
 
                         offsetMap.put(new TopicPartition(record.topic(), record.partition()),
                             new OffsetAndMetadata(record.offset()));
