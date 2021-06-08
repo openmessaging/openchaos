@@ -28,9 +28,12 @@ public class KillProcessUtil {
 
     public static void kill(String node, String processName) throws Exception {
         log.info("Kill node {} process {} .", node, processName);
-        String pid = SshUtil.execCommandWithArgsReturnStr(node, String.format("ps ax | grep -i '%s' | grep java | grep -v grep | awk '{print $1}'", processName)).trim();
-        if (!pid.isEmpty()) {
-            SshUtil.execCommand(node, String.format("kill %s", pid));
+        String pidList = SshUtil.execCommandWithArgsReturnStr(node, String.format("ps ax | grep -i '%s' | grep java | grep -v grep | awk '{print $1}'", processName)).trim();
+        if (!pidList.isEmpty()) {
+            String[] pids = pidList.split("\n");
+            for (String pid : pids) {
+                SshUtil.execCommand(node, String.format("kill %s", pid));
+            }
         } else {
             log.info("No {} process running in node {}.", processName, node);
         }
@@ -38,9 +41,12 @@ public class KillProcessUtil {
 
     public static void forceKill(String node, String processName) throws Exception {
         log.info("Force kill node {} process {} .", node, processName);
-        String pid = SshUtil.execCommandWithArgsReturnStr(node, String.format("ps ax | grep -i '%s' | grep java | grep -v grep | awk '{print $1}'", processName)).trim();
-        if (!pid.isEmpty()) {
-            SshUtil.execCommand(node, String.format("kill -9 %s", pid));
+        String pidList = SshUtil.execCommandWithArgsReturnStr(node, String.format("ps ax | grep -i '%s' | grep java | grep -v grep | awk '{print $1}'", processName)).trim();
+        if (!pidList.isEmpty()) {
+            String[] pids = pidList.split("\n");
+            for (String pid : pids) {
+                SshUtil.execCommand(node, String.format("kill -9 %s", pid));
+            }
         } else {
             log.info("No {} process running in node {}.", processName, node);
         }
