@@ -101,14 +101,14 @@ public class KVModel implements Model {
             log.info("Cache clients setup..");
 
             for (int i = 0; i < concurrency; i++) {
-                Client client = new KVClient(driver, recorder, key);
+                Client client = new KVClient(driver, recorder, Optional.of(key.get() + i));
                 client.setup();
                 clients.add(client);
                 ClientWorker clientWorker = new ClientWorker("cacheClient-" + i, client, rateLimiter, log);
                 workers.add(clientWorker);
             }
 
-            log.info("{} mq clients setup success", concurrency);
+            log.info("{} cache clients setup success", concurrency);
 
         } catch (Exception e) {
             log.error("Cache model setupClient fail", e);
@@ -146,7 +146,7 @@ public class KVModel implements Model {
             }
 
             log.info("Cluster start...");
-            log.info("Wait for all nodes to start...");
+            log.info("Wait for all preNodes to start...");
 
             preNodesMap.values().forEach(ChaosNode::start);
             try {
@@ -154,6 +154,7 @@ public class KVModel implements Model {
             } catch (InterruptedException e) {
                 log.error("", e);
             }
+            log.info("Wait for all nodes to start...");
             cluster.values().forEach(ChaosNode::start);
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(40));
@@ -170,7 +171,7 @@ public class KVModel implements Model {
             }
 
         } catch (Exception e) {
-            log.error("Queue model setupCluster fail", e);
+            log.error("Cache model setupCluster fail", e);
             throw new RuntimeException(e);
         }
     }
@@ -185,7 +186,7 @@ public class KVModel implements Model {
     }
 
     @Override public void stop() {
-        log.info("MQ chaos test stop");
+        log.info("Cache chaos test stop");
         workers.forEach(Worker::breakLoop);
     }
 
@@ -193,7 +194,9 @@ public class KVModel implements Model {
         if (clients.isEmpty()) {
             throw new IllegalArgumentException("clients is empty");
         } else {
-            clients.get(0).lastInvoke();
+            for (Client client : clients) {
+                client.lastInvoke();
+            }
         }
     }
 
