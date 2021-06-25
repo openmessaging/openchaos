@@ -18,6 +18,8 @@
 # under the License.
 #
 
+cd `dirname $0`/../; pwd
+
 JVM_GC_LOG=" -XX:+PrintGCDetails -XX:+PrintGCApplicationStoppedTime  -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=64m  -Xloggc:/dev/shm/benchmark-client-gc_%p.log"
 
 java -jar chaos-framework/target/ChaosControl.jar $*

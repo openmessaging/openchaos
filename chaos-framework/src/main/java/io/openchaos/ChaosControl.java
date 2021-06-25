@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
+import io.openchaos.checker.BankChecker;
 import io.openchaos.checker.CacheChecker;
 import io.openchaos.checker.MQChecker;
 import io.openchaos.checker.PerfChecker;
@@ -36,6 +37,7 @@ import io.openchaos.fault.KillFault;
 import io.openchaos.fault.NetFault;
 import io.openchaos.fault.NoopFault;
 import io.openchaos.fault.PauseFault;
+import io.openchaos.model.BankModel;
 import io.openchaos.model.CacheModel;
 import io.openchaos.model.Model;
 import io.openchaos.model.QueueModel;
@@ -197,6 +199,7 @@ public class ChaosControl {
             clearAfterException();
         } finally {
             clear();
+            System.exit(0);
         }
     }
 
@@ -281,6 +284,9 @@ public class ChaosControl {
                     break;
                 case "cache":
                     model = new CacheModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
+                    break;
+                case "bank":
+                    model = new BankModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
                     break;
                 default:
                     throw new RuntimeException("model not recognized.");
@@ -424,6 +430,10 @@ public class ChaosControl {
                 points = Collections.singletonList("put");
                 checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));
                 break;
+            case "bank":
+                checkerList.add(new BankChecker(arguments.outputDir, historyFile));
+                points = Collections.singletonList("transfer");
+                checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));
             default:
                 break;
         }

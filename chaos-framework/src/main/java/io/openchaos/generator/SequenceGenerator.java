@@ -13,6 +13,8 @@
 
 package io.openchaos.generator;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -36,5 +38,10 @@ public class SequenceGenerator {
 
     public static Operation generateCacheOperation() {
         return new Operation("put", String.valueOf(stagger.getAndIncrement()));
+    }
+
+    public static BankOperation generateBankOperation(List<String> accounts) {
+        Collections.shuffle(accounts);
+        return new BankOperation("transfer", accounts.get(0), accounts.get(1), random.nextInt(100));
     }
 }
