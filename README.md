@@ -55,7 +55,7 @@ Usage: messaging-chaos [options]
       Fault type to be injected. eg: noop, minor-kill, major-kill, 
       random-kill, fixed-kill, random-partition, fixed-partition, 
       partition-majorities-ring, bridge, random-loss, minor-suspend, 
-      major-suspend, random-suspend, fixed-suspend
+      major-suspend, random-suspend, fixed-suspend, leader-kill, leader-suspend
       Default: noop
     -i, --fault-interval
       Fault injection interval. eg: 30
@@ -76,18 +76,15 @@ Usage: messaging-chaos [options]
       time). eg: 60
       Default: 60
     -m, --model
-      Test model. Currently queue model and cache model are supported.
+      Test model. Currently queue model and kv model are supported.
       Default: queue
-    --order
-      Check the partition order of messaging platform. Just for mq model.
-      Default: false
     --output-dir
       The directory of history files and the output files
     -p, --port
       The listening port of http agent.
       Default: 8080
     --pull
-      Driver use pull consumer, default is push consumer. Just for mq model.
+      Driver use pull consumer, default is push consumer. Just for queue model.
       Default: false
     -r, --rate
       Approximate number of requests per second. eg: 20
