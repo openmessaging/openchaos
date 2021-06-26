@@ -311,8 +311,9 @@ public class ChaosControl {
                     case "random-kill":
                         fault = new KillFault(map, arguments.fault, recorder);
                         break;
-                    case "leader-Kill":
+                    case "leader-kill":
                         fault = new KillFault(map, stateClass, metaNode, metaName, arguments.fault, recorder);
+                        break;
                     case "fixed-kill":
                         fault = new KillFault(map, arguments.fault, recorder, faultNodeList);
                         break;
@@ -341,6 +342,7 @@ public class ChaosControl {
                         break;
                     case "leader-suspend":
                         fault = new PauseFault(map, stateClass, metaNode, metaName, arguments.fault, recorder);
+                        break;
                     case "fixed-suspend":
                         fault = new PauseFault(map, arguments.fault, recorder, faultNodeList);
                         break;
