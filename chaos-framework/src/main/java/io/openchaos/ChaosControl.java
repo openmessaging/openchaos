@@ -19,8 +19,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
-import io.openchaos.checker.CacheChecker;
-import io.openchaos.checker.MQChecker;
+import io.openchaos.checker.KVChecker;
+import io.openchaos.checker.QueueChecker;
 import io.openchaos.checker.PerfChecker;
 import io.openchaos.checker.result.TestResult;
 import io.openchaos.http.Agent;
@@ -36,7 +36,7 @@ import io.openchaos.fault.KillFault;
 import io.openchaos.fault.NetFault;
 import io.openchaos.fault.NoopFault;
 import io.openchaos.fault.PauseFault;
-import io.openchaos.model.CacheModel;
+import io.openchaos.model.KVModel;
 import io.openchaos.model.Model;
 import io.openchaos.model.QueueModel;
 import io.openchaos.recorder.Recorder;
@@ -280,7 +280,7 @@ public class ChaosControl {
                     model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile, isOrderTest, pull, shardingKeys);
                     break;
                 case "cache":
-                    model = new CacheModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
+                    model = new KVModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
                     break;
                 default:
                     throw new RuntimeException("model not recognized.");
@@ -292,6 +292,9 @@ public class ChaosControl {
                 map = model.setupCluster(driverConfiguration, arguments.install);
             }
 
+            String metaName = model.getMetaName();
+            String metaNode = model.getMetaNode();
+            String stateClass = driverConfiguration.stateClass;
             model.setupClient();
 
             //Initial fault
@@ -308,6 +311,8 @@ public class ChaosControl {
                     case "random-kill":
                         fault = new KillFault(map, arguments.fault, recorder);
                         break;
+                    case "leader-Kill":
+                        fault = new KillFault(map, stateClass, metaNode, metaName, arguments.fault, recorder);
                     case "fixed-kill":
                         fault = new KillFault(map, arguments.fault, recorder, faultNodeList);
                         break;
@@ -334,6 +339,8 @@ public class ChaosControl {
                     case "random-suspend":
                         fault = new PauseFault(map, arguments.fault, recorder);
                         break;
+                    case "leader-suspend":
+                        fault = new PauseFault(map, stateClass, metaNode, metaName, arguments.fault, recorder);
                     case "fixed-suspend":
                         fault = new PauseFault(map, arguments.fault, recorder, faultNodeList);
                         break;
@@ -415,12 +422,12 @@ public class ChaosControl {
 
         switch (arguments.model) {
             case "queue":
-                checkerList.add(new MQChecker(arguments.outputDir, historyFile));
+                checkerList.add(new QueueChecker(arguments.outputDir, historyFile));
                 points = Collections.singletonList("enqueue");
                 checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));
                 break;
             case "cache":
-                checkerList.add(new CacheChecker(arguments.outputDir, historyFile));
+                checkerList.add(new KVChecker(arguments.outputDir, historyFile));
                 points = Collections.singletonList("put");
                 checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));
                 break;

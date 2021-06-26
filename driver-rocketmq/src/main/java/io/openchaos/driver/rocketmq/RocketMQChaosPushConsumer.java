@@ -13,7 +13,7 @@
 
 package io.openchaos.driver.rocketmq;
 
-import io.openchaos.driver.mq.MQChaosPushConsumer;
+import io.openchaos.driver.queue.MQChaosPushConsumer;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;

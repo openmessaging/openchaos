@@ -13,6 +13,8 @@
 
 package io.openchaos.generator;
 
+import io.openchaos.driver.queue.MQChaosState;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,16 +28,17 @@ import java.util.Set;
 public class FaultGenerator {
 
     private static List<String> faultList = Arrays.asList(
-        "noop", "minor-kill", "major-kill", "random-kill", "fixed-kill", "random-partition",
-        "fixed-partition", "partition-majorities-ring", "bridge", "minor-loss", "major-loss",
-        "fixed-loss", "random-loss", "minor-delay", "major-delay", "random-delay", "fixed-delay",
-        "minor-suspend", "major-suspend", "random-suspend", "fixed-suspend", "minor-cpu-high",
-        "major-cpu-high", "random-cpu-high", "fixed-cpu-high", "minor-mem-high", "major-mem-high",
-        "random-mem-high", "fixed-mem-high", "minor-disk-error", "major-disk-error",
-        "random-disk-error", "fixed-disk-error", "minor-io-hang", "major-io-hang",
-        "random-io-hang", "fixed-io-hang");
+            "noop", "minor-kill", "major-kill", "random-kill", "fixed-kill", "leader-kill", "random-partition",
+            "fixed-partition", "partition-majorities-ring", "bridge", "minor-loss", "major-loss",
+            "fixed-loss", "random-loss", "minor-delay", "major-delay", "random-delay", "fixed-delay",
+            "minor-suspend", "major-suspend", "leader-suspend", "random-suspend", "fixed-suspend", "minor-cpu-high",
+            "major-cpu-high", "random-cpu-high", "fixed-cpu-high", "minor-mem-high", "major-mem-high",
+            "random-mem-high", "fixed-mem-high", "minor-disk-error", "major-disk-error",
+            "random-disk-error", "fixed-disk-error", "minor-io-hang", "major-io-hang",
+            "random-io-hang", "fixed-io-hang");
 
     private static Random random = new Random();
+    private static MQChaosState chaosState;
 
     public static List<String> getFaultList() {
         return faultList;
@@ -95,7 +98,7 @@ public class FaultGenerator {
     }
 
     public static List<FaultOperation> generate(Collection<String> nodes, Collection<String> faultNodes,
-        String faultName) {
+                                                String faultName) {
         if (nodes == null || nodes.isEmpty()) {
             throw new IllegalArgumentException("Nodes cannot be null or empty");
         }
@@ -123,6 +126,21 @@ public class FaultGenerator {
                 throw new IllegalArgumentException("Fault cannot be recognized");
         }
         return operations;
+    }
+
+    public static List<FaultOperation> generate(Collection<String> nodes, String stateClass, String metaName, String metaNode,
+                                                String faultName) {
+        if (nodes == null || nodes.isEmpty()) {
+            throw new IllegalArgumentException("Nodes cannot be null or empty");
+        }
+        int num = 1;
+        switch (faultName) {
+            case "leader-kill":
+            case "leader-suspend":
+                return faultInRandomNumberLeaderNodes(faultName, stateClass, num, metaName, metaNode);
+            default:
+                throw new IllegalArgumentException("Fault cannot be recognized");
+        }
     }
 
     private static List<FaultOperation> randomPartition(Collection<String> nodes, String faultName) {
@@ -201,6 +219,26 @@ public class FaultGenerator {
     private static List<FaultOperation> faultInRandomNumberNodes(Collection<String> nodes, int num, String faultName) {
         List<FaultOperation> operations = new ArrayList<>();
         List<String> shuffleNodes = new ArrayList<>(nodes);
+        Collections.shuffle(shuffleNodes);
+        for (int i = 0; i < num; i++) {
+            FaultOperation operation = new FaultOperation(faultName, shuffleNodes.get(i));
+            operations.add(operation);
+        }
+        return operations;
+    }
+
+    private static List<FaultOperation> faultInRandomNumberLeaderNodes(String faultName, String stateClass, int num,
+                                                                       String metaName, String metaNode) {
+        List<FaultOperation> operations = new ArrayList<>();
+        try {
+            chaosState = (MQChaosState) Class.forName(stateClass).newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        chaosState.initialize(metaName, metaNode);
+        Set<String> leaderNode;
+        leaderNode = chaosState.getLeader();
+        List<String> shuffleNodes = new ArrayList<>(leaderNode);
         Collections.shuffle(shuffleNodes);
         for (int i = 0; i < num; i++) {
             FaultOperation operation = new FaultOperation(faultName, shuffleNodes.get(i));

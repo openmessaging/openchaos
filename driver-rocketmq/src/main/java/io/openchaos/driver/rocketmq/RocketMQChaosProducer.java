@@ -14,7 +14,7 @@
 package io.openchaos.driver.rocketmq;
 
 import io.openchaos.common.InvokeResult;
-import io.openchaos.driver.mq.MQChaosProducer;
+import io.openchaos.driver.queue.MQChaosProducer;
 import java.util.List;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;

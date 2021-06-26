@@ -17,9 +17,29 @@
  * under the License.
  */
 
-package io.openchaos.driver.mq;
+package io.openchaos.driver.queue;
 
+import io.openchaos.common.InvokeResult;
 import io.openchaos.driver.ChaosClient;
 
-public interface MQChaosPushConsumer extends ChaosClient {
+public interface MQChaosProducer extends ChaosClient {
+
+    /**
+     * Enqueue a value to mq cluster
+     *
+     * @param payload
+     * @return result of enqueue
+     */
+    InvokeResult enqueue(byte[] payload);
+
+    /**
+     * Enqueue a value with sharding key to mq cluster
+     *
+     * @param payload
+     * @return result of enqueue
+     */
+    InvokeResult enqueue(String shardingKey, byte[] payload);
+
+
+
 }

@@ -14,8 +14,8 @@
 package io.openchaos.driver.kafka;
 
 import io.openchaos.common.Message;
-import io.openchaos.driver.mq.ConsumerCallback;
-import io.openchaos.driver.mq.MQChaosPushConsumer;
+import io.openchaos.driver.queue.ConsumerCallback;
+import io.openchaos.driver.queue.MQChaosPushConsumer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;

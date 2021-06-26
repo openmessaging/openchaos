@@ -13,9 +13,11 @@
 
 package io.openchaos.driver;
 
-/**
- * PreChaosNode represents one of the auxiliary nodes of the cluster to be tested. eg: Zookeeper for Kafka, Nameserver
- * for RocketMQ
- */
-public interface PreChaosNode extends ChaosNode {
+import java.util.Set;
+
+public interface ChaosState {
+
+    void initialize(String metaName, String metaNode);
+
+    Set<String> getLeader();
 }

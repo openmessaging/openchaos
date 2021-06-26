@@ -14,7 +14,7 @@
 package io.openchaos.driver.kafka;
 
 import io.openchaos.common.Message;
-import io.openchaos.driver.mq.MQChaosPullConsumer;
+import io.openchaos.driver.queue.MQChaosPullConsumer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;

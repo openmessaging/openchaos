@@ -14,7 +14,7 @@ package io.openchaos.checker.result;
 
 import java.util.Set;
 
-public class CacheTestResult extends TestResult {
+public class KVTestResult extends TestResult {
 
     public long putInvokeCount;
     public long putSuccessCount;
@@ -22,7 +22,7 @@ public class CacheTestResult extends TestResult {
     public long lostValueCount;
     public Set<String> lostValues;
 
-    public CacheTestResult() {
+    public KVTestResult() {
         super("CacheTestResult");
     }
 

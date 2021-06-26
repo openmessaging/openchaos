@@ -11,37 +11,11 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.openchaos;
+package io.openchaos.driver;
 
-import java.util.List;
-
-public class DriverConfiguration {
-
-    public String name;
-
-    public String driverClass;
-
-    public String stateClass;
-
-    public List<String> nodes;
-    
-    public List<String> preNodes;
-
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean preNodesParticipateInFault;
-
-    public boolean isUploadImage;
-
-    public String ossEndPoint;
-
-    public String ossAccessKeyId;
-
-    public String ossAccessKeySecret;
-
-    public String bucketName;
+/**
+ * PreChaosNode represents one of the auxiliary nodes of the cluster to be tested. eg: Zookeeper for Kafka, Nameserver
+ * for RocketMQ
+ */
+public interface MetaNode extends ChaosNode {
 }

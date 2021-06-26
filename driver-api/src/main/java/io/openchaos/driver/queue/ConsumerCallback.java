@@ -16,9 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.openchaos.driver.cache;
 
-import io.openchaos.driver.ChaosNode;
+package io.openchaos.driver.queue;
 
-public interface CacheChaosNode extends ChaosNode {
+import io.openchaos.common.Message;
+
+/**
+ * Just for push consumer.
+ */
+public interface ConsumerCallback {
+
+    /**
+     * Push Consumer should invoke this method once for each message received
+     */
+    void messageReceived(Message message);
 }

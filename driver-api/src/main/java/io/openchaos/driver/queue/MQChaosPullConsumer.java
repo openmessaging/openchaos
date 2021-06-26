@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package io.openchaos.driver.mq;
+package io.openchaos.driver.queue;
 
 import io.openchaos.common.Message;
 import io.openchaos.driver.ChaosClient;

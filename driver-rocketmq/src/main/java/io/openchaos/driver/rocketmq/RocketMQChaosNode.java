@@ -16,7 +16,7 @@ package io.openchaos.driver.rocketmq;
 import io.openchaos.common.utils.KillProcessUtil;
 import io.openchaos.common.utils.PauseProcessUtil;
 import io.openchaos.common.utils.SshUtil;
-import io.openchaos.driver.mq.MQChaosNode;
+import io.openchaos.driver.queue.MQChaosNode;
 import io.openchaos.driver.rocketmq.config.RocketMQBrokerConfig;
 import io.openchaos.driver.rocketmq.config.RocketMQConfig;
 import java.lang.reflect.Field;

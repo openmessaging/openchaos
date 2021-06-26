@@ -31,6 +31,9 @@ public class PauseFault implements Fault {
     private List<String> faultNodes;
     private String mode;
     private Recorder recorder;
+    private String metaNode;
+    private String metaName;
+    private String stateClass;
 
     public PauseFault(Map<String, ChaosNode> nodesMap, String mode, Recorder recorder) {
         this.nodesMap = nodesMap;
@@ -38,11 +41,22 @@ public class PauseFault implements Fault {
         this.recorder = recorder;
     }
 
-    public PauseFault(Map<String, ChaosNode> nodesMap, String mode, Recorder recorder, List<String> faultNodes) {
+    public PauseFault(Map<String, ChaosNode> nodesMap, String mode, Recorder recorder,
+                      List<String> faultNodes) {
         this.nodesMap = nodesMap;
         this.mode = mode;
         this.recorder = recorder;
         this.faultNodes = faultNodes;
+    }
+
+    public PauseFault(Map<String, ChaosNode> nodesMap, String stateClass, String metaNode,
+                      String metaName, String mode, Recorder recorder) {
+        this.nodesMap = nodesMap;
+        this.mode = mode;
+        this.recorder = recorder;
+        this.metaName = metaName;
+        this.metaNode = metaNode;
+        this.stateClass = stateClass;
     }
 
     @Override
@@ -50,10 +64,12 @@ public class PauseFault implements Fault {
         log.info("Invoke {} fault....", mode);
         if (faultNodes != null) {
             faultOperations = FaultGenerator.generate(nodesMap.keySet(), faultNodes, mode);
-        } else {
+        } else if (metaName == null) {
             faultOperations = FaultGenerator.generate(nodesMap.keySet(), mode);
+        } else {
+            faultOperations = FaultGenerator.generate(nodesMap.keySet(), stateClass, metaName, metaNode, mode);
         }
-        recorder.recordFault(new FaultLogEntry(mode,"start", System.currentTimeMillis(), faultOperations == null ? null : faultOperations.toString()));
+        recorder.recordFault(new FaultLogEntry(mode, "start", System.currentTimeMillis(), faultOperations == null ? null : faultOperations.toString()));
         for (FaultOperation operation : faultOperations) {
             log.info("Suspend node {} processes...", operation.getNode());
             ChaosNode chaosNode = nodesMap.get(operation.getNode());

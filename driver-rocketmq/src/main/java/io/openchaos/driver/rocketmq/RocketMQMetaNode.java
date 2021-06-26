@@ -16,7 +16,7 @@ package io.openchaos.driver.rocketmq;
 import io.openchaos.common.utils.KillProcessUtil;
 import io.openchaos.common.utils.PauseProcessUtil;
 import io.openchaos.common.utils.SshUtil;
-import io.openchaos.driver.PreChaosNode;
+import io.openchaos.driver.MetaNode;
 import io.openchaos.driver.rocketmq.config.RocketMQConfig;
 import java.util.List;
 import org.slf4j.Logger;
@@ -25,16 +25,16 @@ import org.slf4j.LoggerFactory;
 /**
  * Nodes for nameserver
  */
-public class RocketMQPreChaosNode implements PreChaosNode {
+public class RocketMQMetaNode implements MetaNode {
 
     private static final String NAMESERVER_PROCESS_NAME = "NamesrvStartup";
-    private static final Logger log = LoggerFactory.getLogger(RocketMQPreChaosNode.class);
+    private static final Logger log = LoggerFactory.getLogger(RocketMQMetaNode.class);
     private String installDir = "rocketmq-chaos-test";
     private String rocketmqVersion = "4.6.0";
     private String node;
     private List<String> nodes;
 
-    public RocketMQPreChaosNode(String node, List<String> nodes, RocketMQConfig rmqConfig) {
+    public RocketMQMetaNode(String node, List<String> nodes, RocketMQConfig rmqConfig) {
         this.node = node;
         this.nodes = nodes;
         if (rmqConfig.installDir != null && !rmqConfig.installDir.isEmpty()) {

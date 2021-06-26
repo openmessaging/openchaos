@@ -22,7 +22,7 @@ import io.openchaos.DriverConfiguration;
 import io.openchaos.client.Client;
 import io.openchaos.client.QueueClient;
 import io.openchaos.driver.ChaosNode;
-import io.openchaos.driver.mq.MQChaosDriver;
+import io.openchaos.driver.queue.PubSubDriver;
 import io.openchaos.worker.ClientWorker;
 import io.openchaos.worker.Worker;
 import io.openchaos.common.utils.Utils;
@@ -64,7 +64,7 @@ public class QueueModel implements Model {
     private final File driverConfigFile;
     private final int concurrency;
     private final RateLimiter rateLimiter;
-    private MQChaosDriver mqChaosDriver;
+    private PubSubDriver pubSubDriver;
     private final String chaosTopic;
     private final boolean isOrderTest;
     private final boolean isUsePull;
@@ -87,36 +87,36 @@ public class QueueModel implements Model {
         this.shardingKeys = shardingKeys;
     }
 
-    private static MQChaosDriver createChaosDriver(File driverConfigFile) throws IOException {
+    private static PubSubDriver createChaosDriver(File driverConfigFile) throws IOException {
 
         DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile, DriverConfiguration.class);
         log.info("Initial driver: {}", WRITER.writeValueAsString(driverConfiguration));
 
-        MQChaosDriver mqChaosDriver;
+        PubSubDriver pubSubDriver;
 
         try {
-            mqChaosDriver = (MQChaosDriver) Class.forName(driverConfiguration.driverClass).newInstance();
-            mqChaosDriver.initialize(driverConfigFile, driverConfiguration.nodes);
+            pubSubDriver = (PubSubDriver) Class.forName(driverConfiguration.driverClass).newInstance();
+            pubSubDriver.initialize(driverConfigFile, driverConfiguration.nodes);
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
 
-        return mqChaosDriver;
+        return pubSubDriver;
     }
 
     @Override
     public Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall) {
         try {
-            if (mqChaosDriver == null) {
-                mqChaosDriver = createChaosDriver(driverConfigFile);
+            if (pubSubDriver == null) {
+                pubSubDriver = createChaosDriver(driverConfigFile);
             }
 
             if (driverConfiguration.preNodes != null) {
-                driverConfiguration.preNodes.forEach(node -> preNodesMap.put(node, mqChaosDriver.createPreChaosNode(node, driverConfiguration.preNodes)));
+                driverConfiguration.preNodes.forEach(node -> preNodesMap.put(node, pubSubDriver.createPreChaosNode(node, driverConfiguration.preNodes)));
             }
 
             if (driverConfiguration.nodes != null) {
-                driverConfiguration.nodes.forEach(node -> cluster.put(node, mqChaosDriver.createChaosNode(node, driverConfiguration.nodes)));
+                driverConfiguration.nodes.forEach(node -> cluster.put(node, pubSubDriver.createChaosNode(node, driverConfiguration.nodes)));
             }
 
             if (isInstall) {
@@ -166,18 +166,18 @@ public class QueueModel implements Model {
     @Override
     public void setupClient() {
         try {
-            if (mqChaosDriver == null) {
-                mqChaosDriver = createChaosDriver(driverConfigFile);
+            if (pubSubDriver == null) {
+                pubSubDriver = createChaosDriver(driverConfigFile);
             }
 
             log.info("Create chaos topic : {}", chaosTopic);
-            mqChaosDriver.createTopic(chaosTopic, 8);
+            pubSubDriver.createTopic(chaosTopic, 8);
 
             log.info("MQ clients setup..");
 
             List<List<String>> shardingKeyLists = Utils.partitionList(shardingKeys, concurrency);
             for (int i = 0; i < concurrency; i++) {
-                Client client = new QueueClient(mqChaosDriver, chaosTopic, recorder, isOrderTest, isUsePull, shardingKeyLists.get(i), msgReceivedCount);
+                Client client = new QueueClient(pubSubDriver, chaosTopic, recorder, isOrderTest, isUsePull, shardingKeyLists.get(i), msgReceivedCount);
                 client.setup();
                 clients.add(client);
                 ClientWorker clientWorker = new ClientWorker("queueClient-" + i, client, rateLimiter, log);
@@ -215,9 +215,19 @@ public class QueueModel implements Model {
         log.info("Stop cluster");
         cluster.values().forEach(ChaosNode::stop);
         preNodesMap.values().forEach(ChaosNode::stop);
-        if (mqChaosDriver != null) {
-            mqChaosDriver.shutdown();
+        if (pubSubDriver != null) {
+            pubSubDriver.shutdown();
         }
+    }
+
+    @Override
+    public String getMetaNode() {
+        return pubSubDriver.getMetaNode();
+    }
+
+    @Override
+    public String getMetaName() {
+        return pubSubDriver.getMetaName();
     }
 
     @Override

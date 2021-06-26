@@ -49,7 +49,7 @@ public interface ChaosDriver {
      * @param node current node
      * @param nodes all the nodes of PreChaosNodes
      */
-    default PreChaosNode createPreChaosNode(String node, List<String> nodes) {
+    default MetaNode createPreChaosNode(String node, List<String> nodes) {
         return null;
     }
 }

@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.openchaos.driver.cache;
 
-import io.openchaos.driver.ChaosDriver;
+package io.openchaos.driver.queue;
 
-public interface CacheChaosDriver extends ChaosDriver {
-    CacheChaosClient createCacheChaosClient();
+import io.openchaos.driver.ChaosClient;
+
+public interface MQChaosPushConsumer extends ChaosClient {
 }

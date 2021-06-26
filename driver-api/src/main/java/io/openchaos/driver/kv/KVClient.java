@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.openchaos.driver.cache;
+package io.openchaos.driver.kv;
 
 import io.openchaos.driver.ChaosClient;
 import java.util.List;
 import io.openchaos.common.InvokeResult;
 import java.util.Optional;
 
-public interface CacheChaosClient extends ChaosClient {
+public interface KVClient extends ChaosClient {
 
     InvokeResult put(Optional<String> key, String value);
 

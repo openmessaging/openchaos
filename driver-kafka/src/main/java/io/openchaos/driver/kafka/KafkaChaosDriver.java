@@ -16,16 +16,16 @@ package io.openchaos.driver.kafka;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.openchaos.driver.PreChaosNode;
+import io.openchaos.driver.MetaNode;
 import io.openchaos.driver.kafka.config.KafkaBrokerConfig;
 import io.openchaos.driver.kafka.config.KafkaClientConfig;
 import io.openchaos.driver.kafka.config.KafkaConfig;
-import io.openchaos.driver.mq.ConsumerCallback;
-import io.openchaos.driver.mq.MQChaosDriver;
-import io.openchaos.driver.mq.MQChaosNode;
-import io.openchaos.driver.mq.MQChaosProducer;
-import io.openchaos.driver.mq.MQChaosPullConsumer;
-import io.openchaos.driver.mq.MQChaosPushConsumer;
+import io.openchaos.driver.queue.ConsumerCallback;
+import io.openchaos.driver.queue.PubSubDriver;
+import io.openchaos.driver.queue.MQChaosNode;
+import io.openchaos.driver.queue.MQChaosProducer;
+import io.openchaos.driver.queue.MQChaosPullConsumer;
+import io.openchaos.driver.queue.MQChaosPushConsumer;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -46,7 +46,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KafkaChaosDriver implements MQChaosDriver {
+public class KafkaChaosDriver implements PubSubDriver {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -137,11 +137,22 @@ public class KafkaChaosDriver implements MQChaosDriver {
     }
 
     @Override
+    public String getMetaNode() {
+        return null;
+    }
+
+    @Override
+    public String getMetaName() {
+        return null;
+    }
+
+
+    @Override
     public MQChaosNode createChaosNode(String node, List<String> nodes) {
         return new KafkaChaosNode(node, nodes, kafkaConfig, kafkaBrokerConfig);
     }
 
-    @Override public PreChaosNode createPreChaosNode(String node, List<String> nodes) {
+    @Override public MetaNode createPreChaosNode(String node, List<String> nodes) {
         return null;
     }
 

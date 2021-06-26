@@ -15,7 +15,7 @@ package io.openchaos.checker;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.openchaos.checker.result.CacheTestResult;
+import io.openchaos.checker.result.KVTestResult;
 import io.openchaos.checker.result.TestResult;
 import java.util.Arrays;
 import java.util.List;
@@ -29,11 +29,11 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CacheChecker implements Checker {
+public class KVChecker implements Checker {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private static final Logger log = LoggerFactory.getLogger(CacheChecker.class);
+    private static final Logger log = LoggerFactory.getLogger(KVChecker.class);
     private String outputDir;
     private String fileName;
     private String originFilePath;
@@ -43,7 +43,7 @@ public class CacheChecker implements Checker {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
     }
 
-    public CacheChecker(String outputDir, String fileName) {
+    public KVChecker(String outputDir, String fileName) {
         this.outputDir = outputDir;
         this.fileName = fileName;
     }
@@ -62,22 +62,22 @@ public class CacheChecker implements Checker {
             System.exit(0);
         }
 
-        CacheTestResult cacheTestResult = null;
+        KVTestResult result = null;
 
         try {
-            cacheTestResult = checkInner();
-            MAPPER.writeValue(new File(filePath), cacheTestResult);
+            result = checkInner();
+            MAPPER.writeValue(new File(filePath), result);
         } catch (Exception e) {
             log.error("MQChecker check fail", e);
         }
 
-        return cacheTestResult;
+        return result;
 
     }
 
-    private CacheTestResult checkInner() throws IOException {
-        CacheTestResult cacheTestResult = new CacheTestResult();
-        cacheTestResult.putInvokeCount = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
+    private KVTestResult checkInner() throws IOException {
+        KVTestResult result = new KVTestResult();
+        result.putInvokeCount = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
             filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("put") && x[2].equals("REQUEST")).count();
         Set<String> putSuccessSet = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
             filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("put") && x[3].equals("SUCCESS")).map(x -> x[4]).collect(Collectors.toSet());
@@ -88,12 +88,12 @@ public class CacheChecker implements Checker {
             getSuccessSet.addAll(Arrays.stream(line.substring(1, line.length() - 1).split(",")).map(String::trim).collect(Collectors.toSet()));
         }
 
-        cacheTestResult.putSuccessCount = putSuccessSet.size();
-        cacheTestResult.getSuccessCount = getSuccessSet.size();
+        result.putSuccessCount = putSuccessSet.size();
+        result.getSuccessCount = getSuccessSet.size();
         putSuccessSet.removeAll(getSuccessSet);
-        cacheTestResult.lostValues = putSuccessSet;
-        cacheTestResult.lostValueCount = putSuccessSet.size();
-        return cacheTestResult;
+        result.lostValues = putSuccessSet;
+        result.lostValueCount = putSuccessSet.size();
+        return result;
     }
 
 }

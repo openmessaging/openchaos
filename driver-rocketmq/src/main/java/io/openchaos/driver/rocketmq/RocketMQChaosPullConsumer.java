@@ -15,7 +15,7 @@ package io.openchaos.driver.rocketmq;
 
 import com.google.common.collect.Lists;
 import io.openchaos.common.Message;
-import io.openchaos.driver.mq.MQChaosPullConsumer;
+import io.openchaos.driver.queue.MQChaosPullConsumer;
 import java.util.List;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;

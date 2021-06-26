@@ -18,13 +18,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.io.BaseEncoding;
 import io.openchaos.common.Message;
-import io.openchaos.driver.PreChaosNode;
-import io.openchaos.driver.mq.ConsumerCallback;
-import io.openchaos.driver.mq.MQChaosDriver;
-import io.openchaos.driver.mq.MQChaosNode;
-import io.openchaos.driver.mq.MQChaosProducer;
-import io.openchaos.driver.mq.MQChaosPullConsumer;
-import io.openchaos.driver.mq.MQChaosPushConsumer;
+import io.openchaos.driver.MetaNode;
+import io.openchaos.driver.queue.ConsumerCallback;
+import io.openchaos.driver.queue.PubSubDriver;
+import io.openchaos.driver.queue.MQChaosNode;
+import io.openchaos.driver.queue.MQChaosProducer;
+import io.openchaos.driver.queue.MQChaosPullConsumer;
+import io.openchaos.driver.queue.MQChaosPushConsumer;
 import io.openchaos.driver.rocketmq.config.RocketMQBrokerConfig;
 import io.openchaos.driver.rocketmq.config.RocketMQClientConfig;
 import io.openchaos.driver.rocketmq.config.RocketMQConfig;
@@ -46,12 +46,12 @@ import org.apache.rocketmq.tools.command.CommandUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RocketMQChaosDriver implements MQChaosDriver {
+public class RocketPubSubDriver implements PubSubDriver {
 
     private static final Random RANDOM = new Random();
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private static final Logger log = LoggerFactory.getLogger(RocketMQChaosDriver.class);
+    private static final Logger log = LoggerFactory.getLogger(RocketPubSubDriver.class);
     private DefaultMQAdminExt rmqAdmin;
     private RocketMQClientConfig rmqClientConfig;
     private RocketMQBrokerConfig rmqBrokerConfig;
@@ -140,6 +140,16 @@ public class RocketMQChaosDriver implements MQChaosDriver {
     }
 
     @Override
+    public String getMetaNode() {
+        return getNameserver();
+    }
+
+    @Override
+    public String getMetaName() {
+        return this.rmqClientConfig.clusterName;
+    }
+
+    @Override
     public void createTopic(String topic, int partitions) {
 
         this.rmqAdmin = new DefaultMQAdminExt();
@@ -175,9 +185,9 @@ public class RocketMQChaosDriver implements MQChaosDriver {
         rmqAdmin.shutdown();
     }
 
-    @Override public PreChaosNode createPreChaosNode(String node, List<String> nodes) {
+    @Override public MetaNode createPreChaosNode(String node, List<String> nodes) {
         preNodes = nodes;
-        return new RocketMQPreChaosNode(node, nodes, rmqConfig);
+        return new RocketMQMetaNode(node, nodes, rmqConfig);
     }
 
     private String getNameserver() {

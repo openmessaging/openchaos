@@ -16,18 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package io.openchaos.driver.kv;
 
-package io.openchaos.driver.mq;
+import io.openchaos.driver.ChaosNode;
 
-import io.openchaos.common.Message;
-
-/**
- * Just for push consumer.
- */
-public interface ConsumerCallback {
-
-    /**
-     * Push Consumer should invoke this method once for each message received
-     */
-    void messageReceived(Message message);
+public interface KVNode extends ChaosNode {
 }

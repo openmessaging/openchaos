@@ -15,7 +15,7 @@ package io.openchaos.checker.result;
 
 import java.util.Map;
 
-public class MQTestResult extends TestResult {
+public class QueueTestResult extends TestResult {
     public long enqueueInvokeCount;
     public long enqueueSuccessCount;
     public long dequeueSuccessCount;
@@ -27,7 +27,7 @@ public class MQTestResult extends TestResult {
     public boolean atLeastOnce;
     public boolean exactlyOnce;
 
-    public MQTestResult() {
+    public QueueTestResult() {
         super("MQTestResult");
     }
 

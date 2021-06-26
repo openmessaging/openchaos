@@ -11,37 +11,10 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.openchaos;
+package io.openchaos.driver.queue;
 
-import java.util.List;
+import io.openchaos.driver.ChaosNode;
 
-public class DriverConfiguration {
+public interface MQChaosNode extends ChaosNode {
 
-    public String name;
-
-    public String driverClass;
-
-    public String stateClass;
-
-    public List<String> nodes;
-    
-    public List<String> preNodes;
-
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean preNodesParticipateInFault;
-
-    public boolean isUploadImage;
-
-    public String ossEndPoint;
-
-    public String ossAccessKeyId;
-
-    public String ossAccessKeySecret;
-
-    public String bucketName;
 }

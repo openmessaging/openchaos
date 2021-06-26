@@ -16,17 +16,17 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.openchaos.driver.ChaosNode;
-import io.openchaos.driver.PreChaosNode;
+import io.openchaos.driver.MetaNode;
 import io.openchaos.driver.dledger.config.DLedgerConfig;
-import io.openchaos.driver.cache.CacheChaosClient;
-import io.openchaos.driver.cache.CacheChaosDriver;
+import io.openchaos.driver.kv.KVClient;
+import io.openchaos.driver.kv.KVDriver;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DLedgerChaosDriver implements CacheChaosDriver {
+public class DLedgerChaosDriver implements KVDriver {
 
     private static final Logger log = LoggerFactory.getLogger(DLedgerChaosDriver.class);
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
@@ -36,7 +36,7 @@ public class DLedgerChaosDriver implements CacheChaosDriver {
     private DLedgerConfig dLedgerConfig;
 
 
-    @Override public CacheChaosClient createCacheChaosClient() {
+    @Override public KVClient createClient() {
         return new DLedgerChaosClient(group, getPeers());
     }
 
@@ -56,7 +56,7 @@ public class DLedgerChaosDriver implements CacheChaosDriver {
         return new DLedgerChaosNode(node, nodes, dLedgerConfig);
     }
 
-    @Override public PreChaosNode createPreChaosNode(String node, List<String> nodes) {
+    @Override public MetaNode createPreChaosNode(String node, List<String> nodes) {
         return null;
     }
 

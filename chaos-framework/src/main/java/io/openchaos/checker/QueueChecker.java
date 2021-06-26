@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
-import io.openchaos.checker.result.MQTestResult;
+import io.openchaos.checker.result.QueueTestResult;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,11 +29,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MQChecker implements Checker {
+public class QueueChecker implements Checker {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private static final Logger log = LoggerFactory.getLogger(MQChecker.class);
+    private static final Logger log = LoggerFactory.getLogger(QueueChecker.class);
 
     static {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
@@ -50,13 +50,13 @@ public class MQChecker implements Checker {
     private String originFilePath;
     private String filePath;
 
-    public MQChecker(String outputDir, String fileName) {
+    public QueueChecker(String outputDir, String fileName) {
         this.outputDir = outputDir;
         this.fileName = fileName;
     }
 
     @Override
-    public MQTestResult check() {
+    public QueueTestResult check() {
 
         if (outputDir != null && !outputDir.isEmpty()) {
             originFilePath = outputDir + File.separator + fileName;
@@ -71,17 +71,17 @@ public class MQChecker implements Checker {
             System.exit(0);
         }
 
-        MQTestResult mqTestResult = null;
+        QueueTestResult queueTestResult = null;
 
         try {
             checkInner();
-            mqTestResult = generateResult();
-            MAPPER.writeValue(new File(filePath), mqTestResult);
+            queueTestResult = generateResult();
+            MAPPER.writeValue(new File(filePath), queueTestResult);
         } catch (Exception e) {
             log.error("MQChecker check fail", e);
         }
 
-        return mqTestResult;
+        return queueTestResult;
     }
 
     private void checkInner() throws IOException {
@@ -121,8 +121,8 @@ public class MQChecker implements Checker {
         });
     }
 
-    private MQTestResult generateResult() {
-        MQTestResult mQTestResult = new MQTestResult();
+    private QueueTestResult generateResult() {
+        QueueTestResult mQTestResult = new QueueTestResult();
         mQTestResult.enqueueInvokeCount = enqueueInvokeCount.get();
         mQTestResult.enqueueSuccessCount = enqueueSuccessCount.get();
         mQTestResult.dequeueSuccessCount = dequeueSuccessCount.get();

@@ -18,12 +18,12 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
 import io.openchaos.DriverConfiguration;
-import io.openchaos.client.CacheClient;
+import io.openchaos.client.KVClient;
 import io.openchaos.client.Client;
 import io.openchaos.driver.ChaosNode;
 import io.openchaos.worker.ClientWorker;
 import io.openchaos.worker.Worker;
-import io.openchaos.driver.cache.CacheChaosDriver;
+import io.openchaos.driver.kv.KVDriver;
 import io.openchaos.recorder.Recorder;
 import java.io.File;
 import java.io.IOException;
@@ -39,12 +39,12 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CacheModel implements Model {
+public class KVModel implements Model {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private static final Logger log = LoggerFactory.getLogger(CacheModel.class);
+    private static final Logger log = LoggerFactory.getLogger(KVModel.class);
     private static final ObjectWriter WRITER = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
     static {
@@ -59,10 +59,10 @@ public class CacheModel implements Model {
     private Map<String, ChaosNode> preNodesMap;
     private int concurrency;
     private Recorder recorder;
-    private CacheChaosDriver cacheChaosDriver;
+    private KVDriver driver;
     private File driverConfigFile;
 
-    public CacheModel(int concurrency, RateLimiter rateLimiter, Recorder recorder, File driverConfigFile) {
+    public KVModel(int concurrency, RateLimiter rateLimiter, Recorder recorder, File driverConfigFile) {
         this.concurrency = concurrency;
         this.clients = new ArrayList<>();
         this.workers = new ArrayList<>();
@@ -74,34 +74,34 @@ public class CacheModel implements Model {
         this.key = Optional.ofNullable(String.format("%s-chaos-key", DATE_FORMAT.format(new Date())));
     }
 
-    private static CacheChaosDriver createCacheChaosDriver(File driverConfigFile) throws IOException {
+    private static KVDriver createCacheChaosDriver(File driverConfigFile) throws IOException {
 
         DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile, DriverConfiguration.class);
         log.info("Initial driver: {}", WRITER.writeValueAsString(driverConfiguration));
 
-        CacheChaosDriver cacheChaosDriver;
+        KVDriver driver;
 
         try {
-            cacheChaosDriver = (CacheChaosDriver) Class.forName(driverConfiguration.driverClass).newInstance();
-            cacheChaosDriver.initialize(driverConfigFile, driverConfiguration.nodes);
+            driver = (KVDriver) Class.forName(driverConfiguration.driverClass).newInstance();
+            driver.initialize(driverConfigFile, driverConfiguration.nodes);
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             log.error("Create Cache Chaos Driver fail", e);
             throw new RuntimeException(e);
         }
 
-        return cacheChaosDriver;
+        return driver;
     }
 
     @Override public void setupClient() {
         try {
-            if (cacheChaosDriver == null) {
-                cacheChaosDriver = createCacheChaosDriver(driverConfigFile);
+            if (driver == null) {
+                driver = createCacheChaosDriver(driverConfigFile);
             }
 
             log.info("Cache clients setup..");
 
             for (int i = 0; i < concurrency; i++) {
-                Client client = new CacheClient(cacheChaosDriver, recorder, key);
+                Client client = new KVClient(driver, recorder, key);
                 client.setup();
                 clients.add(client);
                 ClientWorker clientWorker = new ClientWorker("cacheClient-" + i, client, rateLimiter, log);
@@ -118,16 +118,16 @@ public class CacheModel implements Model {
 
     @Override public Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall) {
         try {
-            if (cacheChaosDriver == null) {
-                cacheChaosDriver = createCacheChaosDriver(driverConfigFile);
+            if (driver == null) {
+                driver = createCacheChaosDriver(driverConfigFile);
             }
 
             if (driverConfiguration.preNodes != null) {
-                driverConfiguration.preNodes.forEach(node -> preNodesMap.put(node, cacheChaosDriver.createPreChaosNode(node, driverConfiguration.preNodes)));
+                driverConfiguration.preNodes.forEach(node -> preNodesMap.put(node, driver.createPreChaosNode(node, driverConfiguration.preNodes)));
             }
 
             if (driverConfiguration.nodes != null) {
-                driverConfiguration.nodes.forEach(node -> cluster.put(node, cacheChaosDriver.createChaosNode(node, driverConfiguration.nodes)));
+                driverConfiguration.nodes.forEach(node -> cluster.put(node, driver.createChaosNode(node, driverConfiguration.nodes)));
             }
 
             if (isInstall) {
@@ -203,8 +203,19 @@ public class CacheModel implements Model {
         log.info("Stop cluster");
         cluster.values().forEach(ChaosNode::teardown);
         preNodesMap.values().forEach(ChaosNode::teardown);
-        if (cacheChaosDriver != null) {
-            cacheChaosDriver.shutdown();
+        if (driver != null) {
+            driver.shutdown();
         }
     }
+
+    @Override
+    public String getMetaNode() {
+        return null;
+    }
+
+    @Override
+    public String getMetaName() {
+        return null;
+    }
+
 }

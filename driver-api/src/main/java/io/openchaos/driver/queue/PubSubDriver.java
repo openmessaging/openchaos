@@ -11,11 +11,11 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.openchaos.driver.mq;
+package io.openchaos.driver.queue;
 
 import io.openchaos.driver.ChaosDriver;
 
-public interface MQChaosDriver extends ChaosDriver {
+public interface PubSubDriver extends ChaosDriver {
 
     /**
      * Create a new topic with a given number of partitions
@@ -39,4 +39,7 @@ public interface MQChaosDriver extends ChaosDriver {
      */
     MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName);
 
+    String getMetaNode();
+
+    String getMetaName();
 }

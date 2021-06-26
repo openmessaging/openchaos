@@ -15,11 +15,11 @@ package io.openchaos.client;
 
 import io.openchaos.common.InvokeResult;
 import io.openchaos.common.Message;
-import io.openchaos.driver.mq.ConsumerCallback;
-import io.openchaos.driver.mq.MQChaosDriver;
-import io.openchaos.driver.mq.MQChaosProducer;
-import io.openchaos.driver.mq.MQChaosPullConsumer;
-import io.openchaos.driver.mq.MQChaosPushConsumer;
+import io.openchaos.driver.queue.ConsumerCallback;
+import io.openchaos.driver.queue.PubSubDriver;
+import io.openchaos.driver.queue.MQChaosProducer;
+import io.openchaos.driver.queue.MQChaosPullConsumer;
+import io.openchaos.driver.queue.MQChaosPushConsumer;
 import io.openchaos.recorder.ResponseLogEntry;
 import io.openchaos.generator.SequenceGenerator;
 import io.openchaos.generator.Operation;
@@ -40,7 +40,7 @@ public class QueueClient implements Client, ConsumerCallback {
     private MQChaosProducer mqChaosProducer;
     private MQChaosPullConsumer mqChaosPullConsumer;
     private MQChaosPushConsumer mqChaosPushConsumer;
-    private MQChaosDriver mqChaosDriver;
+    private PubSubDriver pubSubDriver;
     private String chaosTopic;
     private Recorder recorder;
     private int clientId;
@@ -50,9 +50,9 @@ public class QueueClient implements Client, ConsumerCallback {
     private AtomicLong msgReceivedCount;
     private Random random = new Random();
 
-    public QueueClient(MQChaosDriver mqChaosDriver, String chaosTopic, Recorder recorder, boolean isOrderTest,
-        boolean isUsePull, List<String> shardingKeys, AtomicLong msgReceivedCount) {
-        this.mqChaosDriver = mqChaosDriver;
+    public QueueClient(PubSubDriver pubSubDriver, String chaosTopic, Recorder recorder, boolean isOrderTest,
+                       boolean isUsePull, List<String> shardingKeys, AtomicLong msgReceivedCount) {
+        this.pubSubDriver = pubSubDriver;
         this.chaosTopic = chaosTopic;
         this.recorder = recorder;
         clientId = CLIENT_ID_GENERATOR.getAndIncrement();
@@ -63,13 +63,13 @@ public class QueueClient implements Client, ConsumerCallback {
     }
 
     public void setup() {
-        mqChaosProducer = mqChaosDriver.createProducer(chaosTopic);
+        mqChaosProducer = pubSubDriver.createProducer(chaosTopic);
         mqChaosProducer.start();
         if (isUsePull) {
-            mqChaosPullConsumer = mqChaosDriver.createPullConsumer(chaosTopic, SUBSCRIPTION_NAME);
+            mqChaosPullConsumer = pubSubDriver.createPullConsumer(chaosTopic, SUBSCRIPTION_NAME);
             mqChaosPullConsumer.start();
         } else {
-            mqChaosPushConsumer = mqChaosDriver.createPushConsumer(chaosTopic, SUBSCRIPTION_NAME, this);
+            mqChaosPushConsumer = pubSubDriver.createPushConsumer(chaosTopic, SUBSCRIPTION_NAME, this);
             mqChaosPushConsumer.start();
         }
     }

@@ -16,8 +16,7 @@ package io.openchaos.client;
 import io.openchaos.recorder.ResponseLogEntry;
 import java.util.List;
 import io.openchaos.common.InvokeResult;
-import io.openchaos.driver.cache.CacheChaosClient;
-import io.openchaos.driver.cache.CacheChaosDriver;
+import io.openchaos.driver.kv.KVDriver;
 import io.openchaos.generator.Operation;
 import io.openchaos.generator.SequenceGenerator;
 import io.openchaos.recorder.Recorder;
@@ -27,49 +26,49 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CacheClient implements Client {
+public class KVClient implements Client {
 
     private static final AtomicInteger CLIENT_ID_GENERATOR = new AtomicInteger(0);
-    private static final Logger log = LoggerFactory.getLogger(CacheClient.class);
+    private static final Logger log = LoggerFactory.getLogger(io.openchaos.client.KVClient.class);
 
-    private CacheChaosClient cacheChaosClient;
-    private CacheChaosDriver cacheChaosDriver;
+    private io.openchaos.driver.kv.KVClient client;
+    private KVDriver driver;
     private Recorder recorder;
     private int clientId;
 
     private Optional<String> key;
 
-    public CacheClient(CacheChaosDriver cacheChaosDriver, Recorder recorder, Optional<String> key) {
-        this.cacheChaosDriver = cacheChaosDriver;
+    public KVClient(KVDriver driver, Recorder recorder, Optional<String> key) {
+        this.driver = driver;
         this.recorder = recorder;
         this.clientId = CLIENT_ID_GENERATOR.getAndIncrement();
         this.key = key;
     }
 
     @Override public void setup() {
-        if (cacheChaosDriver == null) {
+        if (driver == null) {
             throw new IllegalArgumentException("cacheChaosDriver is null when setup CacheClient");
         }
-        cacheChaosClient = cacheChaosDriver.createCacheChaosClient();
-        cacheChaosClient.start();
+        client = driver.createClient();
+        client.start();
     }
 
     @Override public void teardown() {
-        cacheChaosClient.close();
+        client.close();
     }
 
     @Override public void nextInvoke() {
         Operation op = SequenceGenerator.generateCacheOperation();
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, op.getInvokeOperation(), op.getValue(), System.currentTimeMillis());
         recorder.recordRequest(requestLogEntry);
-        InvokeResult result = cacheChaosClient.put(key, op.getValue());
+        InvokeResult result = client.put(key, op.getValue());
         recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(), result, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
     }
 
     @Override public void lastInvoke() {
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, "getAll", null, System.currentTimeMillis());
         recorder.recordRequest(requestLogEntry);
-        List<String> results = cacheChaosClient.getAll(key);
+        List<String> results = client.getAll(key);
         if (results != null && !results.isEmpty()) {
             recorder.recordResponse(new ResponseLogEntry(clientId, "getAll", InvokeResult.SUCCESS, results.toString(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
         } else {

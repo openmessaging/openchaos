@@ -16,12 +16,12 @@ import io.openchaos.common.utils.KillProcessUtil;
 import io.openchaos.common.utils.PauseProcessUtil;
 import io.openchaos.common.utils.SshUtil;
 import io.openchaos.driver.dledger.config.DLedgerConfig;
-import io.openchaos.driver.cache.CacheChaosNode;
+import io.openchaos.driver.kv.KVNode;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DLedgerChaosNode implements CacheChaosNode {
+public class DLedgerChaosNode implements KVNode {
 
     private static final Logger log = LoggerFactory.getLogger(DLedgerChaosNode.class);
     private String node;

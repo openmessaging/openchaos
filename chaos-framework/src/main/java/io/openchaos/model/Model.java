@@ -57,5 +57,6 @@ public interface Model {
      * Shutdown the model
      */
     void shutdown();
-
+    String getMetaNode();
+    String getMetaName();
 }

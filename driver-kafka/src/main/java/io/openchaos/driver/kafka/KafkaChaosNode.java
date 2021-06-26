@@ -18,7 +18,7 @@ import io.openchaos.common.utils.PauseProcessUtil;
 import io.openchaos.common.utils.SshUtil;
 import io.openchaos.driver.kafka.config.KafkaBrokerConfig;
 import io.openchaos.driver.kafka.config.KafkaConfig;
-import io.openchaos.driver.mq.MQChaosNode;
+import io.openchaos.driver.queue.MQChaosNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

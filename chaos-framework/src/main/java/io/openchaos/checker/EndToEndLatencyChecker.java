@@ -37,7 +37,7 @@ public class EndToEndLatencyChecker implements Checker {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private static final Logger log = LoggerFactory.getLogger(MQChecker.class);
+    private static final Logger log = LoggerFactory.getLogger(QueueChecker.class);
 
     static {
         MAPPER.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);

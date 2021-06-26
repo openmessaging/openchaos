@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.openchaos.common.InvokeResult;
-import io.openchaos.driver.cache.CacheChaosClient;
+import io.openchaos.driver.kv.KVClient;
 import io.openmessaging.storage.dledger.ShutdownAbleThread;
 import io.openmessaging.storage.dledger.client.DLedgerClientRpcNettyService;
 import io.openmessaging.storage.dledger.client.DLedgerClientRpcService;
@@ -42,11 +42,11 @@ import org.apache.rocketmq.remoting.exception.RemotingTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DLedgerChaosClient implements CacheChaosClient {
+public class DLedgerChaosClient implements KVClient {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private static final Logger LOG = LoggerFactory.getLogger(CacheChaosClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KVClient.class);
     private final Map<String, String> peerMap = new ConcurrentHashMap<>();
     private final String group;
     private volatile String leaderId;

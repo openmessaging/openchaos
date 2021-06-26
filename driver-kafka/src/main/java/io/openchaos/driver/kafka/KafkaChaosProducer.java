@@ -14,7 +14,7 @@
 package io.openchaos.driver.kafka;
 
 import io.openchaos.common.InvokeResult;
-import io.openchaos.driver.mq.MQChaosProducer;
+import io.openchaos.driver.queue.MQChaosProducer;
 import java.util.concurrent.ExecutionException;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
