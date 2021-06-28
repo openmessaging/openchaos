@@ -212,5 +212,15 @@ public class KVModel implements Model {
     public String getStateName() {
         return driver.getStateName();
     }
+    
+    @Override
+    public String getMetaNode() {
+        return driver.getMetaNode();
+    }
+
+    @Override
+    public String getMetaName() {
+        return driver.getMetaName();
+    }
 
 }
