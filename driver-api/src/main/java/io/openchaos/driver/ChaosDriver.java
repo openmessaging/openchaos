@@ -52,4 +52,9 @@ public interface ChaosDriver {
     default MetaNode createPreChaosNode(String node, List<String> nodes) {
         return null;
     }
+    
+     /**
+     * Get the ClassName of the state class
+     */
+    String getStateName(); 
 }
