@@ -40,15 +40,15 @@ public class QueueClient implements Client, ConsumerCallback {
     private MQChaosProducer mqChaosProducer;
     private MQChaosPullConsumer mqChaosPullConsumer;
     private MQChaosPushConsumer mqChaosPushConsumer;
-    private PubSubDriver pubSubDriver;
-    private String chaosTopic;
-    private Recorder recorder;
-    private int clientId;
-    private boolean isOrderTest;
-    private boolean isUsePull;
-    private List<String> shardingKeys;
-    private AtomicLong msgReceivedCount;
-    private Random random = new Random();
+    private final PubSubDriver pubSubDriver;
+    private final String chaosTopic;
+    private final Recorder recorder;
+    private final int clientId;
+    private final boolean isOrderTest;
+    private final boolean isUsePull;
+    private final List<String> shardingKeys;
+    private final AtomicLong msgReceivedCount;
+    private final Random random = new Random();
 
     public QueueClient(PubSubDriver pubSubDriver, String chaosTopic, Recorder recorder, boolean isOrderTest,
                        boolean isUsePull, List<String> shardingKeys, AtomicLong msgReceivedCount) {
