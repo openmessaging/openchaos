@@ -242,4 +242,14 @@ public class QueueModel implements Model {
         }
         return probeTimes != 10;
     }
+    
+    @Override
+    public String getMetaNode() {
+        return driver.getMetaNode();
+    }
+
+    @Override
+    public String getMetaName() {
+        return driver.getMetaName();
+    }
 }
