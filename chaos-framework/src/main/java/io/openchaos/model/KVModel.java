@@ -209,7 +209,7 @@ public class KVModel implements Model {
     }
 
     @Override
-    public String getSateName() {
+    public String getStateName() {
         return driver.getStateName();
     }
 
