@@ -29,13 +29,13 @@ import org.slf4j.LoggerFactory;
 public class KVClient implements Client {
 
     private static final AtomicInteger CLIENT_ID_GENERATOR = new AtomicInteger(0);
+    private static final AtomicInteger PUT_COUNT = new AtomicInteger(0);
     private static final Logger log = LoggerFactory.getLogger(io.openchaos.client.KVClient.class);
 
     private io.openchaos.driver.kv.KVClient client;
     private final KVDriver driver;
     private final Recorder recorder;
     private final int clientId;
-    private static AtomicInteger putInvokeCount = new AtomicInteger(0);
     private final Optional<String> key;
 
     public KVClient(KVDriver driver, Recorder recorder, Optional<String> key) {
@@ -50,10 +50,12 @@ public class KVClient implements Client {
             throw new IllegalArgumentException("cacheChaosDriver is null when setup CacheClient");
         }
         client = driver.createClient();
+        log.info("KV client start...");
         client.start();
     }
 
     @Override public void teardown() {
+        log.info("KV client teardown...");
         client.close();
     }
 
@@ -61,7 +63,7 @@ public class KVClient implements Client {
         Operation op = SequenceGenerator.generateCacheOperation();
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, op.getInvokeOperation(), op.getValue(), System.currentTimeMillis());
         recorder.recordRequest(requestLogEntry);
-        putInvokeCount.getAndIncrement();
+        PUT_COUNT.getAndIncrement();
         InvokeResult result = client.put(key, op.getValue());
         recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(), result, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
     }
@@ -69,7 +71,7 @@ public class KVClient implements Client {
     @Override public void lastInvoke() {
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, "getAll", null, System.currentTimeMillis());
         recorder.recordRequest(requestLogEntry);
-        List<String> results = client.getAll(key, putInvokeCount.get());
+        List<String> results = client.getAll(key, PUT_COUNT.get());
         if (results != null && !results.isEmpty()) {
             recorder.recordResponse(new ResponseLogEntry(clientId, "getAll", InvokeResult.SUCCESS, results.toString(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
         } else {
