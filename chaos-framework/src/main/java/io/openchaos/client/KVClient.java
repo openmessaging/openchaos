@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
  * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
@@ -32,18 +32,17 @@ public class KVClient implements Client {
     private static final Logger log = LoggerFactory.getLogger(io.openchaos.client.KVClient.class);
 
     private io.openchaos.driver.kv.KVClient client;
-    private KVDriver driver;
-    private Recorder recorder;
-    private int clientId;
-    private static AtomicInteger putInvokeCount;
-    private Optional<String> key;
+    private final KVDriver driver;
+    private final Recorder recorder;
+    private final int clientId;
+    private static AtomicInteger putInvokeCount = new AtomicInteger(0);
+    private final Optional<String> key;
 
     public KVClient(KVDriver driver, Recorder recorder, Optional<String> key) {
         this.driver = driver;
         this.recorder = recorder;
         this.clientId = CLIENT_ID_GENERATOR.getAndIncrement();
         this.key = key;
-        this.putInvokeCount = new AtomicInteger(0);
     }
 
     @Override public void setup() {
