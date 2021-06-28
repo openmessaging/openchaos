@@ -67,4 +67,10 @@ public interface Model {
      * Get Name of a cluster that can be distinguished. eg: ClusterName of RocketMQ, MasterID of Redis
      */
     String getMetaName();
+    
+    /**
+     * Get the ClassName of the state class
+     */
+    String getStateName();    
+    
 }
