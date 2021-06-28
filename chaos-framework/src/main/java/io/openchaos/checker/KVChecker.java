@@ -68,7 +68,7 @@ public class KVChecker implements Checker {
             result = checkInner();
             MAPPER.writeValue(new File(filePath), result);
         } catch (Exception e) {
-            log.error("CacheChecker check fail", e);
+            log.error("KVChecker check fail", e);
         }
 
         return result;

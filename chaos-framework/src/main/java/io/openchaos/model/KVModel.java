@@ -85,7 +85,7 @@ public class KVModel implements Model {
             driver = (KVDriver) Class.forName(driverConfiguration.driverClass).newInstance();
             driver.initialize(driverConfigFile, driverConfiguration.nodes);
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            log.error("Create Cache Chaos Driver fail", e);
+            log.error("Create KV Chaos Driver fail", e);
             throw new RuntimeException(e);
         }
 
@@ -98,20 +98,20 @@ public class KVModel implements Model {
                 driver = createCacheChaosDriver(driverConfigFile);
             }
 
-            log.info("Cache clients setup..");
+            log.info("kv clients setup..");
 
             for (int i = 0; i < concurrency; i++) {
                 Client client = new KVClient(driver, recorder, Optional.of(key.get() + i));
                 client.setup();
                 clients.add(client);
-                ClientWorker clientWorker = new ClientWorker("cacheClient-" + i, client, rateLimiter, log);
+                ClientWorker clientWorker = new ClientWorker("kvClient-" + i, client, rateLimiter, log);
                 workers.add(clientWorker);
             }
 
-            log.info("{} cache clients setup success", concurrency);
+            log.info("{} kv clients setup success", concurrency);
 
         } catch (Exception e) {
-            log.error("Cache model setupClient fail", e);
+            log.error("KV model setupClient fail", e);
             throw new RuntimeException(e);
         }
     }
@@ -171,7 +171,7 @@ public class KVModel implements Model {
             }
 
         } catch (Exception e) {
-            log.error("Cache model setupCluster fail", e);
+            log.error("KV model setupCluster fail", e);
             throw new RuntimeException(e);
         }
     }
@@ -186,7 +186,7 @@ public class KVModel implements Model {
     }
 
     @Override public void stop() {
-        log.info("Cache chaos test stop");
+        log.info("KV chaos test stop");
         workers.forEach(Worker::breakLoop);
     }
 
