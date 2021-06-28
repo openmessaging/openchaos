@@ -221,7 +221,7 @@ public class QueueModel implements Model {
     }
 
     @Override
-    public String getSateName() {
+    public String getStateName() {
         return pubSubDriver.getStateName();
     }    
 
