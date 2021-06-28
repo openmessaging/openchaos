@@ -294,7 +294,7 @@ public class ChaosControl {
 
             String metaName = model.getMetaName();
             String metaNode = model.getMetaNode();
-            String stateClass = model.getSateName();
+            String stateClass = model.getStateName();
             model.setupClient();
 
             //Initial fault
