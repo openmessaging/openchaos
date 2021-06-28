@@ -157,6 +157,11 @@ public class KafkaChaosDriver implements PubSubDriver {
     }
 
     @Override
+    public String getStateName() {
+        return null;
+    }
+    
+    @Override
     public void shutdown() {
         if (admin != null) {
             admin.close();
