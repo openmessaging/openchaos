@@ -245,11 +245,11 @@ public class QueueModel implements Model {
     
     @Override
     public String getMetaNode() {
-        return driver.getMetaNode();
+        return pubSubDriver.getMetaNode();
     }
 
     @Override
     public String getMetaName() {
-        return driver.getMetaName();
+        return pubSubDriver.getMetaName();
     }
 }
