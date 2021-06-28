@@ -19,7 +19,6 @@
 
 name: Redis
 driverClass: io.openchaos.driver.redis.RedisDriver
-stateClass: io.openchaos.driver.redis.RedisState
 
 endToEndLatencyCheck: false
 
