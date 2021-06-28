@@ -224,16 +224,6 @@ public class QueueModel implements Model {
     public String getSateName() {
         return pubSubDriver.getStateName();
     }    
-    
-    @Override
-    public String getMetaNode() {
-        return pubSubDriver.getMetaNode();
-    }
-
-    @Override
-    public String getMetaName() {
-        return pubSubDriver.getMetaName();
-    }
 
     @Override
     public boolean probeCluster() {
