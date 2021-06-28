@@ -40,10 +40,19 @@ public class RecoveryChecker implements Checker {
     private String fileName;
     private String originFilePath;
     private String filePath;
+    private String opt;
 
-    public RecoveryChecker(String outputDir, String fileName) {
+    public RecoveryChecker(String outputDir, String fileName, String model) {
         this.outputDir = outputDir;
         this.fileName = fileName;
+        switch (model) {
+            case "queue":
+                this.opt = "equeue";
+                break;
+            case "cache":
+                this.opt = "put";
+                break;
+        }
     }
 
     @Override
@@ -80,7 +89,7 @@ public class RecoveryChecker implements Checker {
 
     private void checkInner(RecoveryTestResult recoveryTestResult) throws Exception {
 
-        List<String[]> allRecords = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).collect(Collectors.toList());
+        List<String[]> allRecords = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals(opt) && x[2].equals("RESPONSE"))).collect(Collectors.toList());
 
         RecoveryRecord recoveryRecord = null;
 

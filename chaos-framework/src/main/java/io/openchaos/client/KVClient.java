@@ -35,7 +35,7 @@ public class KVClient implements Client {
     private KVDriver driver;
     private Recorder recorder;
     private int clientId;
-
+    private static AtomicInteger putInvokeCount;
     private Optional<String> key;
 
     public KVClient(KVDriver driver, Recorder recorder, Optional<String> key) {
@@ -43,6 +43,7 @@ public class KVClient implements Client {
         this.recorder = recorder;
         this.clientId = CLIENT_ID_GENERATOR.getAndIncrement();
         this.key = key;
+        this.putInvokeCount = new AtomicInteger(0);
     }
 
     @Override public void setup() {
@@ -61,6 +62,7 @@ public class KVClient implements Client {
         Operation op = SequenceGenerator.generateCacheOperation();
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, op.getInvokeOperation(), op.getValue(), System.currentTimeMillis());
         recorder.recordRequest(requestLogEntry);
+        putInvokeCount.getAndIncrement();
         InvokeResult result = client.put(key, op.getValue());
         recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(), result, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
     }
@@ -68,7 +70,7 @@ public class KVClient implements Client {
     @Override public void lastInvoke() {
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, "getAll", null, System.currentTimeMillis());
         recorder.recordRequest(requestLogEntry);
-        List<String> results = client.getAll(key);
+        List<String> results = client.getAll(key, putInvokeCount.get());
         if (results != null && !results.isEmpty()) {
             recorder.recordResponse(new ResponseLogEntry(clientId, "getAll", InvokeResult.SUCCESS, results.toString(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
         } else {

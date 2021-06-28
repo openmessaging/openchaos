@@ -28,7 +28,7 @@ public class PauseProcessUtil {
 
     public static void suspend(String node, String processName) throws Exception {
         log.info("Suspend node {} process {} .", node, processName);
-        String pidList = SshUtil.execCommandWithArgsReturnStr(node, String.format("ps ax | grep -i '%s' | grep java | grep -v grep | awk '{print $1}'", processName)).trim();
+        String pidList = SshUtil.execCommandWithArgsReturnStr(node, String.format("ps ax | grep -i '%s' | grep -v grep | awk '{print $1}'", processName)).trim();
         if (!pidList.isEmpty()) {
             String[] pids = pidList.split("\n");
             for (String pid : pids) {

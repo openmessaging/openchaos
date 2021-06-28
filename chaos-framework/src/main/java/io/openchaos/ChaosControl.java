@@ -438,10 +438,10 @@ public class ChaosControl {
         }
 
         if (arguments.rto) {
-            checkerList.add(new RTOChecker(arguments.outputDir, historyFile));
+            checkerList.add(new RTOChecker(arguments.outputDir, historyFile, arguments.model));
         }
         if (arguments.recovery) {
-            checkerList.add(new RecoveryChecker(arguments.outputDir, historyFile));
+            checkerList.add(new RecoveryChecker(arguments.outputDir, historyFile, arguments.model));
         }
         if (isOrderTest) {
             checkerList.add(new OrderChecker(arguments.outputDir, historyFile, shardingKeys));

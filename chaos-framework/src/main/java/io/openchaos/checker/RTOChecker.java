@@ -47,10 +47,19 @@ public class RTOChecker implements Checker {
 
     private String originFilePath;
     private String filePath;
+    private String opt;
 
-    public RTOChecker(String outputDir, String fileName) {
+    public RTOChecker(String outputDir, String fileName, String model) {
         this.outputDir = outputDir;
         this.fileName = fileName;
+        switch (model) {
+            case "queue":
+                this.opt = "equeue";
+                break;
+            case "cache":
+                this.opt = "put";
+                break;
+        }
     }
 
     @Override
@@ -91,7 +100,7 @@ public class RTOChecker implements Checker {
         unavailableFlag = false;
         rtoRecord = null;
 
-        Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals("enqueue") && x[2].equals("RESPONSE"))).forEach(x -> {
+        Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> x[0].equals("fault") || (x[1].equals(opt) && x[2].equals("RESPONSE"))).forEach(x -> {
             if (x[0].equals("fault") && x[2].equals("start")) {
                 isInFault = true;
                 rtoRecord = new RTORecord();

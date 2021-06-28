@@ -40,6 +40,16 @@ public class DLedgerChaosDriver implements KVDriver {
         return new DLedgerChaosClient(group, getPeers());
     }
 
+    @Override
+    public String getMetaNode() {
+        return null;
+    }
+
+    @Override
+    public String getMetaName() {
+        return null;
+    }
+
     @Override public void initialize(File configurationFile, List<String> nodes) throws IOException {
         this.nodes = nodes;
         this.dLedgerConfig = MAPPER.readValue(configurationFile, DLedgerConfig.class);

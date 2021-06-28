@@ -78,6 +78,11 @@ public class DLedgerChaosClient implements KVClient {
         }
     }
 
+    @Override
+    public List<String> getAll(Optional<String> key, int putInvokeCount) {
+        return null;
+    }
+
     @Override public List<String> getAll(Optional<String> key) {
         List<String> result = new ArrayList<>();
         int index = 0;

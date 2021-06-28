@@ -27,5 +27,7 @@ public interface KVClient extends ChaosClient {
 
     InvokeResult put(Optional<String> key, String value);
 
+    List<String> getAll(Optional<String> key, int putInvokeCount);
+
     List<String> getAll(Optional<String> key);
 }

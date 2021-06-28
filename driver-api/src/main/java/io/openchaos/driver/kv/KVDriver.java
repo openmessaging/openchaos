@@ -22,4 +22,6 @@ import io.openchaos.driver.ChaosDriver;
 
 public interface KVDriver extends ChaosDriver {
     KVClient createClient();
+    String getMetaNode();
+    String getMetaName();
 }

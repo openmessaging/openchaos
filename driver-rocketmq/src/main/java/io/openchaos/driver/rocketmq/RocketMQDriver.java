@@ -46,12 +46,12 @@ import org.apache.rocketmq.tools.command.CommandUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RocketPubSubDriver implements PubSubDriver {
+public class RocketMQDriver implements PubSubDriver {
 
     private static final Random RANDOM = new Random();
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private static final Logger log = LoggerFactory.getLogger(RocketPubSubDriver.class);
+    private static final Logger log = LoggerFactory.getLogger(RocketMQDriver.class);
     private DefaultMQAdminExt rmqAdmin;
     private RocketMQClientConfig rmqClientConfig;
     private RocketMQBrokerConfig rmqBrokerConfig;

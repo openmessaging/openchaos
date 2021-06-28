@@ -31,6 +31,7 @@
         <module>chaos-common</module>
         <module>driver-kafka</module>
         <module>driver-dledger</module>
+        <module>driver-redis</module>
     </modules>
 
     <parent>
@@ -139,6 +140,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>driver-dledger</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>driver-redis</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
