@@ -57,6 +57,14 @@ public interface Model {
      * Shutdown the model
      */
     void shutdown();
+
+    /**
+     * Get address of MetaNode
+     */
     String getMetaNode();
+
+    /**
+     * Get Name of a cluster that can be distinguished. eg: ClusterName of RocketMQ, MasterID of Redis
+     */
     String getMetaName();
 }

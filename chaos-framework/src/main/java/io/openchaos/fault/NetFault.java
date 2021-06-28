@@ -33,10 +33,11 @@ public class NetFault implements Fault {
     private static final Logger log = LoggerFactory.getLogger(ChaosControl.class);
     private volatile List<FaultOperation> faultOperations;
     private String mode;
-
+    private String stateClass;
     private Set<String> nodes;
     private List<String> faultNodes;
-
+    private String metaNode;
+    private String metaName;
     private Recorder recorder;
 
     public NetFault(Set<String> nodes, String mode, Recorder recorder) {
@@ -52,14 +53,26 @@ public class NetFault implements Fault {
         this.faultNodes = faultNodes;
     }
 
+    public NetFault(Set<String> nodes, String stateClass, String metaNode, String metaName,
+                    String mode, Recorder recorder) {
+        this.mode = mode;
+        this.nodes = nodes;
+        this.recorder = recorder;
+        this.metaName = metaName;
+        this.metaNode = metaNode;
+        this.stateClass = stateClass;
+    }
+
     @Override
     public synchronized void invoke() {
         log.info("Invoke {} fault", mode);
 
         if (faultNodes != null) {
             faultOperations = FaultGenerator.generate(nodes, faultNodes, mode);
-        } else {
+        } else if (metaName == null) {
             faultOperations = FaultGenerator.generate(nodes, mode);
+        } else {
+            faultOperations = FaultGenerator.generate(nodes, stateClass, metaName, metaNode, mode);
         }
         recorder.recordFault(new FaultLogEntry(mode, "start", System.currentTimeMillis(), faultOperations == null ? null : faultOperations.toString()));
         for (FaultOperation operation : faultOperations) {
@@ -69,6 +82,7 @@ public class NetFault implements Fault {
                 switch (operation.getName()) {
                     case "random-partition":
                     case "fixed-partition":
+                    case "leader-partition":
                         for (String partitionNode : operation.getInvokeArgs()) {
                             NetUtil.partition(operation.getNode(), partitionNode);
                         }
@@ -116,6 +130,7 @@ public class NetFault implements Fault {
                 switch (operation.getName()) {
                     case "random-partition":
                     case "fixed-partition":
+                    case "leader-partiton":
                         NetUtil.healPartition(operation.getNode());
                         break;
                     case "partition-majorities-ring":

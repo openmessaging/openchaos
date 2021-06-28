@@ -317,6 +317,9 @@ public class ChaosControl {
                     case "fixed-kill":
                         fault = new KillFault(map, arguments.fault, recorder, faultNodeList);
                         break;
+                    case "leader-partition":
+                        fault = new NetFault(map.keySet(), stateClass, metaNode, metaName, arguments.fault, recorder);
+                        break;
                     case "random-partition":
                     case "random-delay":
                     case "random-loss":

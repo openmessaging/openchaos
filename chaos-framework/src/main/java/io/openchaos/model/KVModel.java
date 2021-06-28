@@ -210,12 +210,12 @@ public class KVModel implements Model {
 
     @Override
     public String getMetaNode() {
-        return null;
+        return driver.getMetaNode();
     }
 
     @Override
     public String getMetaName() {
-        return null;
+        return driver.getMetaName();
     }
 
 }

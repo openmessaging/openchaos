@@ -13,6 +13,7 @@
 
 package io.openchaos.generator;
 
+import io.openchaos.driver.ChaosState;
 import io.openchaos.driver.queue.MQChaosState;
 
 import java.util.ArrayList;
@@ -29,16 +30,15 @@ public class FaultGenerator {
 
     private static List<String> faultList = Arrays.asList(
             "noop", "minor-kill", "major-kill", "random-kill", "fixed-kill", "leader-kill", "random-partition",
-            "fixed-partition", "partition-majorities-ring", "bridge", "minor-loss", "major-loss",
+            "fixed-partition", "leader-partition", "partition-majorities-ring", "bridge", "minor-loss", "major-loss",
             "fixed-loss", "random-loss", "minor-delay", "major-delay", "random-delay", "fixed-delay",
             "minor-suspend", "major-suspend", "leader-suspend", "random-suspend", "fixed-suspend", "minor-cpu-high",
             "major-cpu-high", "random-cpu-high", "fixed-cpu-high", "minor-mem-high", "major-mem-high",
             "random-mem-high", "fixed-mem-high", "minor-disk-error", "major-disk-error",
             "random-disk-error", "fixed-disk-error", "minor-io-hang", "major-io-hang",
             "random-io-hang", "fixed-io-hang");
-
     private static Random random = new Random();
-    private static MQChaosState chaosState;
+    private static ChaosState chaosState;
 
     public static List<String> getFaultList() {
         return faultList;
@@ -135,12 +135,41 @@ public class FaultGenerator {
         }
         int num = 1;
         switch (faultName) {
+            case "leader-partition":
+                num = nodes.size() % 2 == 0 ? nodes.size() / 2 - 1 : nodes.size() / 2;
+                return leaderPartition(nodes, metaName, stateClass, metaNode, faultName, num);
             case "leader-kill":
             case "leader-suspend":
                 return faultInRandomNumberLeaderNodes(faultName, stateClass, num, metaName, metaNode);
             default:
                 throw new IllegalArgumentException("Fault cannot be recognized");
         }
+    }
+
+    private static List<FaultOperation> leaderPartition(Collection<String> nodes, String clusterName, String stateClass, String addr, String faultName, int num) {
+        List<FaultOperation> operations = new ArrayList<>();
+        try {
+            chaosState = (ChaosState) Class.forName(stateClass).newInstance();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        chaosState.initialize(clusterName, addr);
+        Set<String> leaderNode = null;
+        leaderNode = chaosState.getLeader();
+
+        List<String> shuffleNodes = new ArrayList<>(nodes);
+        Collections.shuffle(shuffleNodes);
+        Set<String> partition1 = new HashSet<>(leaderNode);
+        Set<String> partition2 = new HashSet<>(nodes);
+        int i = 0;
+        while (partition1.size() < num) {
+            partition1.add(shuffleNodes.get(i));
+            i++;
+        }
+        partition2.removeAll(partition1);
+        partition1.forEach(node -> operations.add(getPartitionOperation(faultName, node, partition2)));
+
+        return operations;
     }
 
     private static List<FaultOperation> randomPartition(Collection<String> nodes, String faultName) {
