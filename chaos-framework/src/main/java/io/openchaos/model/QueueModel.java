@@ -221,6 +221,11 @@ public class QueueModel implements Model {
     }
 
     @Override
+    public String getSateName() {
+        return pubSubDriver.getStateName();
+    }    
+    
+    @Override
     public String getMetaNode() {
         return pubSubDriver.getMetaNode();
     }
