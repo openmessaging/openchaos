@@ -51,10 +51,10 @@ public class KVChecker implements Checker {
     @Override public TestResult check() {
         if (outputDir != null && !outputDir.isEmpty()) {
             originFilePath = outputDir + File.separator + fileName;
-            filePath = outputDir + File.separator + fileName.replace("history", "cache-result");
+            filePath = outputDir + File.separator + fileName.replace("history", "kv-result");
         } else {
             originFilePath = fileName;
-            filePath = fileName.replace("history", "cache-result");
+            filePath = fileName.replace("history", "kv-result");
         }
 
         if (!new File(originFilePath).exists()) {
@@ -68,7 +68,7 @@ public class KVChecker implements Checker {
             result = checkInner();
             MAPPER.writeValue(new File(filePath), result);
         } catch (Exception e) {
-            log.error("MQChecker check fail", e);
+            log.error("KVChecker check fail", e);
         }
 
         return result;
@@ -93,6 +93,7 @@ public class KVChecker implements Checker {
         putSuccessSet.removeAll(getSuccessSet);
         result.lostValues = putSuccessSet;
         result.lostValueCount = putSuccessSet.size();
+        result.isValid = true;
         return result;
     }
 

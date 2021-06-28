@@ -85,7 +85,7 @@ public class KVModel implements Model {
             driver = (KVDriver) Class.forName(driverConfiguration.driverClass).newInstance();
             driver.initialize(driverConfigFile, driverConfiguration.nodes);
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            log.error("Create Cache Chaos Driver fail", e);
+            log.error(String.format("Failed to create %s !", driverConfiguration.driverClass), e);
             throw new RuntimeException(e);
         }
 
@@ -98,7 +98,7 @@ public class KVModel implements Model {
                 driver = createCacheChaosDriver(driverConfigFile);
             }
 
-            log.info("Cache clients setup..");
+            log.info("KV client setup...");
 
             for (int i = 0; i < concurrency; i++) {
                 Client client = new KVClient(driver, recorder, key);
@@ -108,10 +108,10 @@ public class KVModel implements Model {
                 workers.add(clientWorker);
             }
 
-            log.info("{} mq clients setup success", concurrency);
+            log.info("{} KV client setup success!", concurrency);
 
         } catch (Exception e) {
-            log.error("Cache model setupClient fail", e);
+            log.error("KV client failed to start.", e);
             throw new RuntimeException(e);
         }
     }
@@ -135,7 +135,7 @@ public class KVModel implements Model {
                 cluster.values().forEach(ChaosNode::setup);
             }
 
-            log.info("Cluster shutdown");
+            log.info("Cluster shutdown...");
             cluster.values().forEach(ChaosNode::teardown);
             preNodesMap.values().forEach(ChaosNode::stop);
             log.info("Wait for all nodes to shutdown...");
@@ -170,7 +170,7 @@ public class KVModel implements Model {
             }
 
         } catch (Exception e) {
-            log.error("Queue model setupCluster fail", e);
+            log.error("KV model setupCluster failed", e);
             throw new RuntimeException(e);
         }
     }
@@ -185,7 +185,7 @@ public class KVModel implements Model {
     }
 
     @Override public void stop() {
-        log.info("MQ chaos test stop");
+        log.info("KV chaos test stop...");
         workers.forEach(Worker::breakLoop);
     }
 
@@ -198,9 +198,9 @@ public class KVModel implements Model {
     }
 
     @Override public void shutdown() {
-        log.info("Teardown client");
+        log.info("Teardown client...");
         clients.forEach(Client::teardown);
-        log.info("Stop cluster");
+        log.info("Stop cluster...");
         cluster.values().forEach(ChaosNode::teardown);
         preNodesMap.values().forEach(ChaosNode::teardown);
         if (driver != null) {

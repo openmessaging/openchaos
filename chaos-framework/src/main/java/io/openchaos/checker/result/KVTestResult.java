@@ -23,7 +23,7 @@ public class KVTestResult extends TestResult {
     public Set<String> lostValues;
 
     public KVTestResult() {
-        super("CacheTestResult");
+        super("KVTestResult");
     }
 
     @Override public String toString() {
