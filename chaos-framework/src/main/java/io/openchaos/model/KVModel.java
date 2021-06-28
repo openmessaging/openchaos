@@ -146,7 +146,7 @@ public class KVModel implements Model {
             }
 
             log.info("Cluster start...");
-            log.info("Wait for all preNodes to start...");
+            log.info("Wait for all metaNode to start...");
 
             preNodesMap.values().forEach(ChaosNode::start);
             try {
