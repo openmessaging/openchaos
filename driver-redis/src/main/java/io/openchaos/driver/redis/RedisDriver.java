@@ -82,7 +82,12 @@ public class RedisDriver implements KVDriver {
         preNodes = nodes;
         return new RedisSentinelNode(node, nodes, redisConfig);
     }
-
+    
+    @Override
+    public String getStateName() {
+        return "io.openchaos.driver.redis.RedisState";
+    }
+    
     @Override
     public KVClient createClient() {
         RedisURI sentinelUri = RedisURI.Builder.sentinel(host, port, masterId).build();

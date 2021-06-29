@@ -70,6 +70,11 @@ public class DLedgerChaosDriver implements KVDriver {
         return null;
     }
 
+    @Override
+    public String getStateName() {
+        return null;
+    }
+    
     public String getPeers() {
         if (dLedgerConfig.peers != null && !dLedgerConfig.peers.isEmpty()) {
             return dLedgerConfig.peers;

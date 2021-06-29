@@ -39,7 +39,4 @@ public interface PubSubDriver extends ChaosDriver {
      */
     MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName);
 
-    String getMetaNode();
-
-    String getMetaName();
 }

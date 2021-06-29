@@ -190,6 +190,11 @@ public class RocketMQDriver implements PubSubDriver {
         return new RocketMQMetaNode(node, nodes, rmqConfig);
     }
 
+    @Override
+    public String getStateName() {
+        return "io.openchaos.driver.rocketmq.RocketMQChaosState";
+    }    
+    
     private String getNameserver() {
         if (rmqBrokerConfig.namesrvAddr != null && !rmqBrokerConfig.namesrvAddr.isEmpty()) {
             return rmqBrokerConfig.namesrvAddr;

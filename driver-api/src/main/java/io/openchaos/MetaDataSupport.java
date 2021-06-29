@@ -13,33 +13,14 @@
 
 package io.openchaos;
 
-import java.util.List;
+public interface MetaDataSupport {
+    /**
+     * Get address of MetaNode
+     */
+    String getMetaNode();
 
-public class DriverConfiguration {
-
-    public String name;
-
-    public String driverClass;
-
-    public List<String> nodes;
-    
-    public List<String> preNodes;
-
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean preNodesParticipateInFault;
-
-    public boolean isUploadImage;
-
-    public String ossEndPoint;
-
-    public String ossAccessKeyId;
-
-    public String ossAccessKeySecret;
-
-    public String bucketName;
+    /**
+     * Get Name of a cluster that can be distinguished. eg: ClusterName of RocketMQ, MasterID of Redis
+     */
+    String getMetaName();
 }

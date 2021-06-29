@@ -221,14 +221,9 @@ public class QueueModel implements Model {
     }
 
     @Override
-    public String getMetaNode() {
-        return pubSubDriver.getMetaNode();
-    }
-
-    @Override
-    public String getMetaName() {
-        return pubSubDriver.getMetaName();
-    }
+    public String getStateName() {
+        return pubSubDriver.getStateName();
+    }    
 
     @Override
     public boolean probeCluster() {
@@ -246,5 +241,15 @@ public class QueueModel implements Model {
             return false;
         }
         return probeTimes != 10;
+    }
+    
+    @Override
+    public String getMetaNode() {
+        return pubSubDriver.getMetaNode();
+    }
+
+    @Override
+    public String getMetaName() {
+        return pubSubDriver.getMetaName();
     }
 }

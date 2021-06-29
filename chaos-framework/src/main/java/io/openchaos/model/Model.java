@@ -14,10 +14,11 @@
 package io.openchaos.model;
 
 import io.openchaos.DriverConfiguration;
+import io.openchaos.MetaDataSupport;
 import io.openchaos.driver.ChaosNode;
 import java.util.Map;
 
-public interface Model {
+public interface Model extends MetaDataSupport {
 
     /**
      * Set up all the clients
@@ -67,4 +68,10 @@ public interface Model {
      * Get Name of a cluster that can be distinguished. eg: ClusterName of RocketMQ, MasterID of Redis
      */
     String getMetaName();
+    
+    /**
+     * Get the ClassName of the state class
+     */
+    String getStateName();    
+    
 }
