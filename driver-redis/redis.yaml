@@ -31,7 +31,7 @@ nodes:
   - n3
 
 # Nodes for Sentinel
-preNodes:
+metaNodes:
   - n4 # replace with ip or domain name, such as 192.168.0.1
 
 # Redis configuration

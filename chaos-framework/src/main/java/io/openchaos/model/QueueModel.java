@@ -59,7 +59,7 @@ public class QueueModel implements Model {
     private final List<Client> clients;
     private final List<ClientWorker> workers;
     private final Map<String, ChaosNode> cluster;
-    private Map<String, ChaosNode> preNodesMap;
+    private Map<String, ChaosNode> metaNodesMap;
     private final Recorder recorder;
     private final File driverConfigFile;
     private final int concurrency;
@@ -80,7 +80,7 @@ public class QueueModel implements Model {
         clients = new ArrayList<>();
         workers = new ArrayList<>();
         cluster = new HashMap<>();
-        preNodesMap = new HashMap<>();
+        metaNodesMap = new HashMap<>();
         chaosTopic = String.format("%s-chaos-topic", DATE_FORMAT.format(new Date()));
         this.isOrderTest = isOrderTest;
         this.isUsePull = isUsePull;
@@ -111,8 +111,8 @@ public class QueueModel implements Model {
                 pubSubDriver = createChaosDriver(driverConfigFile);
             }
 
-            if (driverConfiguration.preNodes != null) {
-                driverConfiguration.preNodes.forEach(node -> preNodesMap.put(node, pubSubDriver.createPreChaosNode(node, driverConfiguration.preNodes)));
+            if (driverConfiguration.metaNodes != null) {
+                driverConfiguration.metaNodes.forEach(node -> metaNodesMap.put(node, pubSubDriver.createPreChaosNode(node, driverConfiguration.metaNodes)));
             }
 
             if (driverConfiguration.nodes != null) {
@@ -120,13 +120,13 @@ public class QueueModel implements Model {
             }
 
             if (isInstall) {
-                preNodesMap.values().forEach(ChaosNode::setup);
+                metaNodesMap.values().forEach(ChaosNode::setup);
                 cluster.values().forEach(ChaosNode::setup);
             }
 
             log.info("Cluster shutdown");
             cluster.values().forEach(ChaosNode::stop);
-            preNodesMap.values().forEach(ChaosNode::stop);
+            metaNodesMap.values().forEach(ChaosNode::stop);
             log.info("Wait for all nodes to shutdown...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(10));
@@ -137,7 +137,7 @@ public class QueueModel implements Model {
             log.info("Cluster start...");
             log.info("Wait for all nodes to start...");
 
-            preNodesMap.values().forEach(ChaosNode::start);
+            metaNodesMap.values().forEach(ChaosNode::start);
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(20));
             } catch (InterruptedException e) {
@@ -150,8 +150,8 @@ public class QueueModel implements Model {
                 log.error("", e);
             }
 
-            if (driverConfiguration.preNodesParticipateInFault) {
-                Map<String, ChaosNode> allNodes = new HashMap<>(preNodesMap);
+            if (driverConfiguration.metaNodesParticipateInFault) {
+                Map<String, ChaosNode> allNodes = new HashMap<>(metaNodesMap);
                 allNodes.putAll(cluster);
                 return allNodes;
             } else {
@@ -214,7 +214,7 @@ public class QueueModel implements Model {
         clients.forEach(Client::teardown);
         log.info("Stop cluster");
         cluster.values().forEach(ChaosNode::stop);
-        preNodesMap.values().forEach(ChaosNode::stop);
+        metaNodesMap.values().forEach(ChaosNode::stop);
         if (pubSubDriver != null) {
             pubSubDriver.shutdown();
         }

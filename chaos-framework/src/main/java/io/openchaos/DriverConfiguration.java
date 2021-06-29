@@ -23,7 +23,7 @@ public class DriverConfiguration {
 
     public List<String> nodes;
     
-    public List<String> preNodes;
+    public List<String> metaNodes;
 
     public boolean isOrderTest;
 
@@ -31,7 +31,7 @@ public class DriverConfiguration {
 
     public boolean pull;
 
-    public boolean preNodesParticipateInFault;
+    public boolean metaNodesParticipateInFault;
 
     public boolean isUploadImage;
 

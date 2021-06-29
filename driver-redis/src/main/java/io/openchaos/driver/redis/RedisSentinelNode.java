@@ -75,7 +75,7 @@ public class RedisSentinelNode implements MetaNode {
             SshUtil.execCommandInDir(node, installDir, "redis-sentinel sentinel.conf");
 
         } catch (Exception e) {
-            log.error("Node {} start redis PreNode failed", node, e);
+            log.error("Node {} start redis meta node failed", node, e);
             throw new RuntimeException(e);
         }
     }

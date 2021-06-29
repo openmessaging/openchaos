@@ -58,7 +58,7 @@ public class RocketMQDriver implements PubSubDriver {
     private RocketMQConfig rmqConfig;
     private String nameServerPort = "9876";
     private List<String> nodes;
-    private List<String> preNodes;
+    private List<String> metaNodes;
 
     private static RocketMQClientConfig readConfigForClient(File configurationFile) throws IOException {
         return MAPPER.readValue(configurationFile, RocketMQClientConfig.class);
@@ -92,7 +92,7 @@ public class RocketMQDriver implements PubSubDriver {
     @Override
     public MQChaosNode createChaosNode(String node, List<String> nodes) {
         this.nodes = nodes;
-        return new RocketMQChaosNode(node, nodes, preNodes, rmqConfig, rmqBrokerConfig);
+        return new RocketMQChaosNode(node, nodes, metaNodes, rmqConfig, rmqBrokerConfig);
     }
 
     @Override
@@ -186,7 +186,7 @@ public class RocketMQDriver implements PubSubDriver {
     }
 
     @Override public MetaNode createPreChaosNode(String node, List<String> nodes) {
-        preNodes = nodes;
+        metaNodes = nodes;
         return new RocketMQMetaNode(node, nodes, rmqConfig);
     }
 
@@ -198,9 +198,9 @@ public class RocketMQDriver implements PubSubDriver {
     private String getNameserver() {
         if (rmqBrokerConfig.namesrvAddr != null && !rmqBrokerConfig.namesrvAddr.isEmpty()) {
             return rmqBrokerConfig.namesrvAddr;
-        } else if (preNodes != null) {
+        } else if (metaNodes != null) {
             StringBuilder res = new StringBuilder();
-            preNodes.forEach(node -> res.append(node + ":" + nameServerPort + ";"));
+            metaNodes.forEach(node -> res.append(node + ":" + nameServerPort + ";"));
             return res.toString();
         } else {
             StringBuilder res = new StringBuilder();

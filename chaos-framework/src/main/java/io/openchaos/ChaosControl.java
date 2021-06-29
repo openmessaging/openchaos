@@ -246,8 +246,8 @@ public class ChaosControl {
             if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
                 allNodes.addAll(driverConfiguration.nodes);
             }
-            if (driverConfiguration.preNodes != null && !driverConfiguration.preNodes.isEmpty()) {
-                allNodes.addAll(driverConfiguration.preNodes);
+            if (driverConfiguration.metaNodes != null && !driverConfiguration.metaNodes.isEmpty()) {
+                allNodes.addAll(driverConfiguration.metaNodes);
             }
 
             SshUtil.init(arguments.username, allNodes);

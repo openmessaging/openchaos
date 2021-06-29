@@ -37,7 +37,7 @@ import java.util.List;
 public class RedisDriver implements KVDriver {
 
     private List<String> nodes;
-    private List<String> preNodes;
+    private List<String> metaNodes;
     private RedisConfig redisConfig;
     private RedisClientConfig redisClientConfig;
     private int port;
@@ -79,7 +79,7 @@ public class RedisDriver implements KVDriver {
 
     @Override
     public MetaNode createPreChaosNode(String node, List<String> nodes)  {
-        preNodes = nodes;
+        metaNodes = nodes;
         return new RedisSentinelNode(node, nodes, redisConfig);
     }
     

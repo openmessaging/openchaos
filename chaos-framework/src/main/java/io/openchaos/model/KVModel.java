@@ -56,7 +56,7 @@ public class KVModel implements Model {
     private List<ClientWorker> workers;
     private Map<String, ChaosNode> cluster;
     private RateLimiter rateLimiter;
-    private Map<String, ChaosNode> preNodesMap;
+    private Map<String, ChaosNode> metaNodesMap;
     private int concurrency;
     private Recorder recorder;
     private KVDriver driver;
@@ -69,7 +69,7 @@ public class KVModel implements Model {
         this.cluster = new HashMap<>();
         this.rateLimiter = rateLimiter;
         this.recorder = recorder;
-        this.preNodesMap = new HashMap<>();
+        this.metaNodesMap = new HashMap<>();
         this.driverConfigFile = driverConfigFile;
         this.key = Optional.ofNullable(String.format("%s-chaos-key", DATE_FORMAT.format(new Date())));
     }
@@ -122,8 +122,8 @@ public class KVModel implements Model {
                 driver = createCacheChaosDriver(driverConfigFile);
             }
 
-            if (driverConfiguration.preNodes != null) {
-                driverConfiguration.preNodes.forEach(node -> preNodesMap.put(node, driver.createPreChaosNode(node, driverConfiguration.preNodes)));
+            if (driverConfiguration.metaNodes != null) {
+                driverConfiguration.metaNodes.forEach(node -> metaNodesMap.put(node, driver.createPreChaosNode(node, driverConfiguration.metaNodes)));
             }
 
             if (driverConfiguration.nodes != null) {
@@ -131,13 +131,13 @@ public class KVModel implements Model {
             }
 
             if (isInstall) {
-                preNodesMap.values().forEach(ChaosNode::setup);
+                metaNodesMap.values().forEach(ChaosNode::setup);
                 cluster.values().forEach(ChaosNode::setup);
             }
 
             log.info("Cluster shutdown...");
             cluster.values().forEach(ChaosNode::teardown);
-            preNodesMap.values().forEach(ChaosNode::stop);
+            metaNodesMap.values().forEach(ChaosNode::stop);
             log.info("Wait for all nodes to shutdown...");
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(10));
@@ -148,7 +148,7 @@ public class KVModel implements Model {
             log.info("Cluster start...");
             log.info("Wait for all nodes to start...");
 
-            preNodesMap.values().forEach(ChaosNode::start);
+            metaNodesMap.values().forEach(ChaosNode::start);
             try {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(20));
             } catch (InterruptedException e) {
@@ -161,8 +161,8 @@ public class KVModel implements Model {
                 log.error("", e);
             }
 
-            if (driverConfiguration.preNodesParticipateInFault) {
-                Map<String, ChaosNode> allNodes = new HashMap<>(preNodesMap);
+            if (driverConfiguration.metaNodesParticipateInFault) {
+                Map<String, ChaosNode> allNodes = new HashMap<>(metaNodesMap);
                 allNodes.putAll(cluster);
                 return allNodes;
             } else {
@@ -202,7 +202,7 @@ public class KVModel implements Model {
         clients.forEach(Client::teardown);
         log.info("Stop cluster...");
         cluster.values().forEach(ChaosNode::teardown);
-        preNodesMap.values().forEach(ChaosNode::teardown);
+        metaNodesMap.values().forEach(ChaosNode::teardown);
         if (driver != null) {
             driver.shutdown();
         }
