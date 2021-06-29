@@ -20,11 +20,11 @@ import com.google.common.io.BaseEncoding;
 import io.openchaos.common.Message;
 import io.openchaos.driver.MetaNode;
 import io.openchaos.driver.queue.ConsumerCallback;
-import io.openchaos.driver.queue.PubSubDriver;
-import io.openchaos.driver.queue.MQChaosNode;
-import io.openchaos.driver.queue.MQChaosProducer;
-import io.openchaos.driver.queue.MQChaosPullConsumer;
-import io.openchaos.driver.queue.MQChaosPushConsumer;
+import io.openchaos.driver.queue.QueueDriver;
+import io.openchaos.driver.queue.QueueNode;
+import io.openchaos.driver.queue.QueueProducer;
+import io.openchaos.driver.queue.QueuePullConsumer;
+import io.openchaos.driver.queue.QueuePushConsumer;
 import io.openchaos.driver.rocketmq.config.RocketMQBrokerConfig;
 import io.openchaos.driver.rocketmq.config.RocketMQClientConfig;
 import io.openchaos.driver.rocketmq.config.RocketMQConfig;
@@ -46,7 +46,7 @@ import org.apache.rocketmq.tools.command.CommandUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RocketMQDriver implements PubSubDriver {
+public class RocketMQDriver implements QueueDriver {
 
     private static final Random RANDOM = new Random();
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
@@ -90,13 +90,13 @@ public class RocketMQDriver implements PubSubDriver {
     }
 
     @Override
-    public MQChaosNode createChaosNode(String node, List<String> nodes) {
+    public QueueNode createChaosNode(String node, List<String> nodes) {
         this.nodes = nodes;
         return new RocketMQChaosNode(node, nodes, metaNodes, rmqConfig, rmqBrokerConfig);
     }
 
     @Override
-    public MQChaosProducer createProducer(String topic) {
+    public QueueProducer createProducer(String topic) {
         DefaultMQProducer defaultMQProducer = new DefaultMQProducer("ProducerGroup_Chaos");
         defaultMQProducer.setNamesrvAddr(getNameserver());
         defaultMQProducer.setInstanceName("ProducerInstance" + getRandomString());
@@ -105,7 +105,7 @@ public class RocketMQDriver implements PubSubDriver {
     }
 
     @Override
-    public MQChaosPushConsumer createPushConsumer(String topic, String subscriptionName,
+    public QueuePushConsumer createPushConsumer(String topic, String subscriptionName,
         ConsumerCallback consumerCallback) {
         DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer(subscriptionName);
         defaultMQPushConsumer.setNamesrvAddr(getNameserver());
@@ -125,7 +125,7 @@ public class RocketMQDriver implements PubSubDriver {
     }
 
     @Override
-    public MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName) {
+    public QueuePullConsumer createPullConsumer(String topic, String subscriptionName) {
         DefaultLitePullConsumer defaultLitePullConsumer = new DefaultLitePullConsumer(subscriptionName);
         defaultLitePullConsumer.setNamesrvAddr(getNameserver());
         defaultLitePullConsumer.setInstanceName("ConsumerInstance" + getRandomString());

@@ -14,7 +14,7 @@
 package io.openchaos.driver.rocketmq;
 
 import io.openchaos.common.InvokeResult;
-import io.openchaos.driver.queue.MQChaosProducer;
+import io.openchaos.driver.queue.QueueProducer;
 import java.util.List;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
@@ -29,7 +29,7 @@ import org.apache.rocketmq.remoting.exception.RemotingSendRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RocketMQChaosProducer implements MQChaosProducer {
+public class RocketMQChaosProducer implements QueueProducer {
 
     private static final Logger log = LoggerFactory.getLogger(RocketMQChaosProducer.class);
     private final DefaultMQProducer defaultMQProducer;

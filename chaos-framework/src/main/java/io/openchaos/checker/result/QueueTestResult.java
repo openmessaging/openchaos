@@ -28,7 +28,7 @@ public class QueueTestResult extends TestResult {
     public boolean exactlyOnce;
 
     public QueueTestResult() {
-        super("MQTestResult");
+        super("QueueTestResult");
     }
 
     @Override

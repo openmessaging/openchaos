@@ -22,7 +22,7 @@ import io.openchaos.DriverConfiguration;
 import io.openchaos.client.Client;
 import io.openchaos.client.QueueClient;
 import io.openchaos.driver.ChaosNode;
-import io.openchaos.driver.queue.PubSubDriver;
+import io.openchaos.driver.queue.QueueDriver;
 import io.openchaos.worker.ClientWorker;
 import io.openchaos.worker.Worker;
 import io.openchaos.common.utils.Utils;
@@ -41,9 +41,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The model for mq test
- */
 public class QueueModel implements Model {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
@@ -64,7 +61,7 @@ public class QueueModel implements Model {
     private final File driverConfigFile;
     private final int concurrency;
     private final RateLimiter rateLimiter;
-    private PubSubDriver pubSubDriver;
+    private QueueDriver pubSubDriver;
     private final String chaosTopic;
     private final boolean isOrderTest;
     private final boolean isUsePull;
@@ -87,15 +84,15 @@ public class QueueModel implements Model {
         this.shardingKeys = shardingKeys;
     }
 
-    private static PubSubDriver createChaosDriver(File driverConfigFile) throws IOException {
+    private static QueueDriver createChaosDriver(File driverConfigFile) throws IOException {
 
         DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile, DriverConfiguration.class);
         log.info("Initial driver: {}", WRITER.writeValueAsString(driverConfiguration));
 
-        PubSubDriver pubSubDriver;
+        QueueDriver pubSubDriver;
 
         try {
-            pubSubDriver = (PubSubDriver) Class.forName(driverConfiguration.driverClass).newInstance();
+            pubSubDriver = (QueueDriver) Class.forName(driverConfiguration.driverClass).newInstance();
             pubSubDriver.initialize(driverConfigFile, driverConfiguration.nodes);
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             throw new RuntimeException(e);
@@ -173,7 +170,7 @@ public class QueueModel implements Model {
             log.info("Create chaos topic : {}", chaosTopic);
             pubSubDriver.createTopic(chaosTopic, 8);
 
-            log.info("MQ clients setup..");
+            log.info("Clients setup..");
 
             List<List<String>> shardingKeyLists = Utils.partitionList(shardingKeys, concurrency);
             for (int i = 0; i < concurrency; i++) {
@@ -184,7 +181,7 @@ public class QueueModel implements Model {
                 workers.add(clientWorker);
             }
 
-            log.info("{} mq clients setup success", concurrency);
+            log.info("{} clients setup success", concurrency);
         } catch (Exception e) {
             log.error("Queue model setupClient fail", e);
             throw new RuntimeException(e);
@@ -199,7 +196,7 @@ public class QueueModel implements Model {
 
     @Override
     public void stop() {
-        log.info("MQ chaos test stop");
+        log.info("Test stop");
         workers.forEach(Worker::breakLoop);
     }
 

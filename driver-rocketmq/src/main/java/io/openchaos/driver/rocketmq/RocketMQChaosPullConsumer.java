@@ -15,7 +15,7 @@ package io.openchaos.driver.rocketmq;
 
 import com.google.common.collect.Lists;
 import io.openchaos.common.Message;
-import io.openchaos.driver.queue.MQChaosPullConsumer;
+import io.openchaos.driver.queue.QueuePullConsumer;
 import java.util.List;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
@@ -23,7 +23,7 @@ import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RocketMQChaosPullConsumer implements MQChaosPullConsumer {
+public class RocketMQChaosPullConsumer implements QueuePullConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(RocketMQChaosPullConsumer.class);
     private DefaultLitePullConsumer defaultLitePullConsumer;

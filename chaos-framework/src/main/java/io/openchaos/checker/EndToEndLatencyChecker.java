@@ -74,7 +74,7 @@ public class EndToEndLatencyChecker implements Checker {
             endToEndLatency = generateResult();
             MAPPER.writeValue(new File(filePath), endToEndLatency);
         } catch (Exception e) {
-            log.error("MQChecker check fail", e);
+            log.error("Failed to check", e);
         }
 
         return endToEndLatency;

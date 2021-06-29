@@ -15,7 +15,7 @@ package io.openchaos.driver.queue;
 
 import io.openchaos.driver.ChaosDriver;
 
-public interface PubSubDriver extends ChaosDriver {
+public interface QueueDriver extends ChaosDriver {
 
     /**
      * Create a new topic with a given number of partitions
@@ -25,18 +25,18 @@ public interface PubSubDriver extends ChaosDriver {
     /**
      * Create a Producer for a given topic. Producer will apply operations to the cluster to be tested
      */
-    MQChaosProducer createProducer(String topic);
+    QueueProducer createProducer(String topic);
 
     /**
      * Create a PushConsumer. Note: if driver use pull consumer, you can choose not to implement this method
      */
-    MQChaosPushConsumer createPushConsumer(String topic,
+    QueuePushConsumer createPushConsumer(String topic,
         String subscriptionName,
         ConsumerCallback consumerCallback);
 
     /**
      * Create a PullConsumer. Note: if driver use push consumer, you can choose not to implement this method
      */
-    MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName);
+    QueuePullConsumer createPullConsumer(String topic, String subscriptionName);
 
 }

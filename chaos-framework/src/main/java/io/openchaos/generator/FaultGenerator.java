@@ -14,7 +14,7 @@
 package io.openchaos.generator;
 
 import io.openchaos.driver.ChaosState;
-import io.openchaos.driver.queue.MQChaosState;
+import io.openchaos.driver.queue.QueueState;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -260,7 +260,7 @@ public class FaultGenerator {
                                                                        String metaName, String metaNode) {
         List<FaultOperation> operations = new ArrayList<>();
         try {
-            chaosState = (MQChaosState) Class.forName(stateClass).newInstance();
+            chaosState = (QueueState) Class.forName(stateClass).newInstance();
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             e.printStackTrace();
         }

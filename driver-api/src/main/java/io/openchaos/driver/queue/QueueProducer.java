@@ -22,10 +22,10 @@ package io.openchaos.driver.queue;
 import io.openchaos.common.InvokeResult;
 import io.openchaos.driver.ChaosClient;
 
-public interface MQChaosProducer extends ChaosClient {
+public interface QueueProducer extends ChaosClient {
 
     /**
-     * Enqueue a value to mq cluster
+     * Enqueue a value to messaging cluster
      *
      * @param payload
      * @return result of enqueue
@@ -33,7 +33,7 @@ public interface MQChaosProducer extends ChaosClient {
     InvokeResult enqueue(byte[] payload);
 
     /**
-     * Enqueue a value with sharding key to mq cluster
+     * Enqueue a value with sharding key to messaging cluster
      *
      * @param payload
      * @return result of enqueue

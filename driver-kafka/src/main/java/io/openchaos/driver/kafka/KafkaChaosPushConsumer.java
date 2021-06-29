@@ -15,7 +15,7 @@ package io.openchaos.driver.kafka;
 
 import io.openchaos.common.Message;
 import io.openchaos.driver.queue.ConsumerCallback;
-import io.openchaos.driver.queue.MQChaosPushConsumer;
+import io.openchaos.driver.queue.QueuePushConsumer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class KafkaChaosPushConsumer implements MQChaosPushConsumer {
+public class KafkaChaosPushConsumer implements QueuePushConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosPushConsumer.class);
 

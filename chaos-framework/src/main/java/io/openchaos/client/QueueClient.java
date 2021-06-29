@@ -16,10 +16,10 @@ package io.openchaos.client;
 import io.openchaos.common.InvokeResult;
 import io.openchaos.common.Message;
 import io.openchaos.driver.queue.ConsumerCallback;
-import io.openchaos.driver.queue.PubSubDriver;
-import io.openchaos.driver.queue.MQChaosProducer;
-import io.openchaos.driver.queue.MQChaosPullConsumer;
-import io.openchaos.driver.queue.MQChaosPushConsumer;
+import io.openchaos.driver.queue.QueueDriver;
+import io.openchaos.driver.queue.QueueProducer;
+import io.openchaos.driver.queue.QueuePullConsumer;
+import io.openchaos.driver.queue.QueuePushConsumer;
 import io.openchaos.recorder.ResponseLogEntry;
 import io.openchaos.generator.SequenceGenerator;
 import io.openchaos.generator.Operation;
@@ -37,10 +37,10 @@ public class QueueClient implements Client, ConsumerCallback {
     private static final AtomicInteger CLIENT_ID_GENERATOR = new AtomicInteger(0);
     private static final Logger log = LoggerFactory.getLogger(QueueClient.class);
     private static final String SUBSCRIPTION_NAME = "ChaosTest_ConsumerGroup";
-    private MQChaosProducer mqChaosProducer;
-    private MQChaosPullConsumer mqChaosPullConsumer;
-    private MQChaosPushConsumer mqChaosPushConsumer;
-    private final PubSubDriver pubSubDriver;
+    private QueueProducer producer;
+    private QueuePullConsumer pullConsumer;
+    private QueuePushConsumer pushConsumer;
+    private final QueueDriver pubSubDriver;
     private final String chaosTopic;
     private final Recorder recorder;
     private final int clientId;
@@ -50,7 +50,7 @@ public class QueueClient implements Client, ConsumerCallback {
     private final AtomicLong msgReceivedCount;
     private final Random random = new Random();
 
-    public QueueClient(PubSubDriver pubSubDriver, String chaosTopic, Recorder recorder, boolean isOrderTest,
+    public QueueClient(QueueDriver pubSubDriver, String chaosTopic, Recorder recorder, boolean isOrderTest,
                        boolean isUsePull, List<String> shardingKeys, AtomicLong msgReceivedCount) {
         this.pubSubDriver = pubSubDriver;
         this.chaosTopic = chaosTopic;
@@ -63,24 +63,24 @@ public class QueueClient implements Client, ConsumerCallback {
     }
 
     public void setup() {
-        mqChaosProducer = pubSubDriver.createProducer(chaosTopic);
-        mqChaosProducer.start();
+        producer = pubSubDriver.createProducer(chaosTopic);
+        producer.start();
         if (isUsePull) {
-            mqChaosPullConsumer = pubSubDriver.createPullConsumer(chaosTopic, SUBSCRIPTION_NAME);
-            mqChaosPullConsumer.start();
+            pullConsumer = pubSubDriver.createPullConsumer(chaosTopic, SUBSCRIPTION_NAME);
+            pullConsumer.start();
         } else {
-            mqChaosPushConsumer = pubSubDriver.createPushConsumer(chaosTopic, SUBSCRIPTION_NAME, this);
-            mqChaosPushConsumer.start();
+            pushConsumer = pubSubDriver.createPushConsumer(chaosTopic, SUBSCRIPTION_NAME, this);
+            pushConsumer.start();
         }
     }
 
     public void teardown() {
-        mqChaosProducer.close();
-        if (mqChaosPullConsumer != null) {
-            mqChaosPullConsumer.close();
+        producer.close();
+        if (pullConsumer != null) {
+            pullConsumer.close();
         }
-        if (mqChaosPushConsumer != null) {
-            mqChaosPushConsumer.close();
+        if (pushConsumer != null) {
+            pushConsumer.close();
         }
     }
 
@@ -93,18 +93,18 @@ public class QueueClient implements Client, ConsumerCallback {
                 String shardingKey = shardingKeys.get(random.nextInt(shardingKeys.size()));
                 requestLogEntry.shardingKey = shardingKey;
                 recorder.recordRequest(requestLogEntry);
-                invokeResult = mqChaosProducer.enqueue(shardingKey, op.getValue().getBytes());
+                invokeResult = producer.enqueue(shardingKey, op.getValue().getBytes());
                 recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
                     invokeResult, shardingKey, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp, invokeResult.getExtraInfo()));
             } else {
                 recorder.recordRequest(requestLogEntry);
-                invokeResult = mqChaosProducer.enqueue(op.getValue().getBytes());
+                invokeResult = producer.enqueue(op.getValue().getBytes());
                 recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
                     invokeResult, op.getValue(), System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp, invokeResult.getExtraInfo()));
             }
         } else {
             recorder.recordRequest(requestLogEntry);
-            List<Message> dequeueList = mqChaosPullConsumer.dequeue();
+            List<Message> dequeueList = pullConsumer.dequeue();
             if (dequeueList == null || dequeueList.isEmpty()) {
                 recorder.recordResponse(new ResponseLogEntry(clientId, op.getInvokeOperation(),
                     InvokeResult.FAILURE, null, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
@@ -125,7 +125,7 @@ public class QueueClient implements Client, ConsumerCallback {
             //Drain
             RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, "dequeue", null, System.currentTimeMillis());
             recorder.recordRequest(requestLogEntry);
-            List<Message> dequeueList = mqChaosPullConsumer.dequeue();
+            List<Message> dequeueList = pullConsumer.dequeue();
             while (dequeueList != null && !dequeueList.isEmpty()) {
                 for (Message msg : dequeueList) {
                     msgReceivedCount.incrementAndGet();
@@ -134,7 +134,7 @@ public class QueueClient implements Client, ConsumerCallback {
                 }
                 requestLogEntry = new RequestLogEntry(clientId, "dequeue", null, System.currentTimeMillis());
                 recorder.recordRequest(requestLogEntry);
-                dequeueList = mqChaosPullConsumer.dequeue();
+                dequeueList = pullConsumer.dequeue();
             }
             recorder.recordResponse(new ResponseLogEntry(clientId, "dequeue", InvokeResult.FAILURE, null, System.currentTimeMillis(), System.currentTimeMillis() - requestLogEntry.timestamp));
         }

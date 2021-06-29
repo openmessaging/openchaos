@@ -21,11 +21,11 @@ import io.openchaos.driver.kafka.config.KafkaBrokerConfig;
 import io.openchaos.driver.kafka.config.KafkaClientConfig;
 import io.openchaos.driver.kafka.config.KafkaConfig;
 import io.openchaos.driver.queue.ConsumerCallback;
-import io.openchaos.driver.queue.PubSubDriver;
-import io.openchaos.driver.queue.MQChaosNode;
-import io.openchaos.driver.queue.MQChaosProducer;
-import io.openchaos.driver.queue.MQChaosPullConsumer;
-import io.openchaos.driver.queue.MQChaosPushConsumer;
+import io.openchaos.driver.queue.QueueDriver;
+import io.openchaos.driver.queue.QueueNode;
+import io.openchaos.driver.queue.QueueProducer;
+import io.openchaos.driver.queue.QueuePullConsumer;
+import io.openchaos.driver.queue.QueuePushConsumer;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -46,7 +46,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KafkaChaosDriver implements PubSubDriver {
+public class KafkaChaosDriver implements QueueDriver {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -113,13 +113,13 @@ public class KafkaChaosDriver implements PubSubDriver {
     }
 
     @Override
-    public MQChaosProducer createProducer(String topic) {
+    public QueueProducer createProducer(String topic) {
         KafkaProducer<String, byte[]> producer = new KafkaProducer<>(producerProperties);
         return new KafkaChaosProducer(producer, topic);
     }
 
     @Override
-    public MQChaosPushConsumer createPushConsumer(String topic, String subscriptionName,
+    public QueuePushConsumer createPushConsumer(String topic, String subscriptionName,
                                                   ConsumerCallback consumerCallback) {
         consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, subscriptionName);
         KafkaConsumer<String, byte[]> kafkaConsumer = new KafkaConsumer<>(consumerProperties);
@@ -128,7 +128,7 @@ public class KafkaChaosDriver implements PubSubDriver {
     }
 
     @Override
-    public MQChaosPullConsumer createPullConsumer(String topic, String subscriptionName) {
+    public QueuePullConsumer createPullConsumer(String topic, String subscriptionName) {
         throw new UnsupportedOperationException("Unsupport create a pull consumer currently");
 //        consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, subscriptionName);
 //        KafkaConsumer<String, byte[]> kafkaConsumer = new KafkaConsumer<>(consumerProperties);
@@ -148,7 +148,7 @@ public class KafkaChaosDriver implements PubSubDriver {
 
 
     @Override
-    public MQChaosNode createChaosNode(String node, List<String> nodes) {
+    public QueueNode createChaosNode(String node, List<String> nodes) {
         return new KafkaChaosNode(node, nodes, kafkaConfig, kafkaBrokerConfig);
     }
 

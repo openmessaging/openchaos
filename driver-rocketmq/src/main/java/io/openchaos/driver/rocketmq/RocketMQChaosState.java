@@ -13,7 +13,7 @@
 
 package io.openchaos.driver.rocketmq;
 
-import io.openchaos.driver.queue.MQChaosState;
+import io.openchaos.driver.queue.QueueState;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.remoting.exception.RemotingConnectException;
@@ -25,7 +25,7 @@ import org.apache.rocketmq.tools.command.CommandUtil;
 import java.util.HashSet;
 import java.util.Set;
 
-public class RocketMQChaosState implements MQChaosState {
+public class RocketMQChaosState implements QueueState {
 
     private DefaultMQAdminExt rmqAdmin;
     private String clusterName;

@@ -14,7 +14,7 @@
 package io.openchaos.driver.kafka;
 
 import io.openchaos.common.Message;
-import io.openchaos.driver.queue.MQChaosPullConsumer;
+import io.openchaos.driver.queue.QueuePullConsumer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * There may be issues during operation, KafkaChaosPushConsumer is recommended
  */
 @Deprecated
-public class KafkaChaosPullConsumer implements MQChaosPullConsumer {
+public class KafkaChaosPullConsumer implements QueuePullConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosPullConsumer.class);
     private KafkaConsumer kafkaConsumer;

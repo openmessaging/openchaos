@@ -13,13 +13,13 @@
 
 package io.openchaos.driver.rocketmq;
 
-import io.openchaos.driver.queue.MQChaosPushConsumer;
+import io.openchaos.driver.queue.QueuePushConsumer;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RocketMQChaosPushConsumer implements MQChaosPushConsumer {
+public class RocketMQChaosPushConsumer implements QueuePushConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(RocketMQChaosPushConsumer.class);
     private DefaultMQPushConsumer defaultMQPushConsumer;

@@ -14,7 +14,7 @@
 package io.openchaos.driver.kafka;
 
 import io.openchaos.common.InvokeResult;
-import io.openchaos.driver.queue.MQChaosProducer;
+import io.openchaos.driver.queue.QueueProducer;
 import java.util.concurrent.ExecutionException;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -22,7 +22,7 @@ import org.apache.kafka.common.errors.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KafkaChaosProducer implements MQChaosProducer {
+public class KafkaChaosProducer implements QueueProducer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosProducer.class);
     private String chaosTopic;

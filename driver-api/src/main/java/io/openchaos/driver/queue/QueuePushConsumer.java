@@ -19,13 +19,7 @@
 
 package io.openchaos.driver.queue;
 
-import io.openchaos.common.Message;
 import io.openchaos.driver.ChaosClient;
-import java.util.List;
 
-public interface MQChaosPullConsumer extends ChaosClient {
-    /**
-     * Dequeue from mq cluster.
-     */
-    List<Message> dequeue();
+public interface QueuePushConsumer extends ChaosClient {
 }

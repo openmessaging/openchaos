@@ -60,10 +60,10 @@ public class QueueChecker implements Checker {
 
         if (outputDir != null && !outputDir.isEmpty()) {
             originFilePath = outputDir + File.separator + fileName;
-            filePath = outputDir + File.separator + fileName.replace("history", "mq-result");
+            filePath = outputDir + File.separator + fileName.replace("history", "queue-result");
         } else {
             originFilePath = fileName;
-            filePath = fileName.replace("history", "mq-result");
+            filePath = fileName.replace("history", "queue-result");
         }
 
         if (!new File(originFilePath).exists()) {
@@ -78,7 +78,7 @@ public class QueueChecker implements Checker {
             queueTestResult = generateResult();
             MAPPER.writeValue(new File(filePath), queueTestResult);
         } catch (Exception e) {
-            log.error("MQChecker check fail", e);
+            log.error("Failed to check", e);
         }
 
         return queueTestResult;
@@ -122,19 +122,19 @@ public class QueueChecker implements Checker {
     }
 
     private QueueTestResult generateResult() {
-        QueueTestResult mQTestResult = new QueueTestResult();
-        mQTestResult.enqueueInvokeCount = enqueueInvokeCount.get();
-        mQTestResult.enqueueSuccessCount = enqueueSuccessCount.get();
-        mQTestResult.dequeueSuccessCount = dequeueSuccessCount.get();
-        mQTestResult.lostMessageCount = lostMap.size();
-        mQTestResult.lostMessages = lostMap;
-        mQTestResult.duplicateMessageCount = duplicateSet.size();
-        mQTestResult.duplicateMessages = generateDuplicateMessagesMap();
-        mQTestResult.atMostOnce = duplicateSet.isEmpty();
-        mQTestResult.atLeastOnce = lostMap.isEmpty();
-        mQTestResult.exactlyOnce = lostMap.isEmpty() && duplicateSet.isEmpty();
-        mQTestResult.isValid = true;
-        return mQTestResult;
+        QueueTestResult result = new QueueTestResult();
+        result.enqueueInvokeCount = enqueueInvokeCount.get();
+        result.enqueueSuccessCount = enqueueSuccessCount.get();
+        result.dequeueSuccessCount = dequeueSuccessCount.get();
+        result.lostMessageCount = lostMap.size();
+        result.lostMessages = lostMap;
+        result.duplicateMessageCount = duplicateSet.size();
+        result.duplicateMessages = generateDuplicateMessagesMap();
+        result.atMostOnce = duplicateSet.isEmpty();
+        result.atLeastOnce = lostMap.isEmpty();
+        result.exactlyOnce = lostMap.isEmpty() && duplicateSet.isEmpty();
+        result.isValid = true;
+        return result;
     }
 
     private Map<String, String> generateDuplicateMessagesMap() {
@@ -144,9 +144,5 @@ public class QueueChecker implements Checker {
                 ", info = " + extraInfoMap.get(message.getElement()));
         }
         return res;
-    }
-
-    public static void main(String[] args) {
-
     }
 }

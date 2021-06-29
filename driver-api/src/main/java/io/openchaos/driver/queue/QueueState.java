@@ -15,5 +15,5 @@ package io.openchaos.driver.queue;
 
 import io.openchaos.driver.ChaosState;
 
-public interface MQChaosState extends ChaosState {
+public interface QueueState extends ChaosState {
 }

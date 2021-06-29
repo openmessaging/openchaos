@@ -18,14 +18,14 @@ import io.openchaos.common.utils.PauseProcessUtil;
 import io.openchaos.common.utils.SshUtil;
 import io.openchaos.driver.kafka.config.KafkaBrokerConfig;
 import io.openchaos.driver.kafka.config.KafkaConfig;
-import io.openchaos.driver.queue.MQChaosNode;
+import io.openchaos.driver.queue.QueueNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.List;
 
-public class KafkaChaosNode implements MQChaosNode {
+public class KafkaChaosNode implements QueueNode {
 
     private static final String BROKER_PROCESS_NAME = "Kafka";
     private static final Logger log = LoggerFactory.getLogger(KafkaChaosNode.class);

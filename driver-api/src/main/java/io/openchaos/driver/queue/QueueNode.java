@@ -15,6 +15,6 @@ package io.openchaos.driver.queue;
 
 import io.openchaos.driver.ChaosNode;
 
-public interface MQChaosNode extends ChaosNode {
+public interface QueueNode extends ChaosNode {
 
 }
