@@ -152,7 +152,7 @@ public class KafkaChaosDriver implements QueueDriver {
         return new KafkaChaosNode(node, nodes, kafkaConfig, kafkaBrokerConfig);
     }
 
-    @Override public MetaNode createPreChaosNode(String node, List<String> nodes) {
+    @Override public MetaNode createChaosMetaNode(String node, List<String> nodes) {
         return null;
     }
 

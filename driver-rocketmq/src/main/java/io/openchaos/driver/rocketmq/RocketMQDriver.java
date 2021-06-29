@@ -185,7 +185,7 @@ public class RocketMQDriver implements QueueDriver {
         rmqAdmin.shutdown();
     }
 
-    @Override public MetaNode createPreChaosNode(String node, List<String> nodes) {
+    @Override public MetaNode createChaosMetaNode(String node, List<String> nodes) {
         metaNodes = nodes;
         return new RocketMQMetaNode(node, nodes, rmqConfig);
     }

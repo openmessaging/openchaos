@@ -78,7 +78,7 @@ public class RedisDriver implements KVDriver {
     }
 
     @Override
-    public MetaNode createPreChaosNode(String node, List<String> nodes)  {
+    public MetaNode createChaosMetaNode(String node, List<String> nodes)  {
         metaNodes = nodes;
         return new RedisSentinelNode(node, nodes, redisConfig);
     }

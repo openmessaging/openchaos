@@ -123,7 +123,7 @@ public class KVModel implements Model {
             }
 
             if (driverConfiguration.metaNodes != null) {
-                driverConfiguration.metaNodes.forEach(node -> metaNodesMap.put(node, driver.createPreChaosNode(node, driverConfiguration.metaNodes)));
+                driverConfiguration.metaNodes.forEach(node -> metaNodesMap.put(node, driver.createChaosMetaNode(node, driverConfiguration.metaNodes)));
             }
 
             if (driverConfiguration.nodes != null) {

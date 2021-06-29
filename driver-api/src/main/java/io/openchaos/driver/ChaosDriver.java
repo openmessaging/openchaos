@@ -23,9 +23,9 @@ public interface ChaosDriver extends MetaDataSupport {
      * Driver implementation can use this method to initialize the distributed system libraries, with the provided
      * configuration file.
      *
-     * @param configurationFile
+     * @param configurationFile where to load configuration
      * @param nodes nodes of the distributed system to be tested
-     * @throws IOException
+     * @throws IOException throws exception when load error
      */
     void initialize(File configurationFile, List<String> nodes) throws IOException;
 
@@ -43,13 +43,13 @@ public interface ChaosDriver extends MetaDataSupport {
     ChaosNode createChaosNode(String node, List<String> nodes);
 
     /**
-     * Create a PreChaosNode. PreChaosNode represents one of the auxiliary nodes of the cluster to be tested. eg:
+     * Create a metaNode. MetaNode represents one of the auxiliary nodes of the cluster to be tested. eg:
      * Zookeeper for Kafka, Nameserver for RocketMQ If it does not exist, can return null
      *
      * @param node current node
-     * @param nodes all the nodes of PreChaosNodes
+     * @param nodes all the nodes of MetaNodes
      */
-    default MetaNode createPreChaosNode(String node, List<String> nodes) {
+    default MetaNode createChaosMetaNode(String node, List<String> nodes) {
         return null;
     }
     

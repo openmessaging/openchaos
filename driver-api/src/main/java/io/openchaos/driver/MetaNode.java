@@ -14,7 +14,7 @@
 package io.openchaos.driver;
 
 /**
- * PreChaosNode represents one of the auxiliary nodes of the cluster to be tested. eg: Zookeeper for Kafka, Nameserver
+ * MetaNode represents one of the auxiliary nodes of the cluster to be tested. eg: Zookeeper for Kafka, Nameserver
  * for RocketMQ
  */
 public interface MetaNode extends ChaosNode {

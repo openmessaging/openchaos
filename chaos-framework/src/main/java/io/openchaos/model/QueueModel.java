@@ -109,7 +109,7 @@ public class QueueModel implements Model {
             }
 
             if (driverConfiguration.metaNodes != null) {
-                driverConfiguration.metaNodes.forEach(node -> metaNodesMap.put(node, pubSubDriver.createPreChaosNode(node, driverConfiguration.metaNodes)));
+                driverConfiguration.metaNodes.forEach(node -> metaNodesMap.put(node, pubSubDriver.createChaosMetaNode(node, driverConfiguration.metaNodes)));
             }
 
             if (driverConfiguration.nodes != null) {

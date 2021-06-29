@@ -66,7 +66,7 @@ public class DLedgerChaosDriver implements KVDriver {
         return new DLedgerChaosNode(node, nodes, dLedgerConfig);
     }
 
-    @Override public MetaNode createPreChaosNode(String node, List<String> nodes) {
+    @Override public MetaNode createChaosMetaNode(String node, List<String> nodes) {
         return null;
     }
 
