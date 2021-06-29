@@ -21,8 +21,6 @@ public class DriverConfiguration {
 
     public String driverClass;
 
-    public String stateClass;
-
     public List<String> nodes;
     
     public List<String> preNodes;
