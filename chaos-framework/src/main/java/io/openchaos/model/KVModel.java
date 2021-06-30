@@ -40,7 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class KVModel implements Model {
-
+    public static final String MODEL_NAME = "kv";
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -74,7 +74,7 @@ public class KVModel implements Model {
         this.key = Optional.ofNullable(String.format("%s-chaos-key", DATE_FORMAT.format(new Date())));
     }
 
-    private static KVDriver createCacheChaosDriver(File driverConfigFile) throws IOException {
+    private static KVDriver createKVDriver(File driverConfigFile) throws IOException {
 
         DriverConfiguration driverConfiguration = MAPPER.readValue(driverConfigFile, DriverConfiguration.class);
         log.info("Initial driver: {}", WRITER.writeValueAsString(driverConfiguration));
@@ -95,7 +95,7 @@ public class KVModel implements Model {
     @Override public void setupClient() {
         try {
             if (driver == null) {
-                driver = createCacheChaosDriver(driverConfigFile);
+                driver = createKVDriver(driverConfigFile);
             }
 
             log.info("KV client setup...");
@@ -104,7 +104,7 @@ public class KVModel implements Model {
                 Client client = new KVClient(driver, recorder, key);
                 client.setup();
                 clients.add(client);
-                ClientWorker clientWorker = new ClientWorker("cacheClient-" + i, client, rateLimiter, log);
+                ClientWorker clientWorker = new ClientWorker("kvClient-" + i, client, rateLimiter, log);
                 workers.add(clientWorker);
             }
 
@@ -119,7 +119,7 @@ public class KVModel implements Model {
     @Override public Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall) {
         try {
             if (driver == null) {
-                driver = createCacheChaosDriver(driverConfigFile);
+                driver = createKVDriver(driverConfigFile);
             }
 
             if (driverConfiguration.metaNodes != null) {

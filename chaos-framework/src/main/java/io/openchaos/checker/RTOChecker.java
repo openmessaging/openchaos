@@ -19,6 +19,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.openchaos.checker.result.RTORecord;
 import io.openchaos.checker.result.RTOTestResult;
 import io.openchaos.checker.result.TestResult;
+import io.openchaos.model.KVModel;
+import io.openchaos.model.QueueModel;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -53,10 +55,10 @@ public class RTOChecker implements Checker {
         this.outputDir = outputDir;
         this.fileName = fileName;
         switch (model) {
-            case "queue":
-                this.opt = "equeue";
+            case QueueModel.MODEL_NAME:
+                this.opt = "enqueue";
                 break;
-            case "cache":
+            case KVModel.MODEL_NAME:
                 this.opt = "put";
                 break;
         }

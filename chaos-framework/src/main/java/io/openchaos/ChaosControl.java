@@ -276,10 +276,10 @@ public class ChaosControl {
 
             //Currently only queue model is supported
             switch (arguments.model) {
-                case "queue":
+                case QueueModel.MODEL_NAME:
                     model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile, isOrderTest, pull, shardingKeys);
                     break;
-                case "cache":
+                case KVModel.MODEL_NAME:
                     model = new KVModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
                     break;
                 default:
@@ -426,12 +426,12 @@ public class ChaosControl {
         List<String> points;
 
         switch (arguments.model) {
-            case "queue":
+            case QueueModel.MODEL_NAME:
                 checkerList.add(new QueueChecker(arguments.outputDir, historyFile));
                 points = Collections.singletonList("enqueue");
                 checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));
                 break;
-            case "cache":
+            case KVModel.MODEL_NAME:
                 checkerList.add(new KVChecker(arguments.outputDir, historyFile));
                 points = Collections.singletonList("put");
                 checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));

@@ -47,7 +47,7 @@ public class KVClient implements Client {
 
     @Override public void setup() {
         if (driver == null) {
-            throw new IllegalArgumentException("cacheChaosDriver is null when setup CacheClient");
+            throw new IllegalArgumentException("KV driver is null");
         }
         client = driver.createClient();
         log.info("KV client start...");
@@ -60,7 +60,7 @@ public class KVClient implements Client {
     }
 
     @Override public void nextInvoke() {
-        Operation op = SequenceGenerator.generateCacheOperation();
+        Operation op = SequenceGenerator.generateKVOperation();
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, op.getInvokeOperation(), op.getValue(), System.currentTimeMillis());
         recorder.recordRequest(requestLogEntry);
         PUT_COUNT.getAndIncrement();

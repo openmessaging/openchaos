@@ -34,7 +34,7 @@ public class SequenceGenerator {
         }
     }
 
-    public static Operation generateCacheOperation() {
+    public static Operation generateKVOperation() {
         return new Operation("put", String.valueOf(stagger.getAndIncrement()));
     }
 }
