@@ -32,7 +32,7 @@
     <artifactId>chaos-common</artifactId>
 
     <properties>
-        <sshd-mina.version>2.3.0</sshd-mina.version>
+        <sshd-mina.version>2.7.0</sshd-mina.version>
     </properties>
 
     <dependencies>
