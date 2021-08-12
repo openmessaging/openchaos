@@ -42,4 +42,5 @@ public class DriverConfiguration {
     public String ossAccessKeySecret;
 
     public String bucketName;
+
 }

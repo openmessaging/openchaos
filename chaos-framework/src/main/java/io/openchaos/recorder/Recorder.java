@@ -19,7 +19,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 /**
  * Recode the request/response to history file
  */
@@ -57,21 +56,33 @@ public class Recorder {
         }
     }
 
-
+    public BufferedWriter getBufferedWriter() {
+        return bufferedWriter;
+    }
     public void recordRequest(RequestLogEntry requestLogEntry) {
         recordToHistoryFile(requestLogEntry.toString());
 
         String logLine = "client" + requestLogEntry.clientId + " request " + requestLogEntry.operation + ", data is " + requestLogEntry.value;
         log.info(logLine);
     }
+    public void recordRequestNacos(RequestLogEntry requestLogEntry) {
+        recordToHistoryFile(requestLogEntry.toStringNacos());
 
+        String logLine = "client" + requestLogEntry.clientId + " request " + requestLogEntry.operation + ", data is " + requestLogEntry.value;
+        log.info(logLine);
+    }
     public void recordResponse(ResponseLogEntry responseLogEntry) {
         recordToHistoryFile(responseLogEntry.toString());
 
         String logLine = "client" + responseLogEntry.clientId + " " + responseLogEntry.operation + " response " + responseLogEntry.result + ", data is " + responseLogEntry.value;
         log.info(logLine);
     }
+    public void recordResponseNacos(ResponseLogEntry responseLogEntry) {
+        recordToHistoryFile(responseLogEntry.NacostoString());
 
+        String logLine = "client" + responseLogEntry.clientId + " " + responseLogEntry.operation + " response " + responseLogEntry.result + ", data is " + responseLogEntry.value;
+        log.info(logLine);
+    }
     public void recordFault(FaultLogEntry faultLogEntry) {
         recordToHistoryFile(String.format("fault\t%s\t%s\t%d\n", faultLogEntry.faultName, faultLogEntry.operation, faultLogEntry.timestamp));
     }

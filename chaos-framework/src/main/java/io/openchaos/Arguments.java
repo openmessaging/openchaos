@@ -24,7 +24,7 @@ public class Arguments {
     @Parameter(names = {
         "-d",
         "--driver"}, description = "Driver. eg: driver-rocketmq/rocketmq.yaml", required = true)
-    public String driver;
+    public String driver = "driver-nacos/nacos.yaml";
 
     @Parameter(names = {
         "-t",
@@ -67,7 +67,7 @@ public class Arguments {
     @Parameter(names = {
         "-m",
         "--model"}, description = "Test model. Currently queue model and kv model are supported.")
-    public String model = "queue";
+    public String model = "Nacos";
 
     @Parameter(names = {
         "--rto"}, description = "Calculate failure recovery time in fault.")
