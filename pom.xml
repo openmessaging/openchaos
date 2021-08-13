@@ -86,7 +86,7 @@
                         <id>verify</id>
                         <phase>verify</phase>
                         <configuration>
-                            <configLocation>style/openchaos_checkstyle.xml</configLocation>
+                            <configLocation>style/checkstyle.xml</configLocation>
                             <encoding>UTF-8</encoding>
                             <consoleOutput>true</consoleOutput>
                             <failsOnError>true</failsOnError>

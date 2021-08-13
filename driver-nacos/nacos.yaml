@@ -25,9 +25,9 @@ endToEndLatencyCheck: false
 
 
 # Nacos config
-SERVER_LIST: XXXXXXXXXXXX:XXXX
+serverLIST: XXXXXXXXXXXX:XXXX
 threshold: 100
-NUM: 1
+num: 1
 group:
   - Test
 dataIds:

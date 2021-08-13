@@ -101,6 +101,6 @@ public class ResponseLogEntry {
         return String.format("%d\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%d\n", clientId, operation, type, result, value, shardingKey, timestamp, sendLatency, extraInfo, endToEndLatency);
     }
     public String NacostoString() {
-        return String.format("%d\t%s\t%s\t%s\t%s\t%d\t%d\t%d\n", clientId, operation, type,	result, value, timestamp,sendtimestamp,endToEndLatency);
+        return String.format("%d\t%s\t%s\t%s\t%s\t%d\t%d\t%d\n", clientId, operation, type, result, value, timestamp,sendtimestamp,endToEndLatency);
     }
 }

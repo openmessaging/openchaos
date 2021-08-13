@@ -1,3 +1,15 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package io.openchaos.client;
 
 import io.openchaos.common.InvokeResult;
@@ -6,7 +18,6 @@ import io.openchaos.driver.nacos.NacosCallback;
 import io.openchaos.driver.nacos.NacosDriver;
 import io.openchaos.generator.MD5;
 import io.openchaos.generator.NacosOperation;
-import io.openchaos.generator.Operation;
 import io.openchaos.generator.SequenceGenerator;
 import io.openchaos.recorder.Recorder;
 import io.openchaos.recorder.RequestLogEntry;
@@ -31,7 +42,7 @@ public class NacosClient implements Client, NacosCallback {
     private final Optional<String> key;
     private String dataId;
     private String group;
-    private int NUM;
+    private int num;
     private int threshold ;
     public NacosClient(NacosDriver driver, Recorder recorder, Optional<String> key) {
         this.driver = driver;
@@ -48,7 +59,7 @@ public class NacosClient implements Client, NacosCallback {
         client.start();
         dataId = driver.getdataIds().get(clientId); //String
         group = driver.getgroup().get(0);//String
-        NUM = driver.getNUM();
+        num = driver.getNUM();
     }
 
     public void teardown() {
@@ -60,9 +71,9 @@ public class NacosClient implements Client, NacosCallback {
         List<String> list = new ArrayList<String>();
         list.add(dataId);
         list.add(group);
-        list.add(Integer.toString(NUM));
+        list.add(Integer.toString(num));
 
-        System.out.println("Config canshu:"+list.get(0)+list.get(1)+list.get(2));
+        log.info("Config canshu:" + list.get(0) + list.get(1) + list.get(2));
         NacosOperation op = SequenceGenerator.generateNacosOperation(list);
         InvokeResult result = client.put(key, op.getDataID(),op.getGroup(),op.getPubConfig());
         RequestLogEntry requestLogEntry = new RequestLogEntry(clientId, result,op.getInvokeOperation(), op.getValue(),client.getSendtimestamp());
@@ -84,9 +95,9 @@ public class NacosClient implements Client, NacosCallback {
 
     @Override
     public void messageReceived(NacosMessage message) {
-        String value = "dataID\t"+message.dataId + "\tgroup\t" + message.group + "\tpubConfig\t" + MD5.MD5_16(message.config);
+        String value = "dataID\t" + message.dataId + "\tgroup\t" + message.group + "\tpubConfig\t" + MD5.MD5_16(message.config);
 
         recorder.recordResponseNacos(new ResponseLogEntry(clientId, "receive", message.result, value, System.currentTimeMillis(),
-                message.subTimestamp-message.pubTimestamp,message.pubTimestamp));
+                message.subTimestamp - message.pubTimestamp,message.pubTimestamp));
     }
 }

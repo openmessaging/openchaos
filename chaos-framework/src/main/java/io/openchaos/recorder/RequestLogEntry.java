@@ -44,7 +44,7 @@ public class RequestLogEntry {
         this.extraInfo = extraInfo;
     }
     //for nacos
-    public RequestLogEntry(int clientId, InvokeResult result,String operation, String value, long timestamp){
+    public RequestLogEntry(int clientId, InvokeResult result,String operation, String value, long timestamp) {
         this.clientId = clientId;
         this.operation = operation;
         this.value = value;
@@ -74,7 +74,7 @@ public class RequestLogEntry {
     public String toString() {
         return String.format("%d\t%s\t%s\t%s\t%s\t%d\t%s\n", clientId, operation, type, value, shardingKey, timestamp, extraInfo);
     }
-    public String toStringNacos(){
+    public String toStringNacos() {
         return String.format("%d\t%s\t%s\t%s\t%s\t%d\n", clientId, operation, type, result, value,timestamp);
 
     }

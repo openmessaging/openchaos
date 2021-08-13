@@ -1,3 +1,15 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package io.openchaos.driver.nacos;
 
 import com.alibaba.nacos.api.NacosFactory;
@@ -10,12 +22,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.openchaos.common.InvokeResult;
 import io.openchaos.common.NacosMessage;
-import io.openchaos.driver.nacos.NacosClient;
 import io.openchaos.driver.nacos.config.NacosConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Properties;
 import java.util.concurrent.Executor;
 
 public class NacosChaosClient implements NacosClient {
@@ -23,17 +37,17 @@ public class NacosChaosClient implements NacosClient {
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private static final Logger LOG = LoggerFactory.getLogger(NacosClient.class);
 
-    public ConfigService NacosConfigPub;
-    public ConfigService NacosConfigListener;
+    public ConfigService nacosConfigPub;
+    public ConfigService nacosConfigListener;
     public NacosConfig nacosConfig;
     public NacosCallback nacosCallback;
     public long sendtimestamp;
     private int id;
-    private int NUM;
+    private int num;
     private int threshold;
     private String dataId;
     private String group;
-    private Map<String, Long> ConfigMap = new HashMap<>();
+    private Map<String, Long> configMap = new HashMap<>();
 
 
     public NacosChaosClient(NacosConfig nacosConfig ,int id) {
@@ -57,38 +71,38 @@ public class NacosChaosClient implements NacosClient {
     }
     public void prepare() {
         Properties properties = new Properties();
-        properties.put(PropertyKeyConst.SERVER_ADDR, nacosConfig.SERVER_LIST);
+        properties.put(PropertyKeyConst.SERVER_ADDR, nacosConfig.serverLIST);
 
         properties.put("keyId", "alias/acs/mse");
         properties.put("regionId", "cn-hangzhou");
         try {
-            NacosConfigPub = NacosFactory.createConfigService(properties);
-            NacosConfigListener = NacosFactory.createConfigService(properties);
+            nacosConfigPub = NacosFactory.createConfigService(properties);
+            nacosConfigListener = NacosFactory.createConfigService(properties);
             String name;
-            for (int i = 0; i < nacosConfig.NUM; i++) {
+            for (int i = 0; i < nacosConfig.num; i++) {
                 name = "client: " + id + "dataId: " + nacosConfig.dataIds.get(id) + i + "group: " + nacosConfig.group.get(0);
-//                boolean isSuccess = NacosConfigPub.removeConfig(nacosConfig.dataIds.get(id) + i, nacosConfig.group.get(0));
-                NacosConfigListener.addListener(nacosConfig.dataIds.get(id) + i, nacosConfig.group.get(0), new DefaultConfigListener(name));
+//                boolean isSuccess = nacosConfigPub.removeConfig(nacosConfig.dataIds.get(id) + i, nacosConfig.group.get(0));
+                nacosConfigListener.addListener(nacosConfig.dataIds.get(id) + i, nacosConfig.group.get(0), new DefaultConfigListener(name));
             }
-        }catch (NacosException e){
-            System.out.println("Nacos configservice create or listen error");
+        } catch (NacosException e) {
+            LOG.info("Nacos configservice create or listen error");
         }
     }
-    public void Nacosprepare(){
+    public void Nacosprepare() {
         //add record listener
         Properties properties = new Properties();
-        properties.put(PropertyKeyConst.SERVER_ADDR, nacosConfig.SERVER_LIST);
+        properties.put(PropertyKeyConst.SERVER_ADDR, nacosConfig.serverLIST);
         properties.put("keyId", "alias/acs/mse");
         properties.put("regionId", "cn-hangzhou");
         try {
-            NacosConfigPub = NacosFactory.createConfigService(properties);
-            NacosConfigListener = NacosFactory.createConfigService(properties);
-            for (int i = 0; i < nacosConfig.NUM; i++) {
+            nacosConfigPub = NacosFactory.createConfigService(properties);
+            nacosConfigListener = NacosFactory.createConfigService(properties);
+            for (int i = 0; i < nacosConfig.num; i++) {
                 String tempdataId = nacosConfig.dataIds.get(id) + i;
                 String tempgroup = nacosConfig.group.get(0);
 
 
-                NacosConfigListener.addListener(tempdataId, tempgroup, new Listener() {
+                nacosConfigListener.addListener(tempdataId, tempgroup, new Listener() {
                     @Override
                     public Executor getExecutor() {
                         return null;
@@ -97,23 +111,23 @@ public class NacosChaosClient implements NacosClient {
                     @Override
                     public void receiveConfigInfo(String s) {
                         NacosMessage message = new NacosMessage(id,tempdataId,tempgroup,s,System.currentTimeMillis());
-                        if(ConfigMap.containsKey(s)){
-                            message.setPubTimestamp(ConfigMap.get(s),InvokeResult.SUCCESS);
-                            if(message.subTimestamp-message.pubTimestamp>threshold){
+                        if (configMap.containsKey(s)) {
+                            message.setPubTimestamp(configMap.get(s),InvokeResult.SUCCESS);
+                            if (message.subTimestamp - message.pubTimestamp > threshold) {
                                 message.setResult(InvokeResult.TimeOut);
                             }
-                            ConfigMap.remove(s);
-                        }else{
+                            configMap.remove(s);
+                        } else {
                             message.setPubTimestamp(-1,InvokeResult.FAILURE);
                         }
                         nacosCallback.messageReceived(message);
-                        LOG.info(id +" receive content: " + s);
-                        System.out.println(id +" receive content: " + s);
+                        LOG.info(id + " receive content: " + s);
+
                     }
                 });
             }
-        }catch (NacosException e){
-            System.out.println("Nacos configservice create or listen error");
+        } catch (NacosException e) {
+            LOG.info("Nacos configservice create or listen error");
         }
     }
 
@@ -127,17 +141,17 @@ public class NacosChaosClient implements NacosClient {
         boolean result = false;
 
         try {
-            result = NacosConfigPub.publishConfig(dataId, group, config);
+            result = nacosConfigPub.publishConfig(dataId, group, config);
             sendtimestamp = System.currentTimeMillis();
-            if(result){
-                ConfigMap.put(config,sendtimestamp);
+            if (result) {
+                configMap.put(config,sendtimestamp);
                 LOG.info("nacos config publish SUCCESS");
                 return InvokeResult.SUCCESS;
-            }else{
+            } else {
                 LOG.warn("nacos config publish error");
                 return InvokeResult.FAILURE;
             }
-        }catch (NacosException e){
+        } catch (NacosException e) {
             LOG.info("CONFIG PUBLISH ERROR");
         }
         return InvokeResult.SUCCESS;

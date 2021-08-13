@@ -19,8 +19,19 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
-import io.openchaos.checker.*;
+import io.openchaos.checker.Checker;
+import io.openchaos.checker.PerfChecker;
+import io.openchaos.checker.QueueChecker;
+import io.openchaos.checker.RTOChecker;
+import io.openchaos.checker.GraphChecker;
+import io.openchaos.checker.OrderChecker;
+import io.openchaos.checker.RecoveryChecker;
+import io.openchaos.checker.EndToEndLatencyChecker;
 import io.openchaos.checker.result.TestResult;
+import io.openchaos.checker.KVChecker;
+import io.openchaos.checker.NacosChecker;
+
+
 import io.openchaos.http.Agent;
 import io.openchaos.common.utils.SshUtil;
 import io.openchaos.driver.ChaosNode;
@@ -269,7 +280,7 @@ public class ChaosControl {
             }
 
             //Currently only queue model is supported
-            System.out.println(arguments.model);
+            log.info(arguments.model);
             switch (arguments.model) {
                 case QueueModel.MODEL_NAME:
                     model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile, isOrderTest, pull, shardingKeys);
