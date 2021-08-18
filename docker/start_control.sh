@@ -1,1 +1,0 @@
-docker exec -it chaos-control bash

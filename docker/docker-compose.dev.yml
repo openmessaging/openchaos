@@ -1,5 +1,0 @@
-version: '3.7'
-services:
-  control:
-    volumes:
-    - ${CHAOS_ROOT}:/openchaos
