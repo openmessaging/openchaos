@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  */
 package io.openchaos.recorder;
-
 import io.openchaos.common.InvokeResult;
-
 public class ResponseLogEntry {
     public int clientId;
     public String operation;
