@@ -24,7 +24,7 @@ public class Arguments {
     @Parameter(names = {
         "-d",
         "--driver"}, description = "Driver. eg: driver-rocketmq/rocketmq.yaml", required = true)
-    public String driver = "driver-nacos/nacos.yaml";
+    public String driver ;
 
     @Parameter(names = {
         "-t",
