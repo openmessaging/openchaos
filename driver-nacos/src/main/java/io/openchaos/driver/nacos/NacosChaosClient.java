@@ -114,7 +114,7 @@ public class NacosChaosClient implements NacosClient {
                         if (configMap.containsKey(s)) {
                             message.setPubTimestamp(configMap.get(s),InvokeResult.SUCCESS);
                             if (message.subTimestamp - message.pubTimestamp > threshold) {
-                                message.setResult(InvokeResult.TimeOut);
+                                message.setResult(InvokeResult.UNKNOWN);
                             }
                             configMap.remove(s);
                         } else {

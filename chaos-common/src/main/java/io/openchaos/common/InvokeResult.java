@@ -16,7 +16,6 @@ package io.openchaos.common;
 public enum InvokeResult {
     SUCCESS,
     FAILURE,
-    TimeOut,
     UNKNOWN;
 
     private String extraInfo;

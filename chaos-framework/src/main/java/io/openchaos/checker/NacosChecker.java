@@ -114,7 +114,7 @@ public class NacosChecker implements Checker {
         Set<String> getSuccessSet = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
                 filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && x[3].equals("SUCCESS")).map(x ->x[5] + " " + x[7] + " " + x[9] + " " + x[11]).collect(Collectors.toSet());
         Set<String> subTimeOutSet = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
-                filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && x[3].equals("TimeOut")).map(x ->x[5] + " " + x[7] + " " + x[9] + " " + x[11]).collect(Collectors.toSet());
+                filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && x[3].equals("UNKNOWN")).map(x ->x[5] + " " + x[7] + " " + x[9] + " " + x[11]).collect(Collectors.toSet());
 
         result.pubSuccessCount = putSuccessSet.size();
         result.subSuccessCount = getSuccessSet.size();
@@ -130,7 +130,7 @@ public class NacosChecker implements Checker {
     private NacosEndToEndLatencyResult latencyCheckInner(NacosTestResult resultTest) throws IOException {
         NacosEndToEndLatencyResult result = new NacosEndToEndLatencyResult();
         List<Integer> latency = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
-                filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && (x[3].equals("SUCCESS") || x[3].equals("TimeOut"))).map(x -> Integer.parseInt(x[12])).collect(Collectors.toList());
+                filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && (x[3].equals("SUCCESS") || x[3].equals("UNKNOWN"))).map(x -> Integer.parseInt(x[12])).collect(Collectors.toList());
         Collections.sort(latency);
         int e2eTotalLatency = latency.stream().reduce(0,Integer::sum);
         result.e2eTotalLatency = String.valueOf(e2eTotalLatency);
@@ -169,7 +169,7 @@ public class NacosChecker implements Checker {
             Set<String> putSuccessSet = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
                     filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("pub") && x[3].equals("SUCCESS") && x[5].equals(dataId) && x[7].equals(group)).map(x -> x[9]).collect(Collectors.toSet());
             Set<String> getSuccessSet = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
-                    filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && (x[3].equals("SUCCESS") || x[3].equals("TimeOut")) && x[5].equals(dataId) && x[7].equals(group)).map(x -> x[9]).collect(Collectors.toSet());
+                    filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && (x[3].equals("SUCCESS") || x[3].equals("UNKNOWN")) && x[5].equals(dataId) && x[7].equals(group)).map(x -> x[9]).collect(Collectors.toSet());
             putSuccessSet.removeAll(getSuccessSet);
             List<Long> subConfigTime = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
                     filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && x[5].equals(dataId) && x[7].equals(group)).map(x ->Long.parseLong(x[10])).collect(Collectors.toList());

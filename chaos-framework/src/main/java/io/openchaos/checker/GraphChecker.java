@@ -133,7 +133,6 @@ public class GraphChecker implements Checker {
         List<Point> invokeSuccessList = new ArrayList<>();
         List<Point> invokeFailureList = new ArrayList<>();
         List<Point> invokeUnknownList = new ArrayList<>();
-        List<Point> invokeTimeOutList = new ArrayList<>();
 
         //Fault interval
         List<String[]> faultLines = Files.lines(Paths.get(originFilePath)).
@@ -184,13 +183,10 @@ public class GraphChecker implements Checker {
 
                             break;
                         case "UNKNOWN":
-                            invokeUnknownList.add(new Point((Long.parseLong(line[10]) - testStartTimestamp) / 100, 0));
+                            invokeUnknownList.add(new Point((Long.parseLong(line[10]) - testStartTimestamp) / 100, Long.parseLong(line[12])));
 
                             break;
-                        case "TimeOut":
-                            invokeTimeOutList.add(new Point((Long.parseLong(line[11]) - testStartTimestamp) / 100, Long.parseLong(line[12])));
 
-                            break;
                         default:
                             log.error("Error data in invoke");
                     }
@@ -208,9 +204,7 @@ public class GraphChecker implements Checker {
             if (invokeUnknownList.size() != 0) {
                 renderPoint(p, invokeUnknownList, point + " unknown", 4, NamedPlotColor.BLUE);
             }
-            if (invokeTimeOutList.size() != 0) {
-                renderPoint(p, invokeTimeOutList, point + " timeout", 4, NamedPlotColor.RED);
-            }
+
             invokeSuccessList.clear();
             invokeFailureList.clear();
             invokeUnknownList.clear();
