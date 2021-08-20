@@ -25,14 +25,13 @@ public class ResponseLogEntry {
     public String extraInfo;
     public long sendtimestamp;
 
-    public ResponseLogEntry(int clientId, String operation, InvokeResult result, String value, long timestamp,
-                            long endToEndLatency) {
+    public ResponseLogEntry(int clientId, String operation, InvokeResult result, String value, long timestamp, long sendLatency) {
         this.clientId = clientId;
         this.operation = operation;
         this.result = result;
         this.value = value;
         this.timestamp = timestamp;
-        this.endToEndLatency = endToEndLatency;
+        this.sendLatency = sendLatency;
     }
     //for nacos
     public ResponseLogEntry(int clientId, String operation, InvokeResult result, String value, long timestamp,
