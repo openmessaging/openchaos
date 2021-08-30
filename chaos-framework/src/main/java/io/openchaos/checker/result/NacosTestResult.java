@@ -25,10 +25,12 @@ public class NacosTestResult extends TestResult {
     public Set<String> subTimeOutValues;
     public long lostValueCount = 0;
     public Set<String> lostValues;
+    public boolean lineConsistent = false;
     public long unOrderCount;
     public Map<String,Long> unOrderValues;
     public long missValueCount;
     public Set<String> missValues;
+    public boolean finalConsistent = false;
 
     public NacosTestResult() {
         super("NacosTestResult");

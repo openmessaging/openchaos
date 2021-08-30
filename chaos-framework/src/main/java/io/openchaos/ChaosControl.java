@@ -202,7 +202,6 @@ public class ChaosControl {
             clearAfterException();
         } finally {
             clear();
-            System.exit(0);
         }
     }
 

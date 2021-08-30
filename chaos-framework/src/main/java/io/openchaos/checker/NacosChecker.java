@@ -26,11 +26,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Set;
-import java.util.Map;
+
+
 import java.util.List;
-import java.util.HashMap;
+import java.util.Set;
 import java.util.Collections;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class NacosChecker implements Checker {
@@ -124,6 +128,7 @@ public class NacosChecker implements Checker {
         result.lostValueCount = putSuccessSet.size();
         result.subTimeOutCount = subTimeOutSet.size();
         result.subTimeOutValues = subTimeOutSet;
+        result.lineConsistent = result.lostValueCount + result.subTimeOutCount <= 0;
         result.isValid = true;
         return result;
     }
@@ -158,43 +163,46 @@ public class NacosChecker implements Checker {
             return (1 - g) * data.get(i) + g * data.get(i + 1);
         }
     }
+
     private NacosTestResult missCheckInner(NacosTestResult result) throws IOException {
 
         dataIds = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
                 filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive")).map(x ->x[5]).collect(Collectors.toSet());
         group = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
                 filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive")).map(x ->x[7]).collect(Collectors.toList()).get(0);
-
+        result.missValues = new HashSet<>();
+        result.missValueCount = 0;
+        List<String[]> allPubRecords = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
+                filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("pub") && (x[3].equals("SUCCESS"))).collect(Collectors.toList());
         for (String dataId:dataIds) {
-            Set<String> putSuccessSet = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
-                    filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("pub") && x[3].equals("SUCCESS") && x[5].equals(dataId) && x[7].equals(group)).map(x -> x[9]).collect(Collectors.toSet());
+            Set<String> putSuccessSet = allPubRecords.stream().filter(x -> x[5].equals(dataId) && x[7].equals(group)).map(x -> x[9]).collect(Collectors.toSet());
             Set<String> getSuccessSet = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
-                    filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && (x[3].equals("SUCCESS") || x[3].equals("UNKNOWN")) && x[5].equals(dataId) && x[7].equals(group)).map(x -> x[9]).collect(Collectors.toSet());
+                    filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && (x[3].equals("SUCCESS")) && x[5].equals(dataId) && x[7].equals(group)).map(x -> x[9]).collect(Collectors.toSet());
             putSuccessSet.removeAll(getSuccessSet);
             List<Long> subConfigTime = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
                     filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && x[5].equals(dataId) && x[7].equals(group)).map(x ->Long.parseLong(x[10])).collect(Collectors.toList());
-            int subIndex = 0;
-            Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).filter(x -> !x[0].equals("fault")).
-                    filter(x -> putSuccessSet.contains(x[9])).forEach(x -> {
-                        long time = Long.parseLong(x[10]);
-                        while (time < subConfigTime.get(subIndex) && subConfigTime.size() > 0) {
-                            subConfigTime.remove(subIndex);
-                        }
-                        if (subConfigTime.isEmpty() || time - subConfigTime.get(subIndex) > threshold) {
-                            result.missValueCount++;
-                            result.missValues.add(x[5] + " " + x[7] + " " + x[9] + " " + x[10]);
-                        }
-                    });
+            AtomicInteger subIndex = new AtomicInteger(0);
+            allPubRecords.stream().filter(x -> x[5].equals(dataId) && x[7].equals(group)).forEach(x -> {
+                long time = Long.parseLong(x[10]);
+                while (subConfigTime.size() > 0 && time > subConfigTime.get(subIndex.get())) {
+                    subIndex.incrementAndGet();
+                }
+                if (subIndex.get() >= subConfigTime.size() || subConfigTime.get(subIndex.get()) - time > threshold) {
+                    long value = subConfigTime.get(subIndex.get()) - time;
+                    result.missValues.add(x[5] + " " + x[7] + " " + x[9] + " " + x[10] + " " + subConfigTime.get(subIndex.get()) + " " + value);
+                }
+            });
         }
+        result.missValueCount = result.missValues.size();
         return result;
     }
 
     private   NacosTestResult orderCheckInner(NacosTestResult result) throws Exception {
         result.unOrderValues = new HashMap<>();
         List<String[]> allPubRecords = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
-                filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("pub") && x[3].equals("SUCCESS")).collect(Collectors.toList());
+                filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("pub") && (x[3].equals("SUCCESS"))).collect(Collectors.toList());
         List<String[]> allSubRecords = Files.lines(Paths.get(originFilePath)).map(x -> x.split("\t")).
-                filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && (x[3].equals("SUCCESS"))).collect(Collectors.toList());
+                filter(x -> !x[0].equals("fault")).filter(x -> x[1].equals("receive") && (x[3].equals("SUCCESS") || x[3].equals("UNKNOWN"))).collect(Collectors.toList());
         for (String dataId:dataIds) {
             List<String> subList = allSubRecords.stream().filter(x->x[5].equals(dataId) && x[7].equals(group)).map(x->x[9]).collect(Collectors.toList());
             Map<String,Long> subMap = new HashMap<>();
@@ -213,6 +221,7 @@ public class NacosChecker implements Checker {
 
         }
         result.unOrderCount = result.unOrderValues.size();
+        result.finalConsistent = result.unOrderCount + result.missValueCount <= 0;
         return  result;
     }
 
