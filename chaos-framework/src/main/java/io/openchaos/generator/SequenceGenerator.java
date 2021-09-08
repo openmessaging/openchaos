@@ -12,7 +12,7 @@
  */
 
 package io.openchaos.generator;
-
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -37,4 +37,24 @@ public class SequenceGenerator {
     public static Operation generateKVOperation() {
         return new Operation("put", String.valueOf(stagger.getAndIncrement()));
     }
+    public static NacosOperation generateNacosOperation(List<String> config) {
+       // Collections.shuffle(config);
+        String configContent = getRandomString();
+        int  num = random.nextInt(Integer.parseInt(config.get(2)));
+        return new NacosOperation("pub", config.get(0), config.get(1), num ,configContent);
+    }
+
+    public static String getRandomString() {
+        String str = "zxcvbnmlkjhgfdsaqwertyuiopQWERTYUIOPASDFGHJKLZXCVBNM1234567890";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < str.length(); ++i) {
+            int number = random.nextInt(str.length());
+            sb.append(str.charAt(number));
+        }
+        stagger.incrementAndGet();
+        return sb.toString().substring(0, 4) + stagger.get();
+    }
+
+
 }

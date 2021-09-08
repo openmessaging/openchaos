@@ -19,16 +19,20 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
-import io.openchaos.checker.KVChecker;
-import io.openchaos.checker.QueueChecker;
-import io.openchaos.checker.PerfChecker;
-import io.openchaos.checker.result.TestResult;
-import io.openchaos.http.Agent;
 import io.openchaos.checker.Checker;
-import io.openchaos.checker.EndToEndLatencyChecker;
-import io.openchaos.checker.OrderChecker;
+import io.openchaos.checker.PerfChecker;
+import io.openchaos.checker.QueueChecker;
 import io.openchaos.checker.RTOChecker;
+import io.openchaos.checker.GraphChecker;
+import io.openchaos.checker.OrderChecker;
 import io.openchaos.checker.RecoveryChecker;
+import io.openchaos.checker.EndToEndLatencyChecker;
+import io.openchaos.checker.result.TestResult;
+import io.openchaos.checker.KVChecker;
+import io.openchaos.checker.NacosChecker;
+
+
+import io.openchaos.http.Agent;
 import io.openchaos.common.utils.SshUtil;
 import io.openchaos.driver.ChaosNode;
 import io.openchaos.fault.Fault;
@@ -37,6 +41,7 @@ import io.openchaos.fault.NetFault;
 import io.openchaos.fault.NoopFault;
 import io.openchaos.fault.PauseFault;
 import io.openchaos.model.KVModel;
+import io.openchaos.model.NacosModel;
 import io.openchaos.model.Model;
 import io.openchaos.model.QueueModel;
 import io.openchaos.recorder.Recorder;
@@ -233,7 +238,7 @@ public class ChaosControl {
                         String[] faultNodeArray = arguments.faultNodes.split(";");
                         for (String faultNode : faultNodeArray) {
                             if (!driverConfiguration.nodes.contains(faultNode)) {
-                                throw new IllegalArgumentException(String.format("fault-node %s is not in current config file.", faultNode));
+                                throw new IllegalArgumentException(String.format("fault-node %s is not in current io.openchaos.driver.nacos.io.openchaos.driver.nacos.config file.", faultNode));
                             }
                         }
                         faultNodeList.addAll(Arrays.asList(faultNodeArray));
@@ -268,19 +273,23 @@ public class ChaosControl {
                 System.err.printf("Create %s failed", historyFile);
                 System.exit(-1);
             }
-
             shardingKeys = new ArrayList<>();
             for (int i = 0; i < 2 * arguments.concurrency; i++) {
                 shardingKeys.add("shardingKey" + i);
             }
 
             //Currently only queue model is supported
+            log.info(arguments.model);
             switch (arguments.model) {
                 case QueueModel.MODEL_NAME:
                     model = new QueueModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile, isOrderTest, pull, shardingKeys);
                     break;
                 case KVModel.MODEL_NAME:
                     model = new KVModel(arguments.concurrency, rateLimiter, recorder, driverConfigFile);
+                    break;
+                case NacosModel.MODEL_NAME:
+                    model = new NacosModel(arguments.concurrency,rateLimiter,recorder,driverConfigFile);
+                    log.info("nacos model start");
                     break;
                 default:
                     throw new RuntimeException("model not recognized.");
@@ -296,7 +305,7 @@ public class ChaosControl {
             String metaNode = model.getMetaNode();
             String stateClass = model.getStateName();
             model.setupClient();
-
+            log.info("model setupclient");
             //Initial fault
             if (map == null || map.isEmpty()) {
                 log.warn("Configure file does not contain nodes, use noop fault");
@@ -373,7 +382,7 @@ public class ChaosControl {
     }
 
     public static void run(Arguments arguments) {
-
+        log.info("run");
         ChaosControl.status = Status.RUN_ING;
         //Start fault worker
         faultWorker = new FaultWorker(log, fault, arguments.interval);
@@ -435,6 +444,11 @@ public class ChaosControl {
                 checkerList.add(new KVChecker(arguments.outputDir, historyFile));
                 points = Collections.singletonList("put");
                 checkerList.add(new PerfChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));
+                break;
+            case NacosModel.MODEL_NAME:
+                checkerList.add(new NacosChecker(arguments.outputDir, historyFile,driverConfigFile));
+                points = Collections.singletonList("receive");
+                checkerList.add(new GraphChecker(points, arguments.outputDir, historyFile, testStartTimeStamp, testEndTimestamp, isUploadImage, ossConfig));
                 break;
             default:
                 break;

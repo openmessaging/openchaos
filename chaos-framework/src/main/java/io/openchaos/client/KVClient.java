@@ -30,7 +30,7 @@ public class KVClient implements Client {
 
     private static final AtomicInteger CLIENT_ID_GENERATOR = new AtomicInteger(0);
     private static final AtomicInteger PUT_COUNT = new AtomicInteger(0);
-    private static final Logger log = LoggerFactory.getLogger(io.openchaos.client.KVClient.class);
+    private static final Logger log = LoggerFactory.getLogger(KVClient.class);
 
     private io.openchaos.driver.kv.KVClient client;
     private final KVDriver driver;

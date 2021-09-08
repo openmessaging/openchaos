@@ -13,12 +13,13 @@
 
 package io.openchaos.client;
 
+
 public interface Client {
 
     /**
      * Set up the client
      */
-    void setup();
+    void setup() ;
 
     /**
      * Teardown the client

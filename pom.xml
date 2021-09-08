@@ -32,6 +32,7 @@
         <module>driver-kafka</module>
         <module>driver-dledger</module>
         <module>driver-redis</module>
+        <module>driver-nacos</module>
     </modules>
 
     <parent>
@@ -85,7 +86,7 @@
                         <id>verify</id>
                         <phase>verify</phase>
                         <configuration>
-                            <configLocation>style/openchaos_checkstyle.xml</configLocation>
+                            <configLocation>style/checkstyle.xml</configLocation>
                             <encoding>UTF-8</encoding>
                             <consoleOutput>true</consoleOutput>
                             <failsOnError>true</failsOnError>
@@ -197,6 +198,7 @@
                 <artifactId>aliyun-sdk-oss</artifactId>
                 <version>3.13.0</version>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 

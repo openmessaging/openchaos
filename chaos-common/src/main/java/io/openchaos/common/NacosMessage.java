@@ -10,37 +10,30 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package io.openchaos.common;
 
-package io.openchaos;
+public class NacosMessage {
+    public int clientid;
+    public String dataId;
+    public String group;
+    public String config;
+    public long pubTimestamp;
+    public long subTimestamp;
+    public InvokeResult result;
+    public NacosMessage(int clientid, String dataId, String group, String config, long subTimestamp) {
+        this.clientid = clientid;
+        this.dataId = dataId;
+        this.group = group;
+        this.config = config;
+        this.subTimestamp = subTimestamp;
+    }
 
-import java.util.List;
+    public void setPubTimestamp(long pubTimestamp, InvokeResult result) {
+        this.pubTimestamp = pubTimestamp;
+        this.result = result;
+    }
 
-public class DriverConfiguration {
-
-    public String name;
-
-    public String driverClass;
-
-    public List<String> nodes;
-    
-    public List<String> metaNodes;
-
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean metaNodesParticipateInFault;
-
-    public boolean isUploadImage;
-
-    public String ossEndPoint;
-
-    public String ossAccessKeyId;
-
-    public String ossAccessKeySecret;
-
-    public String bucketName;
-
+    public void setResult(InvokeResult result) {
+        this.result = result;
+    }
 }

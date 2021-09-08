@@ -13,6 +13,8 @@
 
 package io.openchaos.recorder;
 
+import io.openchaos.common.InvokeResult;
+
 public class RequestLogEntry {
     public int clientId;
     public String operation;
@@ -23,6 +25,7 @@ public class RequestLogEntry {
     public String shardingKey;
     public long timestamp;
     public String extraInfo;
+    public InvokeResult result;
 
     //for enqueue
     public RequestLogEntry(int clientId, String operation, String value, long timestamp) {
@@ -40,7 +43,14 @@ public class RequestLogEntry {
         this.timestamp = timestamp;
         this.extraInfo = extraInfo;
     }
-
+    //for nacos
+    public RequestLogEntry(int clientId, InvokeResult result,String operation, String value, long timestamp) {
+        this.clientId = clientId;
+        this.operation = operation;
+        this.value = value;
+        this.timestamp = timestamp;
+        this.result = result;
+    }
     public RequestLogEntry(int clientId, String operation, String shardingKey, String value,
         long timestamp) {
         this.clientId = clientId;
@@ -64,4 +74,9 @@ public class RequestLogEntry {
     public String toString() {
         return String.format("%d\t%s\t%s\t%s\t%s\t%d\t%s\n", clientId, operation, type, value, shardingKey, timestamp, extraInfo);
     }
+    public String toStringNacos() {
+        return String.format("%d\t%s\t%s\t%s\t%s\t%d\n", clientId, operation, type, result, value,timestamp);
+
+    }
+
 }

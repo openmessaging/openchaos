@@ -11,36 +11,28 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.openchaos;
+package io.openchaos.checker.result;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class DriverConfiguration {
 
-    public String name;
+public class NacosTestResult extends TestResult {
+    public long putInvokeCount;
+    public long pubSuccessCount;
+    public long subSuccessCount;
+    public long subTimeOutCount;
+    public Set<String> subTimeOutValues;
+    public long lostValueCount = 0;
+    public Set<String> lostValues;
+    public boolean lineConsistent = false;
+    public long unOrderCount;
+    public Map<String,Long> unOrderValues;
+    public long missValueCount;
+    public Set<String> missValues;
+    public boolean finalConsistent = false;
 
-    public String driverClass;
-
-    public List<String> nodes;
-    
-    public List<String> metaNodes;
-
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean metaNodesParticipateInFault;
-
-    public boolean isUploadImage;
-
-    public String ossEndPoint;
-
-    public String ossAccessKeyId;
-
-    public String ossAccessKeySecret;
-
-    public String bucketName;
-
+    public NacosTestResult() {
+        super("NacosTestResult");
+    }
 }

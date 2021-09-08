@@ -10,37 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-
-package io.openchaos;
+package io.openchaos.driver.nacos.config;
 
 import java.util.List;
 
-public class DriverConfiguration {
-
-    public String name;
-
-    public String driverClass;
-
-    public List<String> nodes;
-    
-    public List<String> metaNodes;
-
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean metaNodesParticipateInFault;
-
-    public boolean isUploadImage;
-
-    public String ossEndPoint;
-
-    public String ossAccessKeyId;
-
-    public String ossAccessKeySecret;
-
-    public String bucketName;
-
+public class NacosConfig {
+    public  String serverLIST;
+    public int num = 1;
+    public List<String> group;
+    public List<String> dataIds;
+    public int threshold;
 }

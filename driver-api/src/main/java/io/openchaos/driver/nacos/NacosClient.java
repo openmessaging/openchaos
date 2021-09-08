@@ -10,37 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package io.openchaos.driver.nacos;
 
-package io.openchaos;
+import io.openchaos.common.InvokeResult;
+import io.openchaos.driver.ChaosClient;
 
 import java.util.List;
+import java.util.Optional;
 
-public class DriverConfiguration {
+public interface NacosClient extends  ChaosClient {
 
-    public String name;
+    InvokeResult put(Optional<String> key, String dataId,String group,String config) ;
 
-    public String driverClass;
+    List<String> getAll(Optional<String> key, int putInvokeCount);
 
-    public List<String> nodes;
-    
-    public List<String> metaNodes;
+    List<String> getAll(Optional<String> key);
+    long getSendtimestamp();
+    void start();
 
-    public boolean isOrderTest;
-
-    public boolean endToEndLatencyCheck;
-
-    public boolean pull;
-
-    public boolean metaNodesParticipateInFault;
-
-    public boolean isUploadImage;
-
-    public String ossEndPoint;
-
-    public String ossAccessKeyId;
-
-    public String ossAccessKeySecret;
-
-    public String bucketName;
-
+    void close();
 }
