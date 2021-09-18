@@ -82,9 +82,8 @@ public class KafkaChaosZKNode implements MetaNode {
         try {
             //Start zookeeper
             log.info("Node {} start zookeeper...", node);
-//            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/zookeeper-server-start.sh '%s' > zookeeper.log 2>&1 &"
-//                , configureFilePath));
-            SshUtil.execCommandInDir(node, installDir, String.format("bin/zookeeper-server-start.sh -daemon config/zookeeper.properties > zookeeper.log 2>&1 &"));
+            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/zookeeper-server-start.sh '%s' > zookeeper.log 2>&1 &"
+                , configureFilePath));
         } catch (Exception e) {
             log.error("Node {} start zookeeper node failed", node, e);
             throw new RuntimeException(e);
