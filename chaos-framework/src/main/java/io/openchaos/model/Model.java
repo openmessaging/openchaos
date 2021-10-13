@@ -30,9 +30,10 @@ public interface Model extends MetaDataSupport {
      *
      * @param driverConfiguration driver configuration
      * @param isInstall whether to reinstall the program on each node
+     * @param restart whether to restart the program on each node
      * @return
      */
-    Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall);
+    Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall, boolean restart);
 
     /**
      * Ensure cluster are ready
