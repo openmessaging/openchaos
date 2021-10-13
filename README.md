@@ -36,7 +36,7 @@ In another shell, use `docker exec -it chaos-control bash` to enter the controll
 
 ```shell
 mvn clean install
-bin/chaos.sh --driver driver-rocketmq/rocketmq.yaml --install
+bin/chaos.sh --driver driver-rocketmq/rocketmq.yaml --install --restart
 ```
 
 ## Option
@@ -71,6 +71,10 @@ Usage: messaging-chaos [options]
       Whether to install program. It will download the installation package on 
       each cluster node. When you first use OpenChaos to test a 
       distributed system, it should be true.
+      Default: false
+    --restart
+      Whether to restart program. If you want the nodes to be restarted, and 
+      shut down after the experiment, it should be true.
       Default: false
     -t, --limit-time
       Chaos execution time in seconds (excluding check time and recovery 
