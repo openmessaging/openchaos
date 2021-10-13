@@ -99,6 +99,11 @@ public class Arguments {
     public boolean install = false;
 
     @Parameter(names = {
+        "--restart"}, description = "Whether to restart program. If you want the node to be restarted, and " +
+        "shut down after the experiment, it should be true. ")
+    public boolean restart = false;
+    
+    @Parameter(names = {
         "--agent"}, description = "Run program as a http agent.")
     public boolean agent = false;
 
