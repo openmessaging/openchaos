@@ -9,9 +9,9 @@ The framework proposals a unified API for vendors to provide solutions to variou
 - [Apache Kafka](https://kafka.apache.org/)
 - [DLedger](https://github.com/openmessaging/openmessaging-storage-dledger)
 - [Redis](https://redis.io/)
-- [Nacos](https://nacos.io/)
+- [Zookeeper](https://zookeeper.apache.org/)
+- [Nacos](https://nacos.io/) -- experimental
 - [Etcd](https://etcd.io/) -- ongoing
-- [Zookeeper](https://zookeeper.apache.org/) -- ongoing
 
 ## Usage
 
