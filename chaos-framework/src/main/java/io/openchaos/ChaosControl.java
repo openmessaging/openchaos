@@ -289,7 +289,7 @@ public class ChaosControl {
             Map<String, ChaosNode> map = null;
 
             if (driverConfiguration.nodes != null && !driverConfiguration.nodes.isEmpty()) {
-                map = model.setupCluster(driverConfiguration, arguments.install);
+                map = model.setupCluster(driverConfiguration, arguments.install, arguments.restart);
             }
 
             String metaName = model.getMetaName();

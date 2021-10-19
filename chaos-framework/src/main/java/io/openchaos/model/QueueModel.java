@@ -66,6 +66,7 @@ public class QueueModel implements Model {
     private final boolean isOrderTest;
     private final boolean isUsePull;
     private final List<String> shardingKeys;
+    private boolean restart;
     private final AtomicLong msgReceivedCount = new AtomicLong(0);
 
     public QueueModel(int concurrency, RateLimiter rateLimiter, Recorder recorder, File driverConfigFile,
@@ -102,7 +103,7 @@ public class QueueModel implements Model {
     }
 
     @Override
-    public Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall) {
+    public Map<String, ChaosNode> setupCluster(DriverConfiguration driverConfiguration, boolean isInstall, boolean restart) {
         try {
             if (pubSubDriver == null) {
                 pubSubDriver = createChaosDriver(driverConfigFile);
@@ -121,31 +122,35 @@ public class QueueModel implements Model {
                 cluster.values().forEach(ChaosNode::setup);
             }
 
-            log.info("Cluster shutdown");
-            cluster.values().forEach(ChaosNode::stop);
-            metaNodesMap.values().forEach(ChaosNode::stop);
-            log.info("Wait for all nodes to shutdown...");
-            try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(10));
-            } catch (InterruptedException e) {
-                log.error("", e);
+            this.restart = restart;
+            if (this.restart) {
+                log.info("Cluster shutdown");
+                cluster.values().forEach(ChaosNode::stop);
+                metaNodesMap.values().forEach(ChaosNode::stop);
+                log.info("Wait for all nodes to shutdown...");
+                try {
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+                } catch (InterruptedException e) {
+                    log.error("", e);
+                }
+
+                log.info("Cluster start...");
+                log.info("Wait for all nodes to start...");
+
+                metaNodesMap.values().forEach(ChaosNode::start);
+                try {
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+                } catch (InterruptedException e) {
+                    log.error("", e);
+                }
+                cluster.values().forEach(ChaosNode::start);
+                try {
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(40));
+                } catch (InterruptedException e) {
+                    log.error("", e);
+                }
             }
 
-            log.info("Cluster start...");
-            log.info("Wait for all nodes to start...");
-
-            metaNodesMap.values().forEach(ChaosNode::start);
-            try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(20));
-            } catch (InterruptedException e) {
-                log.error("", e);
-            }
-            cluster.values().forEach(ChaosNode::start);
-            try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(40));
-            } catch (InterruptedException e) {
-                log.error("", e);
-            }
 
             if (driverConfiguration.metaNodesParticipateInFault) {
                 Map<String, ChaosNode> allNodes = new HashMap<>(metaNodesMap);
@@ -209,9 +214,11 @@ public class QueueModel implements Model {
     public void shutdown() {
         log.info("Teardown client");
         clients.forEach(Client::teardown);
-        log.info("Stop cluster");
-        cluster.values().forEach(ChaosNode::stop);
-        metaNodesMap.values().forEach(ChaosNode::stop);
+        if (this.restart) {
+            log.info("Stop cluster");
+            cluster.values().forEach(ChaosNode::stop);
+            metaNodesMap.values().forEach(ChaosNode::stop);
+        }
         if (pubSubDriver != null) {
             pubSubDriver.shutdown();
         }
