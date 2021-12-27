@@ -292,9 +292,9 @@ public class ChaosControl {
                 map = model.setupCluster(driverConfiguration, arguments.install, arguments.restart);
             }
 
-            String metaName = model.getMetaName();
-            String metaNode = model.getMetaNode();
-            String stateClass = model.getStateName();
+            String metaName;
+            String metaNode;
+            String stateClass;
             model.setupClient();
 
             //Initial fault
@@ -312,12 +312,18 @@ public class ChaosControl {
                         fault = new KillFault(map, arguments.fault, recorder);
                         break;
                     case "leader-kill":
+                        metaName = model.getMetaName();
+                        metaNode = model.getMetaNode();
+                        stateClass = model.getStateName();
                         fault = new KillFault(map, stateClass, metaNode, metaName, arguments.fault, recorder);
                         break;
                     case "fixed-kill":
                         fault = new KillFault(map, arguments.fault, recorder, faultNodeList);
                         break;
                     case "leader-partition":
+                        metaName = model.getMetaName();
+                        metaNode = model.getMetaNode();
+                        stateClass = model.getStateName();
                         fault = new NetFault(map.keySet(), stateClass, metaNode, metaName, arguments.fault, recorder);
                         break;
                     case "random-partition":
@@ -344,6 +350,9 @@ public class ChaosControl {
                         fault = new PauseFault(map, arguments.fault, recorder);
                         break;
                     case "leader-suspend":
+                        metaName = model.getMetaName();
+                        metaNode = model.getMetaNode();
+                        stateClass = model.getStateName();
                         fault = new PauseFault(map, stateClass, metaNode, metaName, arguments.fault, recorder);
                         break;
                     case "fixed-suspend":
