@@ -32,6 +32,7 @@
         <module>driver-kafka</module>
         <module>driver-dledger</module>
         <module>driver-redis</module>
+        <module>driver-etcd</module>
     </modules>
 
     <parent>
@@ -145,6 +146,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>driver-redis</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>driver-etcd</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

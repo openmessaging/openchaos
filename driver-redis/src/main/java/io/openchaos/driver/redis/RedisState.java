@@ -40,7 +40,12 @@ public class RedisState implements ChaosState {
     public Set<String> getLeader() {
         InetSocketAddress socketAddress = (InetSocketAddress) sentinel.getMasterAddrByName(masterId);
         Set<String> leaderAddr = new HashSet<>();
-        leaderAddr.add(socketAddress.getHostName());
+        leaderAddr.add(socketAddress.getHostName() + ":" + socketAddress.getPort());
         return leaderAddr;
+    }
+
+    @Override
+    public void close() {
+
     }
 }

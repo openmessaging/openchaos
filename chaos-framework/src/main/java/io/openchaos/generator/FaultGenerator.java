@@ -155,11 +155,14 @@ public class FaultGenerator {
         }
         chaosState.initialize(clusterName, addr);
         Set<String> leaderNode = null;
+        Set<String> leaderAddr = new HashSet<>();
         leaderNode = chaosState.getLeader();
-
+        for (String leader : leaderNode) {
+            leaderAddr.add(leader.substring(0, leader.indexOf(":")));
+        }
         List<String> shuffleNodes = new ArrayList<>(nodes);
         Collections.shuffle(shuffleNodes);
-        Set<String> partition1 = new HashSet<>(leaderNode);
+        Set<String> partition1 = new HashSet<>(leaderAddr);
         Set<String> partition2 = new HashSet<>(nodes);
         int i = 0;
         while (partition1.size() < num) {
@@ -168,7 +171,7 @@ public class FaultGenerator {
         }
         partition2.removeAll(partition1);
         partition1.forEach(node -> operations.add(getPartitionOperation(faultName, node, partition2)));
-
+        chaosState.close();
         return operations;
     }
 
@@ -267,12 +270,20 @@ public class FaultGenerator {
         chaosState.initialize(metaName, metaNode);
         Set<String> leaderNode;
         leaderNode = chaosState.getLeader();
-        List<String> shuffleNodes = new ArrayList<>(leaderNode);
+
+        Set<String> leaderAddr = new HashSet<>();
+        for (String leader : leaderNode) {
+            leaderAddr.add(leader.substring(0, leader.indexOf(":")));
+        }
+
+        List<String> shuffleNodes = new ArrayList<>(leaderAddr);
         Collections.shuffle(shuffleNodes);
+
         for (int i = 0; i < num; i++) {
             FaultOperation operation = new FaultOperation(faultName, shuffleNodes.get(i));
             operations.add(operation);
         }
+        chaosState.close();
         return operations;
     }
 

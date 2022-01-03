@@ -19,5 +19,8 @@ public interface ChaosState {
 
     void initialize(String metaName, String metaNode);
 
+    //return ip:port
     Set<String> getLeader();
+
+    void close();
 }
