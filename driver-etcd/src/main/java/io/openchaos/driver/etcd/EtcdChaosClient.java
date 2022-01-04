@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class EtcdChaosClient implements KVClient {
 
-    private Client client;
+    private final Client client;
 
     public EtcdChaosClient(Client client) {
         this.client = client;
@@ -51,7 +51,7 @@ public class EtcdChaosClient implements KVClient {
     @Override
     public void close() {
         Optional.ofNullable(client).ifPresent(c -> c.close());
-        log.info("close etcd client");
+        log.info("Close etcd client");
     }
 
     @Override
@@ -61,7 +61,7 @@ public class EtcdChaosClient implements KVClient {
                 .put(ByteSequence.from(key.get() + value, Charsets.UTF_8), ByteSequence.from(value, Charsets.UTF_8))
                 .get();
         } catch (InterruptedException | ExecutionException e) {
-            log.error("etcd put failed.", e);
+            log.error("Etcd put failed.", e);
             return InvokeResult.FAILURE;
         }
         return InvokeResult.SUCCESS;
@@ -83,23 +83,13 @@ public class EtcdChaosClient implements KVClient {
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
-            log.error("get etcd key failed.", e);
+            log.error("Get etcd key failed.", e);
         }
         return results;
     }
 
     @Override
     public List<String> getAll(Optional<String> key) {
-        List<String> results = new LinkedList<>();
-        try {
-            GetResponse response = client.getKVClient()
-                .get(ByteSequence.from(key.get(), Charsets.UTF_8)).get();
-            for (KeyValue keyValue : response.getKvs()) {
-                results.add(keyValue.getValue().toString(Charsets.UTF_8));
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("get etcd ket failed. ", e);
-        }
-        return results;
+        return getAll(key, 1);
     }
 }
