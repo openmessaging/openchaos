@@ -11,18 +11,16 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.openchaos.driver;
+package io.openchaos.driver.etcd.config;
 
-import java.util.Set;
+import lombok.Data;
 
-public interface ChaosState {
-
-    void initialize(String metaName, String metaNode);
-
-    /**
-     * Returns the leader nodes of the cluster. The format is as follows: ip:port
-     */
-    Set<String> getLeader();
-
-    void close();
+@Data
+public class EtcdClientConfig {
+    private boolean auth;
+    private String version;
+    private boolean https;
+    private String username;
+    private String password;
+    private String connectTimeout;
 }

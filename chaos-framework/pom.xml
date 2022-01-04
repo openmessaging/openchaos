@@ -85,6 +85,10 @@
             <artifactId>driver-redis</artifactId>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>driver-etcd</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.panayotis</groupId>
             <artifactId>javaplot</artifactId>
         </dependency>

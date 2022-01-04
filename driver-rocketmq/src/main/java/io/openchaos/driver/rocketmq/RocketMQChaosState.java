@@ -45,16 +45,21 @@ public class RocketMQChaosState implements QueueState {
     @Override
     public Set<String> getLeader() {
         Set<String> leaderAddrPort = new HashSet<>();
-        Set<String> leaderAddr = new HashSet<>();
+
         try {
             leaderAddrPort = CommandUtil.fetchMasterAddrByClusterName(rmqAdmin, clusterName);
         } catch (InterruptedException | RemotingTimeoutException | RemotingSendRequestException | MQBrokerException | RemotingConnectException e) {
             e.printStackTrace();
         }
-        rmqAdmin.shutdown();
-        for (String leader : leaderAddrPort) {
-            leaderAddr.add(leader.substring(0, leader.indexOf(":")));
+
+        return leaderAddrPort;
+    }
+
+    @Override
+    public void close() {
+        if (rmqAdmin != null) {
+            rmqAdmin.shutdown();
         }
-        return leaderAddr;
+
     }
 }
