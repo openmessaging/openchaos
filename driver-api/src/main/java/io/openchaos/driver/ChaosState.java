@@ -20,7 +20,7 @@ public interface ChaosState {
     void initialize(String metaName, String metaNode);
 
     /**
-     * Returns the active node of the cluster. The format is as follows: ip:port
+     * Returns the leader nodes of the cluster. The format is as follows: ip:port
      */
     Set<String> getLeader();
 
