@@ -23,8 +23,8 @@ import java.util.List;
 public class EtcdNode implements ChaosNode {
 
     private static final String ETCD_PROCESS_NAME = "etcd";
-    private String node;
-    private List<String> nodes;
+    private final String node;
+    private final List<String> nodes;
 
     public EtcdNode(String node, List<String> nodes) {
         this.node = node;
@@ -45,9 +45,9 @@ public class EtcdNode implements ChaosNode {
     public void start() {
         try {
             ServiceUtil.start(this.node, ETCD_PROCESS_NAME);
-            log.info("start etcd({}) success", this.node);
+            log.info("Start etcd({}) success", this.node);
         } catch (Exception e) {
-            log.error("start etcd({}) failed. ", this.node, e);
+            log.error("Start etcd({}) failed. ", this.node, e);
         }
     }
 
@@ -55,9 +55,9 @@ public class EtcdNode implements ChaosNode {
     public void stop() {
         try {
             ServiceUtil.stop(this.node, ETCD_PROCESS_NAME);
-            log.info("stop etcd({}) success", this.node);
+            log.info("Stop etcd({}) success", this.node);
         } catch (Exception e) {
-            log.error("stop etcd({}) failed. ", this.node, e);
+            log.error("Stop etcd({}) failed. ", this.node, e);
         }
     }
 
@@ -65,9 +65,9 @@ public class EtcdNode implements ChaosNode {
     public void kill() {
         try {
             ServiceUtil.stop(this.node, ETCD_PROCESS_NAME);
-            log.info("kill etcd({}) success", this.node);
+            log.info("Kill etcd({}) success", this.node);
         } catch (Exception e) {
-            log.error("kill etcd({}) failed. ", this.node, e);
+            log.error("Kill etcd({}) failed. ", this.node, e);
         }
     }
 
