@@ -10,9 +10,11 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 package io.openchaos.driver.etcd;
 
 import com.google.common.base.Charsets;
+
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -21,14 +23,14 @@ import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.openchaos.common.InvokeResult;
 import io.openchaos.driver.kv.KVClient;
-
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-
+@Slf4j
 public class EtcdChaosClient implements KVClient {
 
     private Client client;
@@ -56,7 +58,8 @@ public class EtcdChaosClient implements KVClient {
     public InvokeResult put(Optional<String> key, String value) {
         try {
             PutResponse response = client.getKVClient()
-                    .put(ByteSequence.from(key.get()+value, Charsets.UTF_8), ByteSequence.from(value, Charsets.UTF_8)).get();
+                .put(ByteSequence.from(key.get() + value, Charsets.UTF_8), ByteSequence.from(value, Charsets.UTF_8))
+                .get();
         } catch (InterruptedException | ExecutionException e) {
             log.error("etcd put failed.", e);
             return InvokeResult.FAILURE;
@@ -70,12 +73,12 @@ public class EtcdChaosClient implements KVClient {
         KV kv = client.getKVClient();
 
         try {
-            for(int i = 0; i < putInvokeCount; i++) {
+            for (int i = 0; i < putInvokeCount; i++) {
                 GetResponse response = kv.get(ByteSequence.from(key.get() + i, Charsets.UTF_8)).get();
                 if (response.getKvs().isEmpty()) {
                     continue;
                 }
-                for(KeyValue keyValue : response.getKvs()) {
+                for (KeyValue keyValue : response.getKvs()) {
                     results.add(keyValue.getValue().toString(Charsets.UTF_8));
                 }
             }
@@ -90,8 +93,8 @@ public class EtcdChaosClient implements KVClient {
         List<String> results = new LinkedList<>();
         try {
             GetResponse response = client.getKVClient()
-                    .get(ByteSequence.from(key.get(), Charsets.UTF_8)).get();
-            for(KeyValue keyValue : response.getKvs()) {
+                .get(ByteSequence.from(key.get(), Charsets.UTF_8)).get();
+            for (KeyValue keyValue : response.getKvs()) {
                 results.add(keyValue.getValue().toString(Charsets.UTF_8));
             }
         } catch (InterruptedException | ExecutionException e) {
