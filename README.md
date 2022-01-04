@@ -10,8 +10,9 @@ The framework proposals a unified API for vendors to provide solutions to variou
 - [DLedger](https://github.com/openmessaging/openmessaging-storage-dledger)
 - [Redis](https://redis.io/)
 - [Zookeeper](https://zookeeper.apache.org/)
+- [Etcd](https://etcd.io/)
 - [Nacos](https://nacos.io/) -- experimental
-- [Etcd](https://etcd.io/) -- ongoing
+
 
 ## Usage
 
