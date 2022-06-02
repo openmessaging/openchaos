@@ -21,13 +21,8 @@ endToEndLatencyCheck: true
 
 # Nodes for broker
 nodes:
-- n1 # replace with ip or domain name, such as 192.168.0.2
-- n2
-- n3
-
-# Nodes for nameserver
-metaNodes:
-- n4 # replace with ip or domain name, such as 192.168.0.1
+- 172.22.144.61 # replace with ip or domain name, such as 192.168.0.2
+- 172.22.144.60
 
 # RocketMQ configuration
 rocketmqVersion: 4.8.0
@@ -40,9 +35,10 @@ vipChannelEnabled: false
 
 # RocketMQ broker configuration
 brokerClusterName: DefaultCluster
-brokerName: RaftNode00
+brokerName: broker-a
 storePathRootDir: /tmp/rmqstore/node00
 storePathCommitLog: /tmp/rmqstore/node00/commitlog
 enableDLegerCommitLog: true
 dLegerGroup: RaftNode00
 sendMessageThreadPoolNums: 16
+configureFilePath: /home/rocketmq/conf/broker/broker1.conf
