@@ -72,7 +72,7 @@ public class RocketMQMetaNode implements MetaNode {
         try {
             //Start nameserver
             log.info("Node {} start nameserver...", node);
-            SshUtil.execCommandInDir(node, installDir, "nohup sh bin/mqnamesrv > nameserver.log 2>&1 &");
+            SshUtil.execCommandInDir(node, installDir, "nohup sh bin/mqnamesrv -c /home/rocketmq/conf/namesrv/namesrv.conf > nameserver.log 2>&1 &");
         } catch (Exception e) {
             log.error("Node {} start nameserver node failed", node, e);
             throw new RuntimeException(e);

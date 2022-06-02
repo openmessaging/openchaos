@@ -24,9 +24,15 @@ nodes:
 - 172.22.144.61 # replace with ip or domain name, such as 192.168.0.2
 - 172.22.144.60
 
+# Nodes for nameserver
+metaNodes:
+- 172.22.144.62 # replace with ip or domain name, such as 192.168.0.1
+- 172.22.144.63
+- 172.22.144.64
+
 # RocketMQ configuration
 rocketmqVersion: 4.8.0
-installDir: rocketmq-chaos-test # you could set existent location for RocketMQ
+installDir: rocketmq-5.0.0-BETA-SNAPSHOT # you could set existent location for RocketMQ
 nameServerPort: 9876
 
 # RocketMQ client configuration
@@ -35,10 +41,11 @@ vipChannelEnabled: false
 
 # RocketMQ broker configuration
 brokerClusterName: DefaultCluster
-brokerName: broker-a
+brokerName: RaftNode00
 storePathRootDir: /tmp/rmqstore/node00
 storePathCommitLog: /tmp/rmqstore/node00/commitlog
 enableDLegerCommitLog: true
 dLegerGroup: RaftNode00
 sendMessageThreadPoolNums: 16
 configureFilePath: /home/rocketmq/conf/broker/broker1.conf
+metaNodesParticipateInFault: false
