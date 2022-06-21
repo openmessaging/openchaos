@@ -48,6 +48,10 @@ public class Arguments {
     public String username = "root";
 
     @Parameter(names = {
+            "--password"}, description = "User password for ssh remote login. eg: admin")
+    public String password = null;
+
+    @Parameter(names = {
         "-f",
         "--fault"}, description = "Fault type to be injected. eg: noop, minor-kill, major-kill, random-kill, fixed-kill, random-partition, " +
         "fixed-partition, partition-majorities-ring, bridge, random-loss, minor-suspend, major-suspend, random-suspend, fixed-suspend"

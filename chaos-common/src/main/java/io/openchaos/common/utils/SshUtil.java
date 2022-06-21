@@ -36,9 +36,22 @@ public class SshUtil {
     private static Set<String> nodeSet = new HashSet<>();
     private static String username;
 
+    private static String password;
+
     public static void init(String username, List<String> nodes) throws Exception {
         SshUtil.username = username;
         client = SshClient.setUpDefaultClient();
+        client.start();
+        if (nodes != null) {
+            nodeSet.addAll(nodes);
+        }
+    }
+
+    public static void init(String username, String password, List<String> nodes) throws Exception {
+        SshUtil.username = username;
+        SshUtil.password = password;
+        client = SshClient.setUpDefaultClient();
+        client.addPasswordIdentity(password);
         client.start();
         if (nodes != null) {
             nodeSet.addAll(nodes);

@@ -104,6 +104,9 @@ Usage: messaging-chaos [options]
     -u, --username
       User name for ssh remote login. eg: admin
       Default: root
+    --password
+      User password for ssh remote login. eg: admin
+      Default: null
 ```
 
 ## Fault type
