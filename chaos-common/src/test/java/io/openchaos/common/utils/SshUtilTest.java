@@ -1,9 +1,6 @@
 package io.openchaos.common.utils;
 
 import org.junit.Test;
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-import org.junit.runner.notification.Failure;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,11 +18,4 @@ public class SshUtilTest {
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        Result result = JUnitCore.runClasses(SshUtilTest.class);
-        for (Failure failure : result.getFailures()){
-            System.out.println(failure.toString());
-        }
-        System.out.println("测试结果为: " + result.wasSuccessful());
-    }
 }
