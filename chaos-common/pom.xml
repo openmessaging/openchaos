@@ -28,6 +28,7 @@
 
     <properties>
         <sshd-mina.version>2.7.0</sshd-mina.version>
+        <junit.version>4.13.2</junit.version>
     </properties>
 
     <dependencies>
@@ -39,8 +40,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
-            <scope>test</scope>
+            <version>${junit.version}</version>
         </dependency>
     </dependencies>
 </project>
