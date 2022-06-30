@@ -1,4 +1,15 @@
 package io.openmessaging.driver.rabbitmq;
 
-public class RabbitMQChaosPushConsumer {
+import io.openchaos.driver.queue.QueuePushConsumer;
+
+public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void close() {
+
+    }
 }
