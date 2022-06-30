@@ -15,11 +15,17 @@
             <groupId>io.openmessaging</groupId>
             <artifactId>driver-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>${amqp-client.version}</version>
+        </dependency>
     </dependencies>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <amqp-client.version>5.4.3</amqp-client.version>
     </properties>
 
 </project>
