@@ -28,6 +28,7 @@
 
     <properties>
         <sshd-mina.version>2.7.0</sshd-mina.version>
+        <junit.version>4.13.2</junit.version>
     </properties>
 
     <dependencies>
@@ -35,6 +36,11 @@
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-mina</artifactId>
             <version>${sshd-mina.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
         </dependency>
     </dependencies>
 </project>

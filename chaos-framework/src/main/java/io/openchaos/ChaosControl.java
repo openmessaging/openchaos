@@ -250,7 +250,9 @@ public class ChaosControl {
                 allNodes.addAll(driverConfiguration.metaNodes);
             }
 
-            SshUtil.init(arguments.username, allNodes);
+
+            SshUtil.init(arguments.username, arguments.password, allNodes);
+
 
             log.info("--------------- CHAOS TEST --- DRIVER : {}---------------", driverConfiguration.name);
 
