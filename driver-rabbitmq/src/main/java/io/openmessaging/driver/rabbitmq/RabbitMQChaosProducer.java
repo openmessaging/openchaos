@@ -5,6 +5,9 @@ import io.openchaos.driver.queue.QueueProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.concurrent.TimeoutException;
+
 public class RabbitMQChaosProducer implements QueueProducer {
     private static final Logger log = LoggerFactory.getLogger(RabbitMQChaosProducer.class);
     String queueName = "openchaos_client_1";
@@ -33,8 +36,16 @@ public class RabbitMQChaosProducer implements QueueProducer {
 
     @Override
     public InvokeResult enqueue(byte[] payload) {
-
-        return null;
+        try{
+            producer.sendMessage(queueName, payload);
+        } catch (IOException e) {
+            log.warn("Enqueue fail");
+            return InvokeResult.FAILURE;
+        } catch (TimeoutException e) {
+            log.warn("Enqueue timeout");
+            return InvokeResult.FAILURE;
+        }
+        return InvokeResult.SUCCESS.setExtraInfoAndReturnSelf(new String(payload));
     }
 
     @Override

@@ -27,9 +27,14 @@ public class SingleConnectionFactory {
     }
 
     public static void handleCloseExecption(ConnectionFactory factory) throws IOException, TimeoutException {
-        synchronized (SingleConnectionFactory.class){
-            Connection connection = factory.newConnection();
-            connections.put(factory, connection);
+        Connection connection = connections.get(factory);
+        if (connection == null || !connection.isOpen() ){
+            synchronized (SingleConnectionFactory.class){
+                if (!connection.isOpen()) {
+                    connection = factory.newConnection();
+                    connections.put(factory, connection);
+                }
+            }
         }
     }
 }
