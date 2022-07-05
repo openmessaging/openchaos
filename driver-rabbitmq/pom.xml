@@ -20,12 +20,18 @@
             <artifactId>amqp-client</artifactId>
             <version>${amqp-client.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>${objectpool.version}</version>
+        </dependency>
     </dependencies>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <amqp-client.version>5.4.3</amqp-client.version>
+        <objectpool.version>2.11.1</objectpool.version>
     </properties>
 
 </project>

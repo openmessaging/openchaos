@@ -44,13 +44,15 @@ public class RabbitMQChaosProducer implements QueueProducer {
         } catch (TimeoutException e) {
             log.warn("Enqueue timeout");
             return InvokeResult.FAILURE;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return InvokeResult.SUCCESS.setExtraInfoAndReturnSelf(new String(payload));
     }
 
     @Override
     public InvokeResult enqueue(String shardingKey, byte[] payload) {
-        return null;
+        return null; //todo 分片队列
     }
 
     private  boolean notNull(String s){
