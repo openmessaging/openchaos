@@ -1,4 +1,4 @@
-package io.openmessaging.driver.rabbitmq;
+package io.openmessaging.driver.rabbitmq.core;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -40,7 +40,6 @@ public class DefaultRabbitMQProducer {
         if (notNull(password)) {
             this.password = password;
         }
-        init();
     }
 
     public void init() {
@@ -49,9 +48,9 @@ public class DefaultRabbitMQProducer {
         factory.setPort(port);
         factory.setUsername(user);
         factory.setPassword(password);
-        channelPoolFactory = new ChannelPoolFactory(factory);
+        connection = getNewConnection();
+        channelPoolFactory = new ChannelPoolFactory(factory, connection);
         channelPool = new GenericObjectPool<Channel>(channelPoolFactory);
-        connection = getConnection();
     }
 
     public void sendMessage(String queueName, byte[] message) throws Exception {
@@ -65,7 +64,7 @@ public class DefaultRabbitMQProducer {
             // by the time we started action and reasons for
             // closing it
             log.warn("connection or channel is shutdown");
-            getConnection();
+            getNewConnection();
         } catch (IOException ioe) {
             // check why connection was closed
             log.warn("IO was blocked");
@@ -75,11 +74,19 @@ public class DefaultRabbitMQProducer {
 
     }
 
+    public void shutdown(){
+        try {
+            channelPool.close();
+            connection.close();
+        } catch (IOException e) {
+            log.warn("Close RabbitMQProducer failed");
+        }
+    }
     private boolean notNull(String s) {
         return s != null && !s.equals("");
     }
 
-    public Connection getConnection() {
+    public Connection getNewConnection() {
         try {
             if (connection == null || !connection.isOpen()) {
                 connection = factory.newConnection();
@@ -91,5 +98,8 @@ public class DefaultRabbitMQProducer {
         return connection;
     }
 
+    public Connection getConnection(){
+        return connection;
+    }
 }
 

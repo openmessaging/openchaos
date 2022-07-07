@@ -18,9 +18,9 @@ public class ChannelPoolFactory extends BasePooledObjectFactory {
     private ConnectionFactory factory;
     private Connection connection;
 
-    public ChannelPoolFactory(ConnectionFactory factory) {
+    public ChannelPoolFactory(ConnectionFactory factory, Connection connection) {
         this.factory = factory;
-        connection = createNewConnection();
+        this.connection = connection;
     }
 
     @Override

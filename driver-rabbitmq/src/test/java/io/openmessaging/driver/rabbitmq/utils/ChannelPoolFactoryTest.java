@@ -14,7 +14,17 @@ import static org.junit.Assert.*;
 
 public class ChannelPoolFactoryTest {
     static ConnectionFactory factory = init();
-    static ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory(factory);
+    static ChannelPoolFactory channelPoolFactory;
+
+    static {
+        try {
+            channelPoolFactory = new ChannelPoolFactory(factory, factory.newConnection());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 
     public static ConnectionFactory init() {

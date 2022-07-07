@@ -2,6 +2,7 @@ package io.openmessaging.driver.rabbitmq;
 
 import io.openchaos.common.InvokeResult;
 import io.openchaos.driver.queue.QueueProducer;
+import io.openmessaging.driver.rabbitmq.core.DefaultRabbitMQProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,12 +27,17 @@ public class RabbitMQChaosProducer implements QueueProducer {
 
     @Override
     public void start() {
-
+        try {
+            producer.init();
+        } catch (Exception e) {
+            log.warn("start RabbitMQ Producer failed");
+        }
     }
 
     @Override
     public void close() {
-
+            producer.shutdown();
+            log.warn("Closing RabbitMQProducer.");
     }
 
     @Override
@@ -52,10 +58,14 @@ public class RabbitMQChaosProducer implements QueueProducer {
 
     @Override
     public InvokeResult enqueue(String shardingKey, byte[] payload) {
-        return null; //todo 分片队列
+        return enqueue(payload);
     }
 
     private  boolean notNull(String s){
         return s != null && !s.equals("");
+    }
+
+    public DefaultRabbitMQProducer getProducer(){
+        return producer;
     }
 }

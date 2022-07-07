@@ -12,9 +12,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.*;
-
-public class RabbitMQChaosPushConsumerTest {
+public class DefaultRabbitMQPushConsumerTest {
     static String host = "tcloud";
     static int port = 5672;
     static String user = "guest";
@@ -23,7 +21,6 @@ public class RabbitMQChaosPushConsumerTest {
     static Connection connection ;
     static String queueName = "openchaos_client_test";
     static ObjectPool<Channel> channelPool;
-    static RabbitMQChaosPushConsumer consumer;
     static {
         factory.setHost(host);
         factory.setPort(port);
@@ -38,21 +35,13 @@ public class RabbitMQChaosPushConsumerTest {
         } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
-        DefaultRabbitMQPushConsumer defaultRabbitMQPushConsumer = new DefaultRabbitMQPushConsumer(connection, queueName, channelPool);
-        consumer = new RabbitMQChaosPushConsumer(defaultRabbitMQPushConsumer, host, port, user, password, queueName);
     }
+
+    static DefaultRabbitMQPushConsumer consumer = new DefaultRabbitMQPushConsumer(connection, queueName, channelPool);
 
 
     @Test
-    public void start() {
-        consumer.start();
-        assertTrue(consumer.getConnection().isOpen());
-    }
-
-    @Test
-    public void close() {
-        consumer.start();
-        consumer.close();
-        assertFalse(consumer.getConnection().isOpen());
+    public void createNewConnection() {
+        consumer.createNewConnection();
     }
 }
