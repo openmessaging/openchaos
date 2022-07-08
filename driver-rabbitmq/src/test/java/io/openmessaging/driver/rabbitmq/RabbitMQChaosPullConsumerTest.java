@@ -3,6 +3,7 @@ package io.openmessaging.driver.rabbitmq;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import io.openmessaging.driver.rabbitmq.core.DefaultRabbitMQPullConsumer;
 import io.openmessaging.driver.rabbitmq.core.DefaultRabbitMQPushConsumer;
 import io.openmessaging.driver.rabbitmq.utils.ChannelPoolFactory;
 import org.apache.commons.pool2.ObjectPool;
@@ -12,7 +13,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-public class DefaultRabbitMQPushConsumerTest {
+import static org.junit.Assert.*;
+
+public class RabbitMQChaosPullConsumerTest {
     static String host = "tcloud";
     static int port = 5672;
     static String user = "guest";
@@ -21,6 +24,7 @@ public class DefaultRabbitMQPushConsumerTest {
     static Connection connection ;
     static String queueName = "openchaos_client_test";
     static ObjectPool<Channel> channelPool;
+    static RabbitMQChaosPullConsumer consumer;
     static {
         factory.setHost(host);
         factory.setPort(port);
@@ -35,13 +39,25 @@ public class DefaultRabbitMQPushConsumerTest {
         } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
+        DefaultRabbitMQPullConsumer defaultRabbitMQPullConsumer = new DefaultRabbitMQPullConsumer(connection, queueName, channelPool);
+        consumer = new RabbitMQChaosPullConsumer(defaultRabbitMQPullConsumer, host, port, user, password, queueName);
     }
 
-    static DefaultRabbitMQPushConsumer consumer = new DefaultRabbitMQPushConsumer(connection, queueName, channelPool);
-
+    @Test
+    public void start() {
+        consumer.start();
+        assertTrue(consumer.getConnection().isOpen());
+    }
 
     @Test
-    public void createNewConnection() {
-        consumer.createNewConnection();
+    public void close() {
+        consumer.start();
+        consumer.close();
+        assertFalse(consumer.getConnection().isOpen());
+    }
+
+    @Test
+    public void dequeue() {
+        consumer.dequeue();
     }
 }

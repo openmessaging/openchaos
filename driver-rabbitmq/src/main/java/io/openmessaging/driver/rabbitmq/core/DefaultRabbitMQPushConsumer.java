@@ -19,10 +19,10 @@ public class DefaultRabbitMQPushConsumer implements Consumer {
     private  Connection connection;
     private  String queueName;
     private ObjectPool<Channel> channelPool;
-    public DefaultRabbitMQPushConsumer(Connection connection, String queueName, ObjectPool objectPool) {
+    public DefaultRabbitMQPushConsumer(Connection connection, String queueName, ObjectPool channelPool) {
         this.connection = connection;
         this.queueName = queueName;
-        channelPool = objectPool;
+        this.channelPool = channelPool;
     }
 
     @Override

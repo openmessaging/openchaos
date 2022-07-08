@@ -1,4 +1,4 @@
-package io.openmessaging.driver.rabbitmq;
+package io.openmessaging.driver.rabbitmq.core;
 
 import io.openmessaging.driver.rabbitmq.core.DefaultRabbitMQProducer;
 import org.junit.Test;
