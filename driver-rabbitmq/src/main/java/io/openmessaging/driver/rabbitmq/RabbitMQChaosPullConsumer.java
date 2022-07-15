@@ -30,10 +30,10 @@ public class RabbitMQChaosPullConsumer implements QueuePullConsumer {
     private Connection connection;
     private ChannelPoolFactory channelPoolFactory;
     private ObjectPool<Channel> channelPool;
-    private String queueName = "openchaos_consumer_1";
+    private String queueName = "openchaos_client_1";
 
     public RabbitMQChaosPullConsumer(DefaultRabbitMQPullConsumer consumer,
-                                     String host, int port, String user, String password, String queueName){
+                                     String host, int port, String user, String password, String queueName) {
         this.consumer = consumer;
         this.host = host;
         this.port = port;
@@ -41,6 +41,7 @@ public class RabbitMQChaosPullConsumer implements QueuePullConsumer {
         this.password = password;
         this.queueName = queueName;
     }
+
     @Override
     public void start() {
         factory = new ConnectionFactory();
@@ -88,7 +89,7 @@ public class RabbitMQChaosPullConsumer implements QueuePullConsumer {
                 + message.getEnvelope().getRoutingKey() + ", queueOffset = " + message.getMessageCount() + "]";
     }
 
-    public Connection getConnection(){
+    public Connection getConnection() {
         return connection;
     }
 }

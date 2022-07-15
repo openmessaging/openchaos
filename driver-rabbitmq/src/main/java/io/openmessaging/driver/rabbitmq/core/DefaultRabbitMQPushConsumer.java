@@ -5,7 +5,10 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.GetResponse;
 import com.rabbitmq.client.ShutdownSignalException;
+import io.openchaos.common.Message;
+import io.openchaos.driver.queue.ConsumerCallback;
 import org.apache.commons.pool2.ObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,14 +18,21 @@ import java.nio.charset.StandardCharsets;
 
 public class DefaultRabbitMQPushConsumer implements Consumer {
     private static final Logger log = LoggerFactory.getLogger(DefaultRabbitMQPushConsumer.class);
-    private  Channel channel;
     private  Connection connection;
     private  String queueName;
     private ObjectPool<Channel> channelPool;
+    private ConsumerCallback consumerCallback;
     public DefaultRabbitMQPushConsumer(Connection connection, String queueName, ObjectPool channelPool) {
         this.connection = connection;
         this.queueName = queueName;
         this.channelPool = channelPool;
+    }
+
+    public DefaultRabbitMQPushConsumer(Connection connection, String queueName, ObjectPool channelPool, ConsumerCallback consumerCallback) {
+        this.connection = connection;
+        this.queueName = queueName;
+        this.channelPool = channelPool;
+        this.consumerCallback = consumerCallback;
     }
 
     @Override
@@ -54,9 +64,14 @@ public class DefaultRabbitMQPushConsumer implements Consumer {
 
     @Override
     public void handleDelivery(String s, Envelope envelope, AMQP.BasicProperties basicProperties, byte[] bytes) throws IOException {
-        String message = new String(bytes, StandardCharsets.UTF_8);
-        log.warn(" [x] Received '" + message + "'");
-        channel.basicAck(envelope.getDeliveryTag(), false);
+        Channel channel = null;
+        try {
+            consumerCallback.messageReceived(new Message(bytes));
+            channel = channelPool.borrowObject();
+            channel.basicAck(envelope.getDeliveryTag(), false);
+        } catch (Exception e) {
+            log.warn("Create channel failed");
+        }
     }
 
     public void createNewConnection(){
@@ -65,9 +80,11 @@ public class DefaultRabbitMQPushConsumer implements Consumer {
             Channel channel = channelPool.borrowObject();
             channel.basicQos(64);
             channel.basicConsume(queueName, false, new DefaultRabbitMQPushConsumer(connection, queueName, channelPool));
+
         } catch (Exception e) {
             log.warn("Connection occured error! Try to create new connection.");
             createNewConnection();
         }
     }
+
 }

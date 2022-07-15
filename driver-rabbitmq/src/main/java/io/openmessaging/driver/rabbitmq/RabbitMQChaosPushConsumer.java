@@ -25,9 +25,10 @@ public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
     private Connection connection;
     private ChannelPoolFactory channelPoolFactory;
     private ObjectPool<Channel> channelPool;
-    private String queueName = "openchaos_consumer_1";
+    private String queueName = "openchaos_client_1";
+
     public RabbitMQChaosPushConsumer(DefaultRabbitMQPushConsumer consumer,
-                                     String host, int port, String user, String password, String queueName){
+                                     String host, int port, String user, String password, String queueName) {
         this.consumer = consumer;
         this.host = host;
         this.port = port;
@@ -35,6 +36,7 @@ public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
         this.password = password;
         this.queueName = queueName;
     }
+
     @Override
     public void start() {
         factory = new ConnectionFactory();
@@ -56,7 +58,7 @@ public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
+        consumer.createNewConnection();
     }
 
     @Override
@@ -69,7 +71,7 @@ public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
         }
     }
 
-    public Connection getConnection(){
+    public Connection getConnection() {
         return connection;
     }
 }
