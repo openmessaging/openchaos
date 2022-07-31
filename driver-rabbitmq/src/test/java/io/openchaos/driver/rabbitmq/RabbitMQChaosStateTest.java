@@ -10,7 +10,7 @@ import java.util.Set;
 import static org.junit.Assert.*;
 
 public class RabbitMQChaosStateTest {
-    static RabbitMQChaosState state = new RabbitMQChaosState("", "openchaos_client_1", "tcloud", HaMode.classic);
+    static RabbitMQChaosState state = new RabbitMQChaosState("", "openchaos_client_state_test", "tcloud", HaMode.classic, "root", "root");
     static {
         try {
             SshUtil.init("root", "Yigeyy00", new ArrayList<String>(){{add("tcloud");}});

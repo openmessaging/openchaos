@@ -6,7 +6,9 @@ import com.rabbitmq.client.ConnectionFactory;
 import io.openchaos.driver.queue.ConsumerCallback;
 import io.openchaos.driver.queue.QueuePushConsumer;
 import io.openchaos.driver.rabbitmq.core.DefaultRabbitMQPushConsumer;
+import io.openchaos.driver.rabbitmq.utils.ChannelPoolFactory;
 import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
@@ -36,11 +38,14 @@ public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
     public void start() {
         try {
             if (consumer == null) {
-                consumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallBack, consumeGroup);
+                ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory(factory, connection);
+                this.channelPool = new GenericObjectPool<>(channelPoolFactory);
+                consumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallBack, consumeGroup, channelPool, channelPool.borrowObject());
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
         consumer.createNewChannel();
     }
 

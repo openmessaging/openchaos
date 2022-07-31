@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 public class DefaultRabbitMQProducer {
     private static final Logger log = LoggerFactory.getLogger(DefaultRabbitMQProducer.class);
@@ -59,11 +60,16 @@ public class DefaultRabbitMQProducer {
 
     public void shutdown(){
         try {
+            if (channel != null || channel.isOpen()){
+                channel.close();
+            }
             if (connection != null && connection.isOpen()) {
                 connection.close();
             }
         } catch (IOException e) {
             log.warn("Close connection failed!");
+        } catch (TimeoutException e) {
+            throw new RuntimeException(e);
         }
     }
 

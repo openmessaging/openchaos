@@ -45,7 +45,12 @@ public class RabbitMQChaosPushConsumerTest {
         } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
-        DefaultRabbitMQPushConsumer defaultRabbitMQPushConsumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallback, "test");
+        DefaultRabbitMQPushConsumer defaultRabbitMQPushConsumer = null;
+        try {
+            defaultRabbitMQPushConsumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallback, "test", channelPool, channelPool.borrowObject());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         consumer = new RabbitMQChaosPushConsumer(defaultRabbitMQPushConsumer, factory, queueName, "test", consumerCallback);
     }
 

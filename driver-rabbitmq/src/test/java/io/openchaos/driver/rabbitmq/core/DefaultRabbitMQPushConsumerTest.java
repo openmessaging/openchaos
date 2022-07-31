@@ -39,12 +39,20 @@ public class DefaultRabbitMQPushConsumerTest {
         }
     }
 
-    static DefaultRabbitMQPushConsumer consumer = new DefaultRabbitMQPushConsumer(factory, queueName, new ConsumerCallback() {
-        @Override
-        public void messageReceived(Message message) {
+    static DefaultRabbitMQPushConsumer consumer;
 
+    static {
+        try {
+            consumer = new DefaultRabbitMQPushConsumer(factory, queueName, new ConsumerCallback() {
+                @Override
+                public void messageReceived(Message message) {
+
+                }
+            }, "", channelPool, channelPool.borrowObject());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-    }, "");
+    }
 
 
     @Test

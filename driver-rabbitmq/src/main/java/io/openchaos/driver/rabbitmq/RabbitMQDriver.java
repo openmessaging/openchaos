@@ -76,8 +76,8 @@ public class RabbitMQDriver implements QueueDriver {
         this.nodes = nodes;
         this.user = rmqClientConfig.user;
         this.password = rmqClientConfig.password;
-        state = new RabbitMQChaosState("", queueName, nodes.get(0), rmqBrokerConfig.haMode);
-        state = new RabbitMQChaosState("", queueName, state.getLeader().iterator().next(), rmqBrokerConfig.haMode);
+        state = new RabbitMQChaosState("", queueName, nodes.get(0), rmqBrokerConfig.haMode, user, password);
+        state = new RabbitMQChaosState("", queueName, state.getLeader().iterator().next(), rmqBrokerConfig.haMode, user, password);
         factory = new ConnectionFactory();
         factory.setHost(state.getLeader().iterator().next());
         factory.setUsername(user);
@@ -86,7 +86,12 @@ public class RabbitMQDriver implements QueueDriver {
             Connection connection = factory.newConnection("openchaos_driver");
             ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory(factory, connection);
             channelPool = new GenericObjectPool<>(channelPoolFactory);
+            Channel channel = channelPool.borrowObject();
+            channel.queueDelete(queueName);
+            channel.queueDeclare(queueName, false, false, false, null);
         } catch (TimeoutException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -107,12 +112,7 @@ public class RabbitMQDriver implements QueueDriver {
 
     @Override
     public void createTopic(String topic, int partitions) {
-        try {
-            Channel channel = channelPool.borrowObject();
-            channel.queueDeclare(queueName, false, false, false, null);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
     }
 
     @Override
@@ -122,9 +122,20 @@ public class RabbitMQDriver implements QueueDriver {
 
     @Override
     public QueuePushConsumer createPushConsumer(String topic, String subscriptionName, ConsumerCallback consumerCallback) {
-        DefaultRabbitMQPushConsumer pushConsumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallback, subscriptionName);
-        RabbitMQChaosPushConsumer rabbitMQChaosPushConsumer = new RabbitMQChaosPushConsumer(pushConsumer,
-                factory, queueName, subscriptionName, consumerCallback);
+        RabbitMQChaosPushConsumer rabbitMQChaosPushConsumer;
+        try {
+            ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory(factory, factory.newConnection());
+            this.channelPool = new GenericObjectPool<>(channelPoolFactory);
+            DefaultRabbitMQPushConsumer pushConsumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallback, subscriptionName, channelPool, channelPool.borrowObject());
+            rabbitMQChaosPushConsumer = new RabbitMQChaosPushConsumer(pushConsumer,
+                    factory, queueName, subscriptionName, consumerCallback);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return  rabbitMQChaosPushConsumer;
     }
 

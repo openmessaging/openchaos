@@ -13,11 +13,15 @@ public class RabbitMQChaosState implements QueueState {
     private String queueName = "openchaos_client_1";
     private HaMode haMode;
     private String leader;
+    private String user;
+    private String password;
 
-    public RabbitMQChaosState(String metaName, String queueName, String node, HaMode haMode) {
+    public RabbitMQChaosState(String metaName, String queueName, String node, HaMode haMode, String user, String password) {
         this.haMode = haMode;
         this.queueName = queueName;
         this.leader = node;
+        this.user = user;
+        this.password = password;
     }
 
     @Override
@@ -37,7 +41,7 @@ public class RabbitMQChaosState implements QueueState {
                 log.warn("Get leader failed!");
             }
         } else if (haMode == HaMode.classic) {
-            String command = "curl -s -u root:root http://" + leader + ":15672/api/queues/%2f/openchaos_client_1 | python -m json.tool | grep node";
+            String command = "curl -s -u " + user + ":" + password + " http://" + leader + ":15672/api/queues/%2f/openchaos_client_1 | python -m json.tool | grep node";
             try {
                 String s = SshUtil.execCommandWithArgsReturnStr(leader, command);
                 String[] split = s.split(":");

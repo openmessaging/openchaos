@@ -20,15 +20,15 @@ endToEndLatencyCheck: true
 # Nodes for broker
 nodes:
 - tcloud # replace with ip or domain name, such as 192.168.0.2
-
+- acloud
 
 # RabbitMQ configuration
 rabbitmqVersion: 3.8.4
 installDir: /usr # you could set existent location for RabbitMQ
 configureFilePath: /rabbitmq/etc
-# RabbitMQ client configuration
+# RabbitMQ client configuration. Please add user root with password root
 user: root
 password: root
 # RabbitMQ broker configuration
 haMode : classic
-haParms : {totalNodes : 1, nodes : 1}
+haParms : {totalNodes : 2, nodes : 2}

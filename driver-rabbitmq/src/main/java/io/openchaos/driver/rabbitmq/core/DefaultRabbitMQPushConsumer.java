@@ -5,6 +5,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.ShutdownSignalException;
 import io.openchaos.common.Message;
@@ -18,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-public class DefaultRabbitMQPushConsumer implements Consumer {
+public class DefaultRabbitMQPushConsumer {
     private static final Logger log = LoggerFactory.getLogger(DefaultRabbitMQPushConsumer.class);
     private Connection connection;
     private String queueName;
@@ -30,76 +31,48 @@ public class DefaultRabbitMQPushConsumer implements Consumer {
 
     public DefaultRabbitMQPushConsumer(ConnectionFactory factory, String queueName,
                                        ConsumerCallback consumerCallback,
-                                       String consumerGroup) {
+                                       String consumerGroup, ObjectPool<Channel> channelPool, Channel channel) {
+        this.channel = channel;
+        this.channelPool = channelPool;
         this.factory = factory;
         this.queueName = queueName;
         try {
             connection = factory.newConnection(consumerGroup);
+            channel.queueDeclare(queueName, false, false,false, null);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
-        ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory(factory, connection);
-        this.channelPool = new GenericObjectPool<>(channelPoolFactory);
         this.consumerCallback = consumerCallback;
         this.consumerGroup = consumerGroup;
-        try {
-            channel = channelPool.borrowObject();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
-
-    @Override
-    public void handleConsumeOk(String s) {
-
-    }
-
-    @Override
-    public void handleCancelOk(String s) {
-
-    }
-
-    @Override
-    public void handleCancel(String s) throws IOException {
-        log.warn("Handle cancel : " + s);
-        createNewChannel();
-    }
-
-    @Override
-    public void handleShutdownSignal(String s, ShutdownSignalException e) {
-        log.warn("HandleShutdownSignal : " + s + e.getReason());
-        createNewChannel();
-    }
-
-    @Override
-    public void handleRecoverOk(String s) {
-
-    }
-
-    @Override
-    public void handleDelivery(String s, Envelope envelope, AMQP.BasicProperties basicProperties, byte[] bytes) {
-        try {
-            consumerCallback.messageReceived(new Message(bytes));
-            if (channel == null || !channel.isOpen()) {
-                channel = channelPool.borrowObject();
-            }
-            channel.basicAck(envelope.getDeliveryTag(), false);
-        } catch (Exception e) {
-            log.warn("Create channel failed");
-        }
     }
 
     public void createNewChannel() {
         try {
-            Thread.sleep(1000);
             if (channel == null || !channel.isOpen()) {
                 channel = channelPool.borrowObject();
             }
-            channel.basicQos(64);
-            channel.basicConsume(queueName, false, "openchaos_client", new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallback, consumerGroup));
+            channel.basicQos(400);
+            channel.basicConsume(queueName, false, "openchaos_client",
+                    new DefaultConsumer(channel) {
+                        @Override
+                        public void handleDelivery(String consumerTag,
+                                                   Envelope envelope,
+                                                   AMQP.BasicProperties properties,
+                                                   byte[] body) {
+                            try {
+                                consumerCallback.messageReceived(new Message(body));
+                                if (channel == null || !channel.isOpen()) {
+                                    channel = channelPool.borrowObject();
+                                }
+                                channel.basicAck(envelope.getDeliveryTag(), false);
+                            } catch (Exception e) {
+                                log.warn("Create channel failed");
+                            }
+                        }
+                    });
         } catch (Exception e) {
             log.warn("Connection occured error! Try to create new connection.");
             if (!connection.isOpen()){
@@ -115,4 +88,7 @@ public class DefaultRabbitMQPushConsumer implements Consumer {
         }
     }
 
+
 }
+
+
