@@ -13,10 +13,21 @@
  */
 package io.openchaos.driver.rabbitmq.core;
 
-public enum HaMode {
-    classic, quorum;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-    HaMode() {
+import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ClusterStatus {
+    public List<String> getRunning_nodes() {
+        return running_nodes;
     }
+
+    public void setRunning_nodes(List<String> running_nodes) {
+        this.running_nodes = running_nodes;
+    }
+
+    private List<String> running_nodes;
+
+
 }

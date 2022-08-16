@@ -1,59 +1,62 @@
 package io.openchaos.driver.rabbitmq.utils;
 
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import org.apache.commons.pool2.DestroyMode;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.apache.commons.pool2.PooledObject;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class ChannelPoolFactoryTest {
-    static ConnectionFactory factory = init();
-    static ChannelPoolFactory channelPoolFactory;
+    static ConnectionFactory factory = Mockito.mock(ConnectionFactory.class);
+    static Connection connection = Mockito.mock(Connection.class);
+    static ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory(factory, connection);
 
     static {
         try {
-            channelPoolFactory = new ChannelPoolFactory(factory, factory.newConnection());
+            Mockito.when(factory.newConnection()).thenReturn(Mockito.mock(Connection.class));
+            Mockito.when(connection.createChannel()).thenReturn(Mockito.mock(Channel.class));
+            Mockito.when(connection.isOpen()).thenReturn(Boolean.TRUE);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (TimeoutException e) {
             throw new RuntimeException(e);
         }
-    }
 
-
-    public static ConnectionFactory init() {
-        ConnectionFactory factory1 = new ConnectionFactory();
-        factory1.setHost("tcloud");
-        factory1.setUsername("root");
-        factory1.setPassword("root");
-        return factory1;
     }
 
     @Test
-    public void create() {
+    public void create() throws IOException, TimeoutException {
         assertNotNull(channelPoolFactory.create());
     }
 
     @Test
     public void wrap() {
-        assertNotNull(channelPoolFactory.wrap(channelPoolFactory.create()));
+        assertNotNull(channelPoolFactory.wrap(Mockito.mock(Object.class)));
     }
 
     @Test
     public void destroyObject() throws Exception {
-        Channel channel = (Channel) channelPoolFactory.create();
-        channelPoolFactory.destroyObject(new DefaultPooledObject(channel), DestroyMode.NORMAL);
-        assertFalse(channel.isOpen());
+        PooledObject mock = Mockito.mock(PooledObject.class);
+        Channel channel = Mockito.mock(Channel.class);
+        Mockito.when(mock.getObject()).thenReturn(channel);
+        Mockito.when(channel.isOpen()).thenReturn(true);
+        channelPoolFactory.destroyObject(mock, DestroyMode.NORMAL);
     }
 
     @Test
     public void validateObject() {
-        Channel channel = (Channel) channelPoolFactory.create();
-        assertTrue(channelPoolFactory.validateObject(new DefaultPooledObject(channel)));
+        PooledObject mock = Mockito.mock(PooledObject.class);
+        Channel channel = Mockito.mock(Channel.class);
+        Mockito.when(mock.getObject()).thenReturn(channel);
+        Mockito.when(channel.isOpen()).thenReturn(true);
+        assertTrue(channelPoolFactory.validateObject(mock));
     }
 }

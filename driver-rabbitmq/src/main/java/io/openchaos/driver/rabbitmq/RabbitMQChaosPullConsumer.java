@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.openchaos.driver.rabbitmq;
 
 import com.google.common.collect.Lists;
@@ -7,16 +20,13 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.GetResponse;
 import io.openchaos.common.Message;
 import io.openchaos.driver.queue.QueuePullConsumer;
-import io.openchaos.driver.rabbitmq.utils.ChannelPoolFactory;
 import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 public class RabbitMQChaosPullConsumer implements QueuePullConsumer {
     private static final Logger log = LoggerFactory.getLogger(RabbitMQChaosPushConsumer.class);
@@ -27,19 +37,12 @@ public class RabbitMQChaosPullConsumer implements QueuePullConsumer {
     private Channel channel;
     private String consumeGroup;
 
-    public RabbitMQChaosPullConsumer(ConnectionFactory factory, String queueName, String consumeGroup) {
+    public RabbitMQChaosPullConsumer(ConnectionFactory factory, String queueName, String consumeGroup, ObjectPool<Channel> channelPool, Connection connection) {
         this.queueName = queueName;
         this.consumeGroup = consumeGroup;
         this.factory = factory;
-        try {
-            connection = factory.newConnection(consumeGroup);
-        } catch (IOException e) {
-            log.warn("IO blocked!");
-        } catch (TimeoutException e) {
-            log.warn("Create connection timeout!");
-        }
-        ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory(factory, connection);
-        channelPool = new GenericObjectPool<>(channelPoolFactory);
+        this.connection = connection;
+        this.channelPool = channelPool;
     }
 
     @Override

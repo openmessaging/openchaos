@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.session.ClientSession;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class SshUtil {
         SshUtil.username = username;
         SshUtil.password = password;
         client = SshClient.setUpDefaultClient();
-        if (password != null && !Objects.equals(password, "")){
+        if (password != null && !Objects.equals(password, "")) {
             client.addPasswordIdentity(password);
         }
         client.start();

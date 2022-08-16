@@ -14,21 +14,26 @@
 
 name: RabbitMQ
 driverClass: io.openchaos.driver.rabbitmq.RabbitMQDriver
-
 endToEndLatencyCheck: true
 
+
 # Nodes for broker
-nodes:
-- tcloud # replace with ip or domain name, such as 192.168.0.2
+nodes: # replace with ip or domain name, such as 192.168.0.2
+- tcloud
 - acloud
+- hcloud
 
 # RabbitMQ configuration
-rabbitmqVersion: 3.8.4
-installDir: /usr # you could set existent location for RabbitMQ
-configureFilePath: /rabbitmq/etc
+rabbitmqVersion: 3.8.35
+installDir: /usr/local/rabbitmq-server-3.8.35 # you could set existent location for RabbitMQ
+configureFilePath: /usr/local/rabbitmq-server-3.8.35/etc
+
 # RabbitMQ client configuration. Please add user root with password root
 user: root
 password: root
+
 # RabbitMQ broker configuration
 haMode : classic
-haParms : {totalNodes : 2, nodes : 2}
+haParms :
+  totalNodes : 3
+  nodes : 3

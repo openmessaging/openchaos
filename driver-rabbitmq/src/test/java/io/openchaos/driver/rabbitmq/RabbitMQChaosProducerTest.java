@@ -1,49 +1,41 @@
 package io.openchaos.driver.rabbitmq;
 
+
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import io.openchaos.driver.rabbitmq.core.DefaultRabbitMQProducer;
-import org.checkerframework.framework.qual.MonotonicQualifier;
+import io.openchaos.common.InvokeResult;
+import org.apache.commons.pool2.ObjectPool;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class RabbitMQChaosProducerTest {
-    static String host = "tcloud";
-    static int port = 5672;
-    static String user = "root";
-    static String password = "root";
-    static String queueName = "openchaos_client_1";
-    static ConnectionFactory factory;
-    static DefaultRabbitMQProducer producer;
-    static RabbitMQChaosProducer mqChaosProducer ;
+    ;
+    static RabbitMQChaosProducer mqChaosProducer;
+
     static {
-        factory.setHost(host);
-        factory.setPort(port);
-        factory.setUsername(user);
-        factory.setPassword(password);
-        producer = new DefaultRabbitMQProducer(factory);
-        mqChaosProducer = new RabbitMQChaosProducer(factory, queueName);
+        ConnectionFactory factory = Mockito.mock(ConnectionFactory.class);
+        Connection conn = Mockito.mock(Connection.class);
+        ObjectPool<Channel> channelPool = Mockito.mock(ObjectPool.class);
+        Channel channel = Mockito.mock(Channel.class);
+        try {
+            Mockito.when(channelPool.borrowObject()).thenReturn(channel);
+            Mockito.when(channel.isOpen()).thenReturn(true);
+            Mockito.when(conn.isOpen()).thenReturn(true);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        mqChaosProducer = new RabbitMQChaosProducer(factory, "mqChaosProducer.queueName", conn, channelPool);
     }
 
-
-    {
-        mqChaosProducer.start();
-    }
-    @Test
-    public void start() {
-        assertTrue(mqChaosProducer.getProducer().getConnection().isOpen());
-    }
-
-    @Test
-    public void close() {
-        mqChaosProducer.close();
-        assertFalse(mqChaosProducer.getProducer().getConnection().isOpen());
-    }
 
     @Test
     public void enqueue() {
-        mqChaosProducer.enqueue("hello RabbitMQ".getBytes(StandardCharsets.UTF_8));
+
+        assertEquals(InvokeResult.SUCCESS, mqChaosProducer.enqueue("hello RabbitMQ".getBytes(StandardCharsets.UTF_8)));
     }
 }

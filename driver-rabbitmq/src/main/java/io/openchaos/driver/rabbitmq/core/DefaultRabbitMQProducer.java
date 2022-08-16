@@ -1,12 +1,23 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.openchaos.driver.rabbitmq.core;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.ShutdownSignalException;
-import io.openchaos.driver.rabbitmq.utils.ChannelPoolFactory;
 import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,11 +35,10 @@ public class DefaultRabbitMQProducer {
 
     }
 
-    public DefaultRabbitMQProducer(ConnectionFactory factory) {
+    public DefaultRabbitMQProducer(ConnectionFactory factory, Connection connection, ObjectPool<Channel> channelPool) {
         this.factory = factory;
-        connection = getNewConnection();
-        ChannelPoolFactory channelPoolFactory = new ChannelPoolFactory(factory, connection);
-        this.channelPool = new GenericObjectPool<>(channelPoolFactory);
+        this.connection = connection;
+        this.channelPool = channelPool;
     }
 
     public void init() {
@@ -40,7 +50,7 @@ public class DefaultRabbitMQProducer {
     }
 
     public void sendMessage(String queueName, byte[] message) throws Exception {
-        if (channel == null || !channel.isOpen()){
+        if (channel == null || !channel.isOpen()) {
             channel = channelPool.borrowObject();
         }
         try {
@@ -58,9 +68,9 @@ public class DefaultRabbitMQProducer {
 
     }
 
-    public void shutdown(){
+    public void shutdown() {
         try {
-            if (channel != null || channel.isOpen()){
+            if (channel != null && channel.isOpen()) {
                 channel.close();
             }
             if (connection != null && connection.isOpen()) {
@@ -76,7 +86,7 @@ public class DefaultRabbitMQProducer {
     public Connection getNewConnection() {
         try {
             if (connection == null || !connection.isOpen()) {
-                connection = factory.newConnection();
+                connection = factory.newConnection("openchaos_producer");
             }
         } catch (Exception e) {
             log.warn("Create Connection failed");
@@ -84,7 +94,7 @@ public class DefaultRabbitMQProducer {
         return connection;
     }
 
-    public Connection getConnection(){
+    public Connection getConnection() {
         return connection;
     }
 }
