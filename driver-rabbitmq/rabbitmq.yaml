@@ -19,9 +19,7 @@ endToEndLatencyCheck: true
 
 # Nodes for broker
 nodes: # replace with ip or domain name, such as 192.168.0.2
-- tcloud
 - acloud
-- hcloud
 
 # RabbitMQ configuration
 rabbitmqVersion: 3.8.35

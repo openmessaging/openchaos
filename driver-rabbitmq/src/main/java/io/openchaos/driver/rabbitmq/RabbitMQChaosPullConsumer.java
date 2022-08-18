@@ -33,7 +33,7 @@ public class RabbitMQChaosPullConsumer implements QueuePullConsumer {
     private ConnectionFactory factory;
     private Connection connection;
     private ObjectPool<Channel> channelPool;
-    private String queueName = "openchaos_client_1";
+    private String queueName;
     private Channel channel;
     private String consumeGroup;
 

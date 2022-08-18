@@ -31,14 +31,12 @@ public class RabbitMQChaosProducer implements QueueProducer {
     private static final Logger log = LoggerFactory.getLogger(RabbitMQChaosProducer.class);
     String queueName = "openchaos_client_1";
     private DefaultRabbitMQProducer producer;
-    private Connection connection;
 
     public RabbitMQChaosProducer(ConnectionFactory factory, String queueName, Connection connection, ObjectPool<Channel> channelPool) {
         if (notNull(queueName)) {
             this.queueName = queueName;
         }
         producer = new DefaultRabbitMQProducer(factory, connection, channelPool);
-        this.connection = connection;
     }
 
     @Override
@@ -81,7 +79,4 @@ public class RabbitMQChaosProducer implements QueueProducer {
         return s != null && !s.equals("");
     }
 
-    public DefaultRabbitMQProducer getProducer() {
-        return producer;
-    }
 }

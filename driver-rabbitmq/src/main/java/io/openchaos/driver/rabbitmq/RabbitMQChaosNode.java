@@ -26,7 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
@@ -45,8 +44,6 @@ public class RabbitMQChaosNode implements QueueNode {
     private String rabbitmqVersion = "3.8.35";
     private String configureFilePath = "broker-chaos-test.conf";
     private Sync sync;
-    static final String noErlang = "-bash: erl: command not found";
-    static final String noRabbitmq = "-bash: rabbitmq-server: command not found";
 
     public RabbitMQChaosNode(String node, List<String> nodes, RabbitMQConfig rmqConfig,
                              RabbitMQBrokerConfig rmqBrokerConfig, Sync sync) {
@@ -118,7 +115,7 @@ public class RabbitMQChaosNode implements QueueNode {
                 log.info(no + " join cluster rabbit@" + sync.getLeader() + " finished");
             }
             ClusterStatus clusterStatus = null;
-            while (clusterStatus == null || clusterStatus.getRunning_nodes().size() != nodes.size()) {
+            while (clusterStatus == null || clusterStatus.getRunningNodes().size() != nodes.size()) {
                 String cmd = "rabbitmqctl cluster_status --formatter json";
                 String res = SshUtil.execCommandWithArgsReturnStr(no, cmd);
                 ObjectMapper objectMapper = new ObjectMapper();
@@ -140,24 +137,11 @@ public class RabbitMQChaosNode implements QueueNode {
             }
         } catch (Exception ignored) {
         }
-        String ls;
-        try {
-            ls = SshUtil.execCommandWithArgsReturnStr(no, "ls | grep otp_src_23.2.tar.gz");
-        } catch (Exception e) {
-            ls = e.getLocalizedMessage();
-        }
-        if (!StringUtils.equals(ls, "otp_src_23.2.tar.gz\n")) {
-            log.info(no + " downloading erlang 23.2...");
-            SshUtil.execCommand(no, "wget https://erlang.org/download/otp_src_23.2.tar.gz");
-        }
-        log.info("Installing erlang 23.2");
-        SshUtil.execCommand(no, "tar -zxvf otp_src_23.2.tar.gz");
-        SshUtil.execCommandInDir(no, "~/otp_src_23.2", "./configure --prefix=/usr/local/erlang");
-        SshUtil.execCommandInDir(no, "~/otp_src_23.2", "make && make install");
-        SshUtil.execCommand(no, "echo 'export PATH=$PATH::/usr/local/erlang/bin' >> /etc/profile");
-        SshUtil.execCommand(no, "echo 'export PATH=$PATH::/usr/local/erlang/bin' >> ~/.bashrc");
-        SshUtil.execCommand(no, "source /etc/profile");
-        SshUtil.execCommand(no, "source ~/.bashrc");
+        SshUtil.execCommand(no, "rm -rf /opt/erlang");
+        SshUtil.execCommand(no, "mkdir /opt/erlang");
+        SshUtil.execCommand(no, "yum -y install vim make libtool libtool-ltdl-devel libevent-devel lua-devel openssl-devel flex mysql-devel gcc.x86_64 gcc-c++.x86_64 ncurses-devel wget lrzsz");
+        SshUtil.execCommandInDir(no, "/opt/erlang", "wget https://github.com/rabbitmq/erlang-rpm/releases/download/v23.2.6/erlang-23.2.6-1.el7.x86_64.rpm");
+        SshUtil.execCommandInDir(no, "/opt/erlang", "rpm -ivh erlang-23.2.6-1.el7.x86_64.rpm");
     }
 
     private void installRabbitmq(String no) throws Exception {
@@ -244,20 +228,5 @@ public class RabbitMQChaosNode implements QueueNode {
             log.error("Node {} resume rabbitmq processes failed", node, e);
             throw new RuntimeException(e);
         }
-    }
-
-    public static void main(String[] args) {
-        String tcloud;
-        try {
-            SshUtil.init("root", "Bllxmx123321", new ArrayList<String>() {{
-                add("124.221.97.242");
-            }});
-
-            tcloud = SshUtil.execCommandWithArgsReturnStr("124.221.97.242", "ls | grep otp_src_23.2.tar.gz");
-        } catch (Exception e) {
-            tcloud = e.getLocalizedMessage();
-
-        }
-        System.out.println(tcloud);
     }
 }

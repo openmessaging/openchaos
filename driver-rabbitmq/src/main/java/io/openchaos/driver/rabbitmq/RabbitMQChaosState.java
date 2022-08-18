@@ -24,7 +24,6 @@ import java.util.Set;
 
 public class RabbitMQChaosState implements QueueState {
     private static final Logger log = LoggerFactory.getLogger(RabbitMQChaosState.class);
-    private String queueName = "openchaos_client_1";
     private HaMode haMode;
     private String leader;
     private String user;
@@ -32,7 +31,6 @@ public class RabbitMQChaosState implements QueueState {
 
     public RabbitMQChaosState(String metaName, String queueName, String node, HaMode haMode, String user, String password) {
         this.haMode = haMode;
-        this.queueName = queueName;
         this.leader = node;
         this.user = user;
         this.password = password;

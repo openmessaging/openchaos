@@ -22,13 +22,11 @@ public class Sync {
     private CountDownLatch countDownLatch;
     private CountDownLatch cookieLatch;
     private CountDownLatch joinLatch;
-    private List<String> nodes;
     private String leader;
-    private String cookie = "openchaoscookie";
+    private final String cookie = "openchaoscookie";
     public String status = "wait";
 
     public Sync(List<String> nodes) {
-        this.nodes = nodes;
         countDownLatch = new CountDownLatch(nodes.size());
         cookieLatch = new CountDownLatch(nodes.size());
         joinLatch = new CountDownLatch(nodes.size());

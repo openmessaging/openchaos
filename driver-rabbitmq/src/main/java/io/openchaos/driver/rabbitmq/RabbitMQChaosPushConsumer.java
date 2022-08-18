@@ -31,7 +31,7 @@ public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
     private ConnectionFactory factory;
     private Connection connection;
     private ObjectPool<Channel> channelPool;
-    private String queueName = "openchaos_client_1";
+    private String queueName;
     private String consumeGroup;
     private ConsumerCallback consumerCallBack;
 
@@ -75,7 +75,4 @@ public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
         return connection;
     }
 
-    public DefaultRabbitMQPushConsumer getConsumer() {
-        return consumer;
-    }
 }

@@ -13,12 +13,12 @@
  */
 package io.openchaos.driver.rabbitmq.core;
 
-import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DefaultConsumer;
-import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.DefaultConsumer;
 import io.openchaos.common.Message;
 import io.openchaos.driver.queue.ConsumerCallback;
 import org.apache.commons.pool2.ObjectPool;
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeoutException;
 public class DefaultRabbitMQPushConsumer {
     private static final Logger log = LoggerFactory.getLogger(DefaultRabbitMQPushConsumer.class);
     private Connection connection;
-    private String queueName;
+    private final String queueName;
     private ObjectPool<Channel> channelPool;
     private ConsumerCallback consumerCallback;
     private Channel channel;
@@ -48,8 +48,6 @@ public class DefaultRabbitMQPushConsumer {
         try {
             this.channel = channelPool.borrowObject();
             channel.queueDeclare(queueName, false, false, false, null);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -87,9 +85,7 @@ public class DefaultRabbitMQPushConsumer {
             if (!connection.isOpen()) {
                 try {
                     connection = factory.newConnection(consumerGroup);
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                } catch (TimeoutException ex) {
+                } catch (IOException | TimeoutException ex) {
                     throw new RuntimeException(ex);
                 }
             }

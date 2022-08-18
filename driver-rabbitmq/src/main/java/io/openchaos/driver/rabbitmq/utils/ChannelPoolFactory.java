@@ -22,6 +22,7 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
@@ -63,7 +64,7 @@ public class ChannelPoolFactory extends BasePooledObjectFactory {
         }
     }
 
-    public Connection createNewConnection() {
+    public void createNewConnection() {
         try {
             connection = factory.newConnection("openchaos_channelPool");
         } catch (IOException e) {
@@ -71,7 +72,6 @@ public class ChannelPoolFactory extends BasePooledObjectFactory {
         } catch (TimeoutException e) {
             log.warn("Create connection timeout");
         }
-        return connection;
     }
 
     @Override
