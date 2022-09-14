@@ -42,6 +42,10 @@ import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 public class RabbitMQDriver implements QueueDriver {
+    enum State {
+        START, STOP, FINISH
+    }
+
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private final String queueName = "openchaos_client_1";
@@ -60,7 +64,7 @@ public class RabbitMQDriver implements QueueDriver {
     private Connection producerConnection;
     private Connection stateConnection;
     private Sync sync;
-    private volatile String curState = "stop";
+    private volatile State curState = State.STOP;
 
     private static RabbitMQClientConfig readConfigForClient(File configurationFile) throws IOException {
         return MAPPER.readValue(configurationFile, RabbitMQClientConfig.class);
@@ -96,11 +100,11 @@ public class RabbitMQDriver implements QueueDriver {
         sync = new Sync(nodes);
     }
 
-    public void intialState() {
-        if (Objects.equals("finish", curState) || Objects.equals("start", curState)) {
+    public void initialState() {
+        if (curState == State.FINISH || curState == State.START) {
             return;
         }
-        curState = "start";
+        curState = State.START;
         state = new RabbitMQChaosState("", queueName, nodes.get(0), rmqBrokerConfig.haMode, user, password);
         ConnectionFactory tmpFac = new ConnectionFactory();
         tmpFac.setHost(nodes.get(0));
@@ -139,7 +143,7 @@ public class RabbitMQDriver implements QueueDriver {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            curState = "finish";
+            curState = State.FINISH;
         }
     }
 
@@ -186,16 +190,16 @@ public class RabbitMQDriver implements QueueDriver {
 
     @Override
     public QueueProducer createProducer(String topic) {
-        if (Objects.equals("stop", curState)) {
-            intialState();
+        if (curState == State.STOP) {
+            initialState();
         }
         return new RabbitMQChaosProducer(factory, queueName, producerConnection, producerChannelPool);
     }
 
     @Override
     public QueuePushConsumer createPushConsumer(String topic, String subscriptionName, ConsumerCallback consumerCallback) {
-        if (Objects.equals("stop", curState)) {
-            intialState();
+        if (curState == State.STOP) {
+            initialState();
         }
         RabbitMQChaosPushConsumer rabbitMQChaosPushConsumer;
         try {
@@ -210,8 +214,8 @@ public class RabbitMQDriver implements QueueDriver {
 
     @Override
     public QueuePullConsumer createPullConsumer(String topic, String subscriptionName) {
-        if (Objects.equals("stop", curState)) {
-            intialState();
+        if (curState == State.STOP) {
+            initialState();
         }
         return new RabbitMQChaosPullConsumer(factory, queueName, subscriptionName, consumerChannelPool, consumerConnection);
     }
