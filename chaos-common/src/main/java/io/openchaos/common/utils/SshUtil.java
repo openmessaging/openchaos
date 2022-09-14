@@ -39,12 +39,11 @@ public class SshUtil {
     private static String username;
     private static String password;
 
-
     public static void init(String username, String password, List<String> nodes) throws Exception {
         SshUtil.username = username;
         SshUtil.password = password;
         client = SshClient.setUpDefaultClient();
-        if (password != null && !Objects.equals(password, "")) {
+        if (password != null && !Objects.equals(password, "")){
             client.addPasswordIdentity(password);
         }
         client.start();
