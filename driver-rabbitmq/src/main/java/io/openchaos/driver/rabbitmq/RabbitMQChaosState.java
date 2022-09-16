@@ -16,9 +16,19 @@ package io.openchaos.driver.rabbitmq;
 import io.openchaos.common.utils.SshUtil;
 import io.openchaos.driver.queue.QueueState;
 import io.openchaos.driver.rabbitmq.core.HaMode;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,21 +63,32 @@ public class RabbitMQChaosState implements QueueState {
                 log.warn("Get leader failed!");
             }
         } else if (haMode == HaMode.classic) {
-            String command = "curl -s -u " + user + ":" + password + " http://" + leader + ":15672/api/queues/%2f/openchaos_client_1 | python -m json.tool | grep node";
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            HttpPost httpPost = new HttpPost("http://" + leader + ":15672/api/queues/%2f/openchaos_client_1");
+            ArrayList<NameValuePair> parameters = new ArrayList<>();
+            parameters.add(new BasicNameValuePair("username", user));
+            parameters.add(new BasicNameValuePair("password", password));
+            CloseableHttpResponse response = null;
             try {
-                String s = SshUtil.execCommandWithArgsReturnStr(leader, command);
-                String[] split = s.split(":");
-                int l = 0;
-                while (split[1].charAt(l) != '"') {
-                    ++l;
+                UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(parameters);
+                httpPost.setEntity(formEntity);
+                httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
+                response = httpClient.execute(httpPost);
+                if (response.getStatusLine().getStatusCode() == 200) {
+                    String content = EntityUtils.toString(response.getEntity(), "UTF-8");
+
                 }
-                int r = split[1].length() - 1;
-                while (split[1].charAt(r) != '"') {
-                    --r;
-                }
-                leaderAddr.add(getHost(split[1].substring(l + 1, r)));
             } catch (Exception e) {
                 throw new RuntimeException(e);
+            } finally {
+                try {
+                    if (response != null) {
+                        response.close();
+                    }
+                    httpClient.close();
+                } catch (IOException e) {
+                    log.error("httpclient close faild!");
+                }
             }
         }
         return leaderAddr;
