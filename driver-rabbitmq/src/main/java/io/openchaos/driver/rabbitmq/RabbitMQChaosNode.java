@@ -64,10 +64,10 @@ public class RabbitMQChaosNode implements QueueNode {
 
     @Override
     public void setup() {
-        if (!StringUtils.equals(sync.status, "wait")) {
+        if (sync.status == Sync.State.START || sync.status == Sync.State.FINISH) {
             return;
         }
-        sync.status = "start";
+        sync.status = Sync.State.START;
         CountDownLatch latch = new CountDownLatch(nodes.size());
         Executor executor = new ForkJoinPool(nodes.size());
         for (String no : nodes) {
@@ -85,7 +85,7 @@ public class RabbitMQChaosNode implements QueueNode {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
-            sync.status = "finish";
+            sync.status = Sync.State.FINISH;
         }
     }
 
@@ -95,34 +95,39 @@ public class RabbitMQChaosNode implements QueueNode {
             // install erlang and rabbitmq
             installErlang(no);
             installRabbitmq(no);
-            sync.getCountDownLatch().countDown();
-            sync.getCountDownLatch().await(14, TimeUnit.MINUTES);
+            sync.barrier.await(14, TimeUnit.MINUTES);
             // sync cookie
+            sync.resetBarrier();
             sync.syncCookie(no);
-            sync.getCookieLatch().countDown();
-            sync.getCookieLatch().await(5, TimeUnit.MINUTES);
+            sync.barrier.await(5, TimeUnit.MINUTES);
             try {
                 SshUtil.execCommand(no, "rabbitmq-server -detached");
             } catch (Exception e) {
                 log.error(e.getMessage());
             }
             // join cluster
+            sync.resetBarrier();
             if (!Objects.equals(no, sync.getLeader())) {
-                SshUtil.execCommand(no, "rabbitmqctl stop_app");
-                SshUtil.execCommand(no, "rabbitmqctl reset");
-                SshUtil.execCommand(no, "rabbitmqctl join_cluster rabbit@" + sync.getLeader());
-                SshUtil.execCommand(no, "rabbitmqctl start_app");
-                log.info(no + " join cluster rabbit@" + sync.getLeader() + " finished");
+                try {
+                    SshUtil.execCommand(no, "rabbitmqctl stop_app");
+                    SshUtil.execCommand(no, "rabbitmqctl reset");
+                    SshUtil.execCommand(no, "rabbitmqctl join_cluster rabbit@" + sync.getLeader());
+                    SshUtil.execCommand(no, "rabbitmqctl start_app");
+                    log.info(no + " join cluster rabbit@" + sync.getLeader() + " finished");
+                } catch (Exception e){
+                    log.error(e.getMessage());
+                }
             }
+            sync.barrier.await(5, TimeUnit.MINUTES);
             ClusterStatus clusterStatus = null;
-            while (clusterStatus == null || clusterStatus.getRunningNodes().size() != nodes.size()) {
+            sync.resetBarrier();
+            while (clusterStatus == null || clusterStatus.getRunning_nodes().size() != nodes.size()) {
                 String cmd = "rabbitmqctl cluster_status --formatter json";
                 String res = SshUtil.execCommandWithArgsReturnStr(no, cmd);
                 ObjectMapper objectMapper = new ObjectMapper();
                 clusterStatus = objectMapper.readValue(res, ClusterStatus.class);
             }
-            sync.getJoinLatch().countDown();
-            sync.getJoinLatch().await(5, TimeUnit.MINUTES);
+            sync.barrier.await(5, TimeUnit.MINUTES);
         } catch (Exception e) {
             log.error("Node {} setup rabbitmq node failed", no, e);
             throw new RuntimeException(e);

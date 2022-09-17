@@ -76,7 +76,7 @@ public class RabbitMQChaosState implements QueueState {
                 response = httpClient.execute(httpPost);
                 if (response.getStatusLine().getStatusCode() == 200) {
                     String content = EntityUtils.toString(response.getEntity(), "UTF-8");
-
+                    //todo
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);

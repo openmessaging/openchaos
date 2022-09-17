@@ -19,13 +19,13 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ClusterStatus {
-    private List<String> runningNodes;
+    private List<String> running_nodes;
 
-    public List<String> getRunningNodes() {
-        return runningNodes;
+    public List<String> getRunning_nodes() {
+        return running_nodes;
     }
 
-    public void setRunningNodes(List<String> runningNodes) {
-        this.runningNodes = runningNodes;
+    public void setRunning_nodes(List<String> running_nodes) {
+        this.running_nodes = running_nodes;
     }
 }

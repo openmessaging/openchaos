@@ -17,29 +17,24 @@ import io.openchaos.common.utils.SshUtil;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 
 public class Sync {
-    private CountDownLatch countDownLatch;
-    private CountDownLatch cookieLatch;
-    private CountDownLatch joinLatch;
+    public enum State {
+        START, WAIT, FINISH;
+    }
+    public CyclicBarrier barrier;
     private String leader;
     private final String cookie = "openchaoscookie";
-    public String status = "wait";
+    public volatile State status = State.WAIT;
+    private int size;
 
     public Sync(List<String> nodes) {
-        countDownLatch = new CountDownLatch(nodes.size());
-        cookieLatch = new CountDownLatch(nodes.size());
-        joinLatch = new CountDownLatch(nodes.size());
+        barrier = new CyclicBarrier(nodes.size());
+        size = nodes.size();
         if (nodes.size() != 0) leader = nodes.get(0);
     }
 
-    public CountDownLatch getCountDownLatch() {
-        return countDownLatch;
-    }
-
-    public CountDownLatch getCookieLatch() {
-        return cookieLatch;
-    }
 
     public String getLeader() {
         return leader;
@@ -50,16 +45,18 @@ public class Sync {
         SshUtil.execCommand(node, cmd);
     }
 
-    public CountDownLatch getJoinLatch() {
-        return joinLatch;
-    }
-
     public void addUser(String username, String password) {
         try {
             SshUtil.execCommand(leader, "rabbitmqctl add_user " + username + " " + password);
             SshUtil.execCommand(leader, "rabbitmqctl set_user_tags " + username + " administrator");
             SshUtil.execCommand(leader, "rabbitmqctl set_permissions -p / " + username + " \".*\" \".*\" \".*\"");
         } catch (Exception ignored) {
+        }
+    }
+
+    public void resetBarrier() {
+        if (barrier.getNumberWaiting() == size) {
+            barrier.reset();
         }
     }
 }
