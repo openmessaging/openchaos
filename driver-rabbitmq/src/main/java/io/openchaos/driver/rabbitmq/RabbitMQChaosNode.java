@@ -114,7 +114,7 @@ public class RabbitMQChaosNode implements QueueNode {
                     SshUtil.execCommand(no, "rabbitmqctl join_cluster rabbit@" + sync.getLeader());
                     SshUtil.execCommand(no, "rabbitmqctl start_app");
                     log.info(no + " join cluster rabbit@" + sync.getLeader() + " finished");
-                } catch (Exception e){
+                } catch (Exception e) {
                     log.error(e.getMessage());
                 }
             }

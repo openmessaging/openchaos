@@ -13,22 +13,21 @@
  */
 package io.openchaos.driver.rabbitmq;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.openchaos.common.utils.SshUtil;
 import io.openchaos.driver.queue.QueueState;
 import io.openchaos.driver.rabbitmq.core.HaMode;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
+import io.openchaos.driver.rabbitmq.core.HttpClientFactory;
+import io.openchaos.driver.rabbitmq.core.LeaderStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,6 +43,7 @@ public class RabbitMQChaosState implements QueueState {
         this.leader = node;
         this.user = user;
         this.password = password;
+        HttpClientFactory.initial(user, password);
     }
 
     @Override
@@ -63,34 +63,16 @@ public class RabbitMQChaosState implements QueueState {
                 log.warn("Get leader failed!");
             }
         } else if (haMode == HaMode.classic) {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            HttpPost httpPost = new HttpPost("http://" + leader + ":15672/api/queues/%2f/openchaos_client_1");
-            ArrayList<NameValuePair> parameters = new ArrayList<>();
-            parameters.add(new BasicNameValuePair("username", user));
-            parameters.add(new BasicNameValuePair("password", password));
-            CloseableHttpResponse response = null;
+            String url = "http://" + leader + ":15672/api/queues/%2f/openchaos_client_1";
             try {
-                UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(parameters);
-                httpPost.setEntity(formEntity);
-                httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
-                response = httpClient.execute(httpPost);
-                if (response.getStatusLine().getStatusCode() == 200) {
-                    String content = EntityUtils.toString(response.getEntity(), "UTF-8");
-                    //todo
-                }
-            } catch (Exception e) {
+                String content = sendGet(url);
+                ObjectMapper objectMapper = new ObjectMapper();
+                leader = objectMapper.readValue(content, LeaderStatus.class).getNode();
+            } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
-            } finally {
-                try {
-                    if (response != null) {
-                        response.close();
-                    }
-                    httpClient.close();
-                } catch (IOException e) {
-                    log.error("httpclient close faild!");
-                }
             }
         }
+        leaderAddr.add(getHost(leader));
         return leaderAddr;
     }
 
@@ -100,5 +82,29 @@ public class RabbitMQChaosState implements QueueState {
 
     private String getHost(String nodeName) {
         return nodeName.split("@")[1];
+    }
+
+    private String sendGet(String url) {
+        CloseableHttpClient httpClient = HttpClientFactory.createCloseableHttpClientWithBasicAuth(null);
+        HttpGet httpGet = new HttpGet(url);
+        CloseableHttpResponse response = null;
+        try {
+            response = httpClient.execute(httpGet);
+            if (response.getStatusLine().getStatusCode() == 200) {
+                return EntityUtils.toString(response.getEntity(), "UTF-8");
+            }
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        } finally {
+            try {
+                if (response != null) {
+                    response.close();
+                }
+                httpClient.close();
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
+        }
+        return leader;
     }
 }

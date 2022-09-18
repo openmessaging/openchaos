@@ -38,7 +38,6 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 public class RabbitMQDriver implements QueueDriver {

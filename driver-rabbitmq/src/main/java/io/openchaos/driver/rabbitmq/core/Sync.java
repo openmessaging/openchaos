@@ -16,13 +16,13 @@ package io.openchaos.driver.rabbitmq.core;
 import io.openchaos.common.utils.SshUtil;
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 public class Sync {
     public enum State {
         START, WAIT, FINISH;
     }
+
     public CyclicBarrier barrier;
     private String leader;
     private final String cookie = "openchaoscookie";
