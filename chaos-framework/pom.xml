@@ -95,6 +95,11 @@
             <groupId>com.aliyun.oss</groupId>
             <artifactId>aliyun-sdk-oss</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.openmessaging</groupId>
+            <artifactId>driver-elasticsearch</artifactId>
+            <version>0.6.5-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
