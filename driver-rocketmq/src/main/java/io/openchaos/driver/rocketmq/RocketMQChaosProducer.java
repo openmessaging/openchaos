@@ -16,14 +16,12 @@ package io.openchaos.driver.rocketmq;
 
 import io.openchaos.common.InvokeResult;
 import io.openchaos.driver.queue.QueueProducer;
-import java.util.List;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
-import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
-import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.exception.RemotingConnectException;
 import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.remoting.exception.RemotingSendRequestException;
@@ -34,7 +32,7 @@ public class RocketMQChaosProducer implements QueueProducer {
 
     private static final Logger log = LoggerFactory.getLogger(RocketMQChaosProducer.class);
     private final DefaultMQProducer defaultMQProducer;
-    private String chaosTopic;
+    private final String chaosTopic;
 
     public RocketMQChaosProducer(final DefaultMQProducer defaultMQProducer, String chaosTopic) {
         this.defaultMQProducer = defaultMQProducer;
@@ -44,7 +42,7 @@ public class RocketMQChaosProducer implements QueueProducer {
     @Override
     public InvokeResult enqueue(byte[] payload) {
         Message message = new Message(chaosTopic, payload);
-        SendResult sendResult = null;
+        SendResult sendResult;
         try {
             sendResult = defaultMQProducer.send(message);
         } catch (RemotingException e) {
@@ -62,6 +60,9 @@ public class RocketMQChaosProducer implements QueueProducer {
             log.warn("Enqueue unknown", e);
             return InvokeResult.UNKNOWN;
         }
+        if (sendResult.getSendStatus() != SendStatus.SEND_OK) {
+            return InvokeResult.FAILURE.setExtraInfoAndReturnSelf(sendResult.toString());
+        }
         return InvokeResult.SUCCESS.setExtraInfoAndReturnSelf(sendResult.toString());
     }
 
@@ -69,15 +70,12 @@ public class RocketMQChaosProducer implements QueueProducer {
     public InvokeResult enqueue(String shardingKey, byte[] payload) {
         Message message = new Message(chaosTopic, payload);
         message.setKeys(shardingKey);
-        SendResult sendResult = null;
+        SendResult sendResult;
         try {
-            sendResult = defaultMQProducer.send(message, new MessageQueueSelector() {
-                @Override
-                public MessageQueue select(List<MessageQueue> mqs, Message msg, Object arg) {
-                    String key = (String) arg;
-                    int index = Math.abs(key.hashCode()) % mqs.size();
-                    return mqs.get(index);
-                }
+            sendResult = defaultMQProducer.send(message, (mqs, msg, arg) -> {
+                String key = (String) arg;
+                int index = Math.abs(key.hashCode()) % mqs.size();
+                return mqs.get(index);
             }, shardingKey);
         } catch (RemotingException e) {
             if (e instanceof RemotingConnectException || e instanceof RemotingSendRequestException) {
@@ -93,6 +91,9 @@ public class RocketMQChaosProducer implements QueueProducer {
         } catch (Exception e) {
             log.warn("Enqueue unknown", e);
             return InvokeResult.UNKNOWN;
+        }
+        if (sendResult.getSendStatus() != SendStatus.SEND_OK) {
+            return InvokeResult.FAILURE.setExtraInfoAndReturnSelf(sendResult.toString());
         }
         return InvokeResult.SUCCESS.setExtraInfoAndReturnSelf(sendResult.toString());
     }
