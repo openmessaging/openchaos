@@ -30,6 +30,7 @@
         <module>driver-dledger</module>
         <module>driver-redis</module>
         <module>driver-etcd</module>
+        <module>driver-rabbitmq</module>
     </modules>
 
     <parent>

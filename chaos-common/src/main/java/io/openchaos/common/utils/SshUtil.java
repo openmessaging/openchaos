@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.session.ClientSession;
 import org.slf4j.Logger;
@@ -37,7 +38,6 @@ public class SshUtil {
     private static Set<String> nodeSet = new HashSet<>();
     private static String username;
     private static String password;
-
 
     public static void init(String username, String password, List<String> nodes) throws Exception {
         SshUtil.username = username;
