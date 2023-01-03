@@ -21,22 +21,23 @@ endToEndLatencyCheck: true
 
 # Nodes for broker
 nodes:
-- 172.22.144.61 # replace with ip or domain name, such as 192.168.0.2
-- 172.22.144.60
+- 172.16.66.76 # replace with ip or domain name, such as 192.168.0.2
+- 172.16.66.77
 
-# Nodes for nameserver
+# Nodes for controller
 metaNodes:
-- 172.22.144.62 # replace with ip or domain name, such as 192.168.0.1
-- 172.22.144.63
-- 172.22.144.64
+- 172.16.66.73 # replace with ip or domain name, such as 192.168.0.1
+- 172.16.66.74
+- 172.16.66.75
 
 # RocketMQ configuration
 rocketmqVersion: 4.8.0
-installDir: rocketmq-5.0.0-BETA-SNAPSHOT # you could set existent location for RocketMQ
+installDir: rocketmq-5.0.1-SNAPSHOT # you could set existent location for RocketMQ
 nameServerPort: 9876
 
 # RocketMQ client configuration
 clusterName: DefaultCluster # same value as the config in broker.properties
+namesrvAddr: 172.16.66.72:9876
 vipChannelEnabled: false
 
 # RocketMQ broker configuration
@@ -47,5 +48,5 @@ storePathCommitLog: /tmp/rmqstore/node00/commitlog
 enableDLegerCommitLog: true
 dLegerGroup: RaftNode00
 sendMessageThreadPoolNums: 16
-configureFilePath: /home/rocketmq/conf/broker/broker1.conf
+configureFilePath: /root/broker.conf
 metaNodesParticipateInFault: false

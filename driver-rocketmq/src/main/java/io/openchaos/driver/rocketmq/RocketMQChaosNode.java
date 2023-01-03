@@ -111,7 +111,7 @@ public class RocketMQChaosNode implements QueueNode {
             }
             //Start broker
             log.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", "nohup sh bin/mqbroker -c /home/rocketmq/conf/broker/broker1.conf > broker.log 2>&1 &");
+            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", "nohup sh bin/mqbroker -c /root/broker.conf > broker.log 2>&1 &");
         } catch (Exception e) {
             log.error("Node {} start rocketmq node failed", node, e);
             throw new RuntimeException(e);

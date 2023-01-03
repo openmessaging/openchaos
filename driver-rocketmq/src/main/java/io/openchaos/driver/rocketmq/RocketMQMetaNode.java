@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RocketMQMetaNode implements MetaNode {
 
-    private static final String NAMESERVER_PROCESS_NAME = "NamesrvStartup";
+    private static final String NAMESERVER_PROCESS_NAME = "ControllerStartup";
     private static final Logger log = LoggerFactory.getLogger(RocketMQMetaNode.class);
     private String installDir = "rocketmq-chaos-test";
     private String rocketmqVersion = "4.6.0";
@@ -72,7 +72,7 @@ public class RocketMQMetaNode implements MetaNode {
         try {
             //Start nameserver
             log.info("Node {} start nameserver...", node);
-            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", "nohup sh bin/mqnamesrv -c /home/rocketmq/conf/namesrv/namesrv.conf > nameserver.log 2>&1 &");
+            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", "nohup sh bin/mqcontroller -c /root/controller.conf > controller.log 2>&1 &");
         } catch (Exception e) {
             log.error("Node {} start nameserver node failed", node, e);
             throw new RuntimeException(e);
