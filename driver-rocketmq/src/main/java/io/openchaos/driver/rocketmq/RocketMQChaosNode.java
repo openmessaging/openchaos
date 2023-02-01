@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public class RocketMQChaosNode implements QueueNode {
 
     private static final String BROKER_PROCESS_NAME = "BrokerStartup";
-    private static final String NAMESERVER_PROCESS_NAME = "NamesrvStartup";
+    private static final String NAMESERVER_PROCESS_NAME = "ControllerStartup";
     private static final Logger log = LoggerFactory.getLogger(RocketMQChaosNode.class);
     private String node;
     private List<String> nodes;
@@ -107,11 +107,11 @@ public class RocketMQChaosNode implements QueueNode {
             if ((metaNodes == null || metaNodes.isEmpty())
                 && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty())) {
                 log.info("Node {} start nameserver...", node);
-                SshUtil.execCommandInDir(node, installDir, "nohup sh bin/mqnamesrv > nameserver.log 2>&1 &");
+                SshUtil.execCommandInDir(node, installDir, "nohup sh rmq/bin/mqcontroller -c svn_conf/controller.conf &");
             }
             //Start broker
             log.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", "nohup sh bin/mqbroker -c /root/broker.conf > broker.log 2>&1 &");
+            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", "nohup sh startbroker.sh &");
         } catch (Exception e) {
             log.error("Node {} start rocketmq node failed", node, e);
             throw new RuntimeException(e);
