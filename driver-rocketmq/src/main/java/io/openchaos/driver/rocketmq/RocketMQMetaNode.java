@@ -24,20 +24,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Nodes for nameserver
+ * Nodes for metanode
  */
 public class RocketMQMetaNode implements MetaNode {
 
-    private static final String NAMESERVER_PROCESS_NAME = "ControllerStartup";
+    private static final String METANODE_PROCESS_NAME = "ControllerStartup";
     private static final Logger log = LoggerFactory.getLogger(RocketMQMetaNode.class);
     private String installDir = "rocketmq-chaos-test";
     private String rocketmqVersion = "4.6.0";
     private String node;
     private List<String> nodes;
+    private RocketMQConfig rmqConfig;
 
     public RocketMQMetaNode(String node, List<String> nodes, RocketMQConfig rmqConfig) {
         this.node = node;
         this.nodes = nodes;
+        this.rmqConfig = rmqConfig;
         if (rmqConfig.installDir != null && !rmqConfig.installDir.isEmpty()) {
             this.installDir = rmqConfig.installDir;
         }
@@ -49,17 +51,17 @@ public class RocketMQMetaNode implements MetaNode {
     @Override public void setup() {
         try {
             //Download rocketmq package
-            log.info("Node {} download rocketmq for nameserver ...", node);
+            log.info("Node {} download rocketmq for metanode ...", node);
             SshUtil.execCommand(node, String.format("rm -rf %s; mkdir %s", installDir, installDir));
             SshUtil.execCommandInDir(node, installDir,
                 String.format("curl https://archive.apache.org/dist/rocketmq/%s/rocketmq-all-%s-bin-release.zip -o rocketmq.zip", rocketmqVersion, rocketmqVersion),
                 "unzip rocketmq.zip", "rm -f rocketmq.zip", "mv rocketmq-all*/* .", "rmdir rocketmq-all*");
-            log.info("Node {} download rocketmq for nameserver success", node);
+            log.info("Node {} download rocketmq for metanode success", node);
 
             //For docker test, because the memory of local computer is too small
             SshUtil.execCommandInDir(node, installDir, "sed -i  's/-Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m/-Xms500m -Xmx500m -Xmn250m -XX:MetaspaceSize=16m -XX:MaxMetaspaceSize=40m/g' bin/runserver.sh");
         } catch (Exception e) {
-            log.error("Node {} setup nameserver node failed", node, e);
+            log.error("Node {} setup metanode node failed", node, e);
             throw new RuntimeException(e);
         }
     }
@@ -70,47 +72,47 @@ public class RocketMQMetaNode implements MetaNode {
 
     @Override public void start() {
         try {
-            //Start nameserver
-            log.info("Node {} start nameserver...", node);
-            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", "nohup sh bin/mqcontroller -c /root/controller.conf > controller.log 2>&1 &");
+            //Start metanode
+            log.info("Node {} start controller...", node);
+            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", rmqConfig.metaNodeProcessStartupCommandLine);
         } catch (Exception e) {
-            log.error("Node {} start nameserver node failed", node, e);
+            log.error("Node {} start metanode node failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
     @Override public void stop() {
         try {
-            KillProcessUtil.kill(node, NAMESERVER_PROCESS_NAME);
+            KillProcessUtil.kill(node, METANODE_PROCESS_NAME);
         } catch (Exception e) {
-            log.error("Node {} stop nameserver processes failed", node, e);
+            log.error("Node {} stop metanode processes failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
     @Override public void kill() {
         try {
-            KillProcessUtil.forceKill(node, NAMESERVER_PROCESS_NAME);
+            KillProcessUtil.forceKill(node, METANODE_PROCESS_NAME);
         } catch (Exception e) {
-            log.error("Node {} kill nameserver processes failed", node, e);
+            log.error("Node {} kill metanode processes failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
     @Override public void pause() {
         try {
-            PauseProcessUtil.suspend(node, NAMESERVER_PROCESS_NAME);
+            PauseProcessUtil.suspend(node, METANODE_PROCESS_NAME);
         } catch (Exception e) {
-            log.error("Node {} suspend nameserver processes failed", node, e);
+            log.error("Node {} suspend metanode processes failed", node, e);
             throw new RuntimeException(e);
         }
     }
 
     @Override public void resume() {
         try {
-            PauseProcessUtil.resume(node, NAMESERVER_PROCESS_NAME);
+            PauseProcessUtil.resume(node, METANODE_PROCESS_NAME);
         } catch (Exception e) {
-            log.error("Node {} resume nameserver processes failed", node, e);
+            log.error("Node {} resume metanode processes failed", node, e);
             throw new RuntimeException(e);
         }
     }

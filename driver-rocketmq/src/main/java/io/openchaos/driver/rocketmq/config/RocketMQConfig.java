@@ -19,4 +19,6 @@ public class RocketMQConfig {
     public String rocketmqVersion;
     public String configureFilePath;
     public String nameServerPort;
+    public String metaNodeProcessStartupCommandLine;
+    public String brokerProcessStartupCommandLine;
 }

@@ -32,8 +32,10 @@ metaNodes:
 
 # RocketMQ configuration
 rocketmqVersion: 4.8.0
-installDir: /root/rmq/bin # you could set existent location for RocketMQ
+installDir: "/root/rocketmq-5.0.1-SNAPSHOT" # you could set existent location for RocketMQ Home
 nameServerPort: 9876
+metaNodeProcessStartupCommandLine:  "nohup sh bin/mqcontroller -c /root/controller.conf > controller.log 2>&1 &"
+brokerProcessStartupCommandLine: "nohup sh bin/mqbroker -c /root/broker.conf > broker.log 2>&1 &"
 
 # RocketMQ client configuration
 clusterName: ha-cluster # same value as the config in broker.properties
@@ -41,7 +43,7 @@ namesrvAddr: 172.16.66.72:9876
 vipChannelEnabled: false
 
 # RocketMQ broker configuration
-brokerClusterName: ha-cluster
+brokerClusterName: cluster1
 brokerName: RaftNode00
 storePathRootDir: /tmp/rmqstore/node00
 storePathCommitLog: /tmp/rmqstore/node00/commitlog

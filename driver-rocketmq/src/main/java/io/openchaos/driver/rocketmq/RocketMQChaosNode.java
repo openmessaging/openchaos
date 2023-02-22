@@ -28,12 +28,12 @@ import org.slf4j.LoggerFactory;
 public class RocketMQChaosNode implements QueueNode {
 
     private static final String BROKER_PROCESS_NAME = "BrokerStartup";
-    private static final String NAMESERVER_PROCESS_NAME = "ControllerStartup";
     private static final Logger log = LoggerFactory.getLogger(RocketMQChaosNode.class);
     private String node;
     private List<String> nodes;
     private List<String> metaNodes;
     private RocketMQBrokerConfig rmqBrokerConfig;
+    private RocketMQConfig rmqConfig;
     private String installDir = "rocketmq-chaos-test";
     private String rocketmqVersion = "4.6.0";
     private String configureFilePath = "broker-chaos-test.conf";
@@ -45,6 +45,7 @@ public class RocketMQChaosNode implements QueueNode {
         this.nodes = nodes;
         this.metaNodes = metaNodes;
         this.rmqBrokerConfig = rmqBrokerConfig;
+        this.rmqConfig = rmqConfig;
         if (rmqConfig.installDir != null && !rmqConfig.installDir.isEmpty()) {
             this.installDir = rmqConfig.installDir;
         }
@@ -103,15 +104,9 @@ public class RocketMQChaosNode implements QueueNode {
     @Override
     public void start() {
         try {
-            //Start nameserver
-            if ((metaNodes == null || metaNodes.isEmpty())
-                && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty())) {
-                log.info("Node {} start nameserver...", node);
-                SshUtil.execCommandInDir(node, installDir, "nohup sh rmq/bin/mqcontroller -c svn_conf/controller.conf &");
-            }
             //Start broker
             log.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", "nohup sh startbroker.sh &");
+            SshUtil.execCommandInDir(node, installDir, "source /etc/profile", rmqConfig.brokerProcessStartupCommandLine);
         } catch (Exception e) {
             log.error("Node {} start rocketmq node failed", node, e);
             throw new RuntimeException(e);
@@ -122,10 +117,6 @@ public class RocketMQChaosNode implements QueueNode {
     public void stop() {
         try {
             KillProcessUtil.kill(node, BROKER_PROCESS_NAME);
-            if ((metaNodes == null || metaNodes.isEmpty())
-                && (metaNodes == null && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty()))) {
-                KillProcessUtil.kill(node, NAMESERVER_PROCESS_NAME);
-            }
         } catch (Exception e) {
             log.error("Node {} stop rocketmq processes failed", node, e);
             throw new RuntimeException(e);
@@ -136,10 +127,6 @@ public class RocketMQChaosNode implements QueueNode {
     public void kill() {
         try {
             KillProcessUtil.forceKill(node, BROKER_PROCESS_NAME);
-            if ((metaNodes == null || metaNodes.isEmpty())
-                && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty())) {
-                KillProcessUtil.forceKill(node, NAMESERVER_PROCESS_NAME);
-            }
         } catch (Exception e) {
             log.error("Node {} kill rocketmq processes failed", node, e);
             throw new RuntimeException(e);
@@ -150,10 +137,6 @@ public class RocketMQChaosNode implements QueueNode {
     public void pause() {
         try {
             PauseProcessUtil.suspend(node, BROKER_PROCESS_NAME);
-            if ((metaNodes == null || metaNodes.isEmpty())
-                && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty())) {
-                PauseProcessUtil.suspend(node, NAMESERVER_PROCESS_NAME);
-            }
         } catch (Exception e) {
             log.error("Node {} pause rocketmq processes failed", node, e);
             throw new RuntimeException(e);
@@ -164,10 +147,6 @@ public class RocketMQChaosNode implements QueueNode {
     public void resume() {
         try {
             PauseProcessUtil.resume(node, BROKER_PROCESS_NAME);
-            if ((metaNodes == null || metaNodes.isEmpty())
-                && (rmqBrokerConfig.namesrvAddr == null || rmqBrokerConfig.namesrvAddr.isEmpty())) {
-                PauseProcessUtil.resume(node, NAMESERVER_PROCESS_NAME);
-            }
         } catch (Exception e) {
             log.error("Node {} resume rocketmq processes failed", node, e);
             throw new RuntimeException(e);
@@ -181,19 +160,4 @@ public class RocketMQChaosNode implements QueueNode {
         }
         return res.toString();
     }
-
-    private String getNameserver(List<String> nodes) {
-        if (rmqBrokerConfig.namesrvAddr != null && !rmqBrokerConfig.namesrvAddr.isEmpty()) {
-            return rmqBrokerConfig.namesrvAddr;
-        } else if (metaNodes != null) {
-            StringBuilder res = new StringBuilder();
-            metaNodes.forEach(node -> res.append(node + ":" + nameServerPort + ";"));
-            return res.toString();
-        } else {
-            StringBuilder res = new StringBuilder();
-            nodes.forEach(node -> res.append(node + ":" + nameServerPort + ";"));
-            return res.toString();
-        }
-    }
-
 }
