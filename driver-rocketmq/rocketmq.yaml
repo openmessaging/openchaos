@@ -21,14 +21,14 @@ endToEndLatencyCheck: true
 
 # Nodes for broker
 nodes:
-- 121.40.218.144 # replace with ip or domain name, such as 192.168.0.2
-- 116.62.14.207
+- 114.55.103.35 # replace with ip or domain name, such as 192.168.0.2
+- 47.99.122.254
 
 # Nodes for controller
 metaNodes:
-- 120.26.66.165 # replace with ip or domain name, such as 192.168.0.1
-- 120.26.48.44
-- 121.41.81.74
+- 172.16.66.73 # replace with ip or domain name, such as 192.168.0.1
+- 172.16.66.74
+- 172.16.66.75
 
 # RocketMQ configuration
 rocketmqVersion: 4.8.0
@@ -38,7 +38,7 @@ metaNodeProcessStartupCommandLine:  "nohup sh bin/mqcontroller -c /root/controll
 brokerProcessStartupCommandLine: "nohup sh bin/mqbroker -c /root/broker.conf > broker.log 2>&1 &"
 
 # RocketMQ client configuration
-clusterName: ha-cluster # same value as the config in broker.properties
+clusterName: cluster1 # same value as the config in broker.properties
 namesrvAddr: 172.16.66.72:9876
 vipChannelEnabled: false
 
