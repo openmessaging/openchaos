@@ -115,6 +115,7 @@ public class RocketMQDriver implements QueueDriver {
             defaultMQPushConsumer.subscribe(topic, "*");
             defaultMQPushConsumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
                 for (MessageExt message : msgs) {
+                    log.error(msgs.toString());
                     consumerCallback.messageReceived(new Message(message.getKeys(), message.getBody(), message.getBornTimestamp(), System.currentTimeMillis(), buildExtraInfo(message, subscriptionName)));
                 }
                 return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
