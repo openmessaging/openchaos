@@ -31,6 +31,7 @@
         <module>driver-redis</module>
         <module>driver-etcd</module>
         <module>driver-rabbitmq</module>
+        <module>driver-elasticsearch</module>
     </modules>
 
     <parent>
