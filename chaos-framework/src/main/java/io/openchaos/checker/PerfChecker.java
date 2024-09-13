@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -137,10 +138,9 @@ public class PerfChecker implements Checker {
         List<Point> invokeUnknownList = new ArrayList<>();
 
         // Get fault interval from chaos mesh log file
-        String logFilePath = System.getenv("CHAOS_MESH_LOG_FILE");
-        if (logFilePath == null || logFilePath.isEmpty()) {
-            logFilePath = originFilePath;
-        }
+        String chaosMeshLogFilePath = System.getenv("CHAOS_MESH_LOG_FILE");
+        // Validate if the file path is valid
+        String logFilePath = getValidLogFilePath(chaosMeshLogFilePath, originFilePath);
 
         // Read fault intervals from the log file
         List<String[]> faultLines = Files.lines(Paths.get(logFilePath))
@@ -222,6 +222,18 @@ public class PerfChecker implements Checker {
         p.plot();
 
         ImageIO.write(png.getImage(), "png", file);
+    }
+
+    private String getValidLogFilePath(String envLogFilePath, String defaultFilePath) throws IOException {
+        if (envLogFilePath != null && !envLogFilePath.isEmpty()) {
+            Path path = Paths.get(envLogFilePath);
+            if (Files.exists(path) && Files.isReadable(path)) {
+                return envLogFilePath;
+            } else {
+                throw new IOException("CHAOS_MESH_LOG_FILE is set but the file does not exist or is not readable: " + envLogFilePath);
+            }
+        }
+        return defaultFilePath;
     }
 
     private void renderPoint(JavaPlot plot, List<Point> dataSet, String title, int pointType, NamedPlotColor color) {
