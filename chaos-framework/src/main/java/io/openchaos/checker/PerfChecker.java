@@ -224,16 +224,14 @@ public class PerfChecker implements Checker {
         ImageIO.write(png.getImage(), "png", file);
     }
 
-    private String getValidLogFilePath(String envLogFilePath, String defaultFilePath) throws IOException {
+    private String getValidLogFilePath(String envLogFilePath, String defaultFilePath) {
         if (envLogFilePath != null && !envLogFilePath.isEmpty()) {
             Path path = Paths.get(envLogFilePath);
             if (Files.exists(path) && Files.isReadable(path)) {
                 return envLogFilePath;
-            } else {
-                throw new IOException("CHAOS_MESH_LOG_FILE is set but the file does not exist or is not readable: " + envLogFilePath);
             }
         }
-        return defaultFilePath;
+        return defaultFilePath; // Use default path if environment variable is not set or invalid
     }
 
     private void renderPoint(JavaPlot plot, List<Point> dataSet, String title, int pointType, NamedPlotColor color) {
