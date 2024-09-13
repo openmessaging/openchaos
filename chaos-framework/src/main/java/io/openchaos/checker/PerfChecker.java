@@ -136,17 +136,17 @@ public class PerfChecker implements Checker {
         List<Point> invokeFailureList = new ArrayList<>();
         List<Point> invokeUnknownList = new ArrayList<>();
 
-        // Fault interval
-        List<String[]> faultLines;
         // Get fault interval from chaos mesh log file
-        String chaosMeshLogFilePath = System.getenv("CHAOS_MESH_LOG_FILE");
-        if (chaosMeshLogFilePath != null && !chaosMeshLogFilePath.isEmpty()) {
-            faultLines = Files.lines(Paths.get(chaosMeshLogFilePath)).
-                    filter(x -> x.startsWith("fault")).map(x -> x.split("\t")).collect(Collectors.toList());
-        } else {
-            faultLines = Files.lines(Paths.get(originFilePath)).
-                    filter(x -> x.startsWith("fault")).map(x -> x.split("\t")).collect(Collectors.toList());
+        String logFilePath = System.getenv("CHAOS_MESH_LOG_FILE");
+        if (logFilePath == null || logFilePath.isEmpty()) {
+            logFilePath = originFilePath;
         }
+
+        // Read fault intervals from the log file
+        List<String[]> faultLines = Files.lines(Paths.get(logFilePath))
+                .filter(line -> line.startsWith("fault"))
+                .map(line -> line.split("\t"))
+                .collect(Collectors.toList());
 
         for (int i = 0; i < faultLines.size(); ) {
             if (faultLines.get(i)[2].equals("start")) {
