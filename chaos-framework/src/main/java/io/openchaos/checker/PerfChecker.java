@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -136,9 +137,16 @@ public class PerfChecker implements Checker {
         List<Point> invokeFailureList = new ArrayList<>();
         List<Point> invokeUnknownList = new ArrayList<>();
 
-        //Fault interval
-        List<String[]> faultLines = Files.lines(Paths.get(originFilePath)).
-            filter(x -> x.startsWith("fault")).map(x -> x.split("\t")).collect(Collectors.toList());
+        // Get fault interval from chaos mesh log file
+        String chaosMeshLogFilePath = System.getenv("CHAOS_MESH_LOG_FILE");
+        // Validate if the file path is valid
+        String logFilePath = getValidLogFilePath(chaosMeshLogFilePath, originFilePath);
+
+        // Read fault intervals from the log file
+        List<String[]> faultLines = Files.lines(Paths.get(logFilePath))
+                .filter(line -> line.startsWith("fault"))
+                .map(line -> line.split("\t"))
+                .collect(Collectors.toList());
 
         for (int i = 0; i < faultLines.size(); ) {
             if (faultLines.get(i)[2].equals("start")) {
@@ -214,6 +222,16 @@ public class PerfChecker implements Checker {
         p.plot();
 
         ImageIO.write(png.getImage(), "png", file);
+    }
+
+    private String getValidLogFilePath(String envLogFilePath, String defaultFilePath) {
+        if (envLogFilePath != null && !envLogFilePath.isEmpty()) {
+            Path path = Paths.get(envLogFilePath);
+            if (Files.exists(path) && Files.isReadable(path)) {
+                return envLogFilePath;
+            }
+        }
+        return defaultFilePath; // Use default path if environment variable is not set or invalid
     }
 
     private void renderPoint(JavaPlot plot, List<Point> dataSet, String title, int pointType, NamedPlotColor color) {
