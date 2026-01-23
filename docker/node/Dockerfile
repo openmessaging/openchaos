@@ -1,5 +1,5 @@
 # Based on the deprecated `https://github.com/tutumcloud/tutum-debian`
-FROM debian:stretch
+FROM debian:sid
 
 # Install packages
 RUN apt-get update && \
@@ -27,8 +27,8 @@ RUN apt-get update && apt-get install -y maven
 RUN apt-get install -y \
         sudo net-tools wget \
         curl vim man faketime unzip less \
-        iptables iputils-ping logrotate && \
-    apt-get remove -y --purge --auto-remove systemd
+        iptables iputils-ping logrotate
+    # apt-get remove -y --purge --auto-remove systemd
 
 EXPOSE 22
 CMD ["/run.sh"]
