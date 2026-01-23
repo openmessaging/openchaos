@@ -1,11 +1,13 @@
 package io.openchaos.common.utils;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
+@Ignore("Requires external SSH host; not part of automated test suite")
 public class SshUtilTest {
     static String user = "root";
     static String password = "Yigeyy00";

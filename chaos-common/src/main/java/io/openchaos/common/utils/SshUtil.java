@@ -43,7 +43,7 @@ public class SshUtil {
         SshUtil.username = username;
         SshUtil.password = password;
         client = SshClient.setUpDefaultClient();
-        if (password != null && !Objects.equals(password, "")){
+        if (password != null && !Objects.equals(password, "")) {
             client.addPasswordIdentity(password);
         }
         client.start();
