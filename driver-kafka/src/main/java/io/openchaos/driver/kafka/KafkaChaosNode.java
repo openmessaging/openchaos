@@ -90,7 +90,7 @@ public class KafkaChaosNode implements QueueNode {
         try {
             //Start broker
             log.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, String.format("nohup sh bin/kafka-server-start.sh '%s' > broker.log 2>&1 &"
+            SshUtil.execCommandInDir(node, installDir, String.format("nohup bash bin/kafka-server-start.sh '%s' > broker.log 2>&1 &"
                 , configureFilePath));
         } catch (Exception e) {
             log.error("Node {} start kafka node failed", node, e);
