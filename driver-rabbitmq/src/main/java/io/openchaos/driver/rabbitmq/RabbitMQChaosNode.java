@@ -121,7 +121,7 @@ public class RabbitMQChaosNode implements QueueNode {
             sync.barrier.await(5, TimeUnit.MINUTES);
             ClusterStatus clusterStatus = null;
             sync.resetBarrier();
-            while (clusterStatus == null || clusterStatus.getRunning_nodes().size() != nodes.size()) {
+            while (clusterStatus == null || clusterStatus.getRunningNodes().size() != nodes.size()) {
                 String cmd = "rabbitmqctl cluster_status --formatter json";
                 String res = SshUtil.execCommandWithArgsReturnStr(no, cmd);
                 ObjectMapper objectMapper = new ObjectMapper();
