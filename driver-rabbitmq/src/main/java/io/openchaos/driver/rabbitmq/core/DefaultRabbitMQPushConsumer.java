@@ -71,24 +71,20 @@ public class DefaultRabbitMQPushConsumer {
                 channel = channelPool.borrowObject();
             }
             channel.basicQos(64);
-            channel.basicConsume(queueName, false, "openchaos_client",
-                    new DefaultConsumer(channel) {
-                        @Override
-                        public void handleDelivery(String consumerTag,
-                                                   Envelope envelope,
-                                                   AMQP.BasicProperties properties,
-                                                   byte[] body) {
-                            try {
-                                consumerCallback.messageReceived(new Message(body));
-                                if (channel == null || !channel.isOpen()) {
-                                    channel = channelPool.borrowObject();
-                                }
-                                channel.basicAck(envelope.getDeliveryTag(), false);
-                            } catch (Exception e) {
-                                log.warn("Create channel failed");
-                            }
+            channel.basicConsume(queueName, false, "openchaos_client", new DefaultConsumer(channel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
+                    try {
+                        consumerCallback.messageReceived(new Message(body));
+                        if (channel == null || !channel.isOpen()) {
+                            channel = channelPool.borrowObject();
                         }
-                    });
+                        channel.basicAck(envelope.getDeliveryTag(), false);
+                    } catch (Exception e) {
+                        log.warn("Create channel failed");
+                    }
+                }
+            });
         } catch (Exception e) {
             log.warn("Connection occured error! Try to create new connection.");
             if (!connection.isOpen()) {
