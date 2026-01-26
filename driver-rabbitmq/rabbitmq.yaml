@@ -22,9 +22,9 @@ nodes: # replace with ip or domain name, such as 192.168.0.2
 - acloud
 
 # RabbitMQ configuration
-rabbitmqVersion: 3.8.35
-installDir: /usr/local/rabbitmq-server-3.8.35 # you could set existent location for RabbitMQ
-configureFilePath: /usr/local/rabbitmq-server-3.8.35/etc
+rabbitmqVersion: 4.2.3
+installDir: /usr/local/rabbitmq-server-4.2.3 # you could set existent location for RabbitMQ
+configureFilePath: /usr/local/rabbitmq-server-4.2.3/etc
 
 # RabbitMQ client configuration. Please add user root with password root
 user: root
