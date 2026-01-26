@@ -19,7 +19,11 @@ endToEndLatencyCheck: true
 
 # Nodes for broker
 nodes: # replace with ip or domain name, such as 192.168.0.2
-- acloud
+- n1
+- n2
+- n3
+- n4
+- n5
 
 # RabbitMQ configuration
 rabbitmqVersion: 4.2.3
@@ -31,7 +35,7 @@ user: root
 password: root
 
 # RabbitMQ broker configuration
-haMode : classic
+haMode : classic # classic or quorum
 haParms :
-  totalNodes : 3
-  nodes : 3
+  totalNodes : 5
+  nodes : 5
