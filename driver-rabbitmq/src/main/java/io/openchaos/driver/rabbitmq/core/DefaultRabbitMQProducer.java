@@ -32,7 +32,6 @@ public class DefaultRabbitMQProducer {
     private Channel channel;
 
     public DefaultRabbitMQProducer() {
-
     }
 
     public DefaultRabbitMQProducer(ConnectionFactory factory, Connection connection, ObjectPool<Channel> channelPool) {

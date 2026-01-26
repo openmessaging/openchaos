@@ -30,7 +30,7 @@ public class RabbitMQChaosPushConsumerTest {
             throw new RuntimeException(e);
         }
         consumer = new RabbitMQChaosPushConsumer(pushConsumer, factory, "queuename",
-                "group", callback, channelPool, conn);
+                "group", callback, channelPool, conn, false);
     }
 
 

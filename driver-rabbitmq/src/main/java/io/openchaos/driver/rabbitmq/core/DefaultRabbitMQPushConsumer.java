@@ -26,28 +26,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 public class DefaultRabbitMQPushConsumer {
     private static final Logger log = LoggerFactory.getLogger(DefaultRabbitMQPushConsumer.class);
-    private Connection connection;
     private final String queueName;
-    private ObjectPool<Channel> channelPool;
-    private ConsumerCallback consumerCallback;
+    private Connection connection;
+    private final ObjectPool<Channel> channelPool;
+    private final ConsumerCallback consumerCallback;
     private Channel channel;
-    private ConnectionFactory factory;
-    private String consumerGroup;
+    private final ConnectionFactory factory;
+    private final String consumerGroup;
+    private final boolean durableQueue;
 
-    public DefaultRabbitMQPushConsumer(ConnectionFactory factory, String queueName,
-                                       ConsumerCallback consumerCallback,
-                                       String consumerGroup, ObjectPool<Channel> channelPool, Connection connection) {
+    public DefaultRabbitMQPushConsumer(ConnectionFactory factory, String queueName, ConsumerCallback consumerCallback, String consumerGroup, ObjectPool<Channel> channelPool, Connection connection, boolean durableQueue) {
         this.connection = connection;
         this.channelPool = channelPool;
         this.factory = factory;
         this.queueName = queueName;
+        this.durableQueue = durableQueue;
+
         try {
             this.channel = channelPool.borrowObject();
-            channel.queueDeclare(queueName, false, false, false, null);
+            if (durableQueue) {
+                Map<String, Object> argsMap = new HashMap<>();
+                argsMap.put("x-queue-type", "quorum");
+                channel.queueDeclare(queueName, durableQueue, false, false, argsMap);
+            } else {
+                channel.queueDeclare(queueName, durableQueue, false, false, null);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

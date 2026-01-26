@@ -26,7 +26,7 @@ public class DefaultRabbitMQPushConsumerTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        consumer = new DefaultRabbitMQPushConsumer(factory, queueName, callback, "group", channelPool, conn);
+        consumer = new DefaultRabbitMQPushConsumer(factory, queueName, callback, "group", channelPool, conn, false);
     }
 
     @Test

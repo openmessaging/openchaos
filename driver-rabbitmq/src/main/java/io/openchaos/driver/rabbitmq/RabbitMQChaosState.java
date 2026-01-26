@@ -14,7 +14,9 @@
 package io.openchaos.driver.rabbitmq;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.openchaos.common.utils.SshUtil;
 import io.openchaos.driver.queue.QueueState;
 import io.openchaos.driver.rabbitmq.core.HaMode;
@@ -28,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -55,12 +58,27 @@ public class RabbitMQChaosState implements QueueState {
     public Set<String> getLeader() {
         Set<String> leaderAddr = new HashSet<>();
         if (haMode == HaMode.quorum) {
+            String res;
             try {
-                String res = SshUtil.execCommandWithArgsReturnStr(leader, "rabbitmq-queues quorum_status \"openchaos_client_1\" | grep leader ");
-                String[] s = res.split(" ");
-                leaderAddr.add(getHost(s[1]));
+                res = SshUtil.execCommandWithArgsReturnStr(leader, "rabbitmq-queues quorum_status \"openchaos_client_1\" --formatter json");
             } catch (Exception e) {
-                log.warn("Get leader failed!");
+                log.warn("SSH command failed", e);
+                return Collections.emptySet();
+            }
+
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                ArrayNode nodesJson = (ArrayNode) mapper.readTree(res);
+                for (JsonNode node : nodesJson) {
+                    String state = node.get("Raft State").asText();
+                    if ("leader".equalsIgnoreCase(state)) {
+                        String leaderNode = node.get("Node Name").asText();
+                        leaderAddr.add(getHost(leaderNode));
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("JSON parsing failed", e);
             }
         } else if (haMode == HaMode.classic) {
             String url = "http://" + leader + ":15672/api/queues/%2f/openchaos_client_1";
@@ -81,7 +99,8 @@ public class RabbitMQChaosState implements QueueState {
     }
 
     private String getHost(String nodeName) {
-        return nodeName.split("@")[1];
+        int i = nodeName.indexOf('@');
+        return i >= 0 ? nodeName.substring(i + 1) : nodeName;
     }
 
     private String sendGet(String url) {
