@@ -1,6 +1,9 @@
 # Based on the deprecated `https://github.com/tutumcloud/tutum-debian`
 FROM debian:sid
 
+# Set noninteractive to avoid tz/locale prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install packages
 RUN apt-get update && \
     apt-get -y install \
@@ -8,10 +11,20 @@ RUN apt-get update && \
         openssh-server \
         openjdk-8-jdk \
         pwgen \
+        locales \
         && \
-mkdir -p /var/run/sshd && \
-sed -i "s/UsePrivilegeSeparation.*/UsePrivilegeSeparation no/g" /etc/ssh/sshd_config && \
-sed -i "s/PermitRootLogin without-password/PermitRootLogin yes/g" /etc/ssh/sshd_config
+        mkdir -p /var/run/sshd && \
+        sed -i "s/UsePrivilegeSeparation.*/UsePrivilegeSeparation no/g" /etc/ssh/sshd_config && \
+        sed -i "s/PermitRootLogin without-password/PermitRootLogin yes/g" /etc/ssh/sshd_config && \
+        # Configure UTF-8 locale
+        sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+        locale-gen en_US.UTF-8 && \
+        update-locale LANG=en_US.UTF-8
+
+# Make sure locale is exported in all shells
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 ENV AUTHORIZED_KEYS **None**
 
