@@ -34,11 +34,12 @@ public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
     private String queueName;
     private String consumeGroup;
     private ConsumerCallback consumerCallBack;
+    private boolean durableQueue;
 
     public RabbitMQChaosPushConsumer(DefaultRabbitMQPushConsumer consumer,
                                      ConnectionFactory factory, String queueName,
                                      String consumeGroup,
-                                     ConsumerCallback consumerCallback, ObjectPool<Channel> channelPool, Connection connection) {
+                                     ConsumerCallback consumerCallback, ObjectPool<Channel> channelPool, Connection connection, boolean durableQueue) {
         this.consumer = consumer;
         this.factory = factory;
         this.queueName = queueName;
@@ -46,13 +47,14 @@ public class RabbitMQChaosPushConsumer implements QueuePushConsumer {
         this.consumerCallBack = consumerCallback;
         this.connection = connection;
         this.channelPool = channelPool;
+        this.durableQueue = durableQueue;
     }
 
     @Override
     public void start() {
         try {
             if (consumer == null) {
-                consumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallBack, consumeGroup, channelPool, connection);
+                consumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallBack, consumeGroup, channelPool, connection, durableQueue);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

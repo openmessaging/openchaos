@@ -33,52 +33,40 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
-
 public class RabbitMQChaosNode implements QueueNode {
-    private static final String BROKER_PROCESS_NAME = "beam.smp";
     private static final Logger log = LoggerFactory.getLogger(RabbitMQChaosNode.class);
-    private String node;
-    private List<String> nodes;
-    private RabbitMQBrokerConfig rmqBrokerConfig;
-    private String installDir = "rabbitmq-chaos-test";
-    private String rabbitmqVersion = "3.8.35";
-    private String configureFilePath = "broker-chaos-test.conf";
-    private Sync sync;
+    private static final String PROCESS = "beam.smp";
 
-    public RabbitMQChaosNode(String node, List<String> nodes, RabbitMQConfig rmqConfig,
-                             RabbitMQBrokerConfig rmqBrokerConfig, Sync sync) {
+    private final String node;
+    private final List<String> nodes;
+    private final Sync sync;
+    private final String rmqHome;
+    private String rabbitmqVersion = "4.2.3";
+
+    public RabbitMQChaosNode(String node, List<String> nodes, RabbitMQConfig config, RabbitMQBrokerConfig brokerConfig, Sync sync) {
         this.node = node;
         this.nodes = nodes;
-        this.rmqBrokerConfig = rmqBrokerConfig;
-        if (rmqConfig.installDir != null && !rmqConfig.installDir.isEmpty()) {
-            this.installDir = rmqConfig.installDir;
-        }
-        if (rmqConfig.rabbitmqVersion != null && !rmqConfig.rabbitmqVersion.isEmpty()) {
-            this.rabbitmqVersion = rmqConfig.rabbitmqVersion;
-        }
-        if (rmqConfig.configureFilePath != null && !rmqConfig.configureFilePath.isEmpty()) {
-            this.configureFilePath = rmqConfig.configureFilePath;
-        }
         this.sync = sync;
+        if (StringUtils.isNotBlank(config.rabbitmqVersion)) this.rabbitmqVersion = config.rabbitmqVersion;
+        this.rmqHome = "/usr/local/rabbitmq-server-" + rabbitmqVersion;
     }
 
     @Override
     public void setup() {
-        if (sync.status == Sync.State.START || sync.status == Sync.State.FINISH) {
-            return;
-        }
+        if (sync.status == Sync.State.START || sync.status == Sync.State.FINISH) return;
+
         sync.status = Sync.State.START;
-        CountDownLatch latch = new CountDownLatch(nodes.size());
         Executor executor = new ForkJoinPool(nodes.size());
-        for (String no : nodes) {
-            executor.execute(() -> {
-                try {
-                    setup(no);
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
+        CountDownLatch latch = new CountDownLatch(nodes.size());
+
+        nodes.forEach(no -> executor.execute(() -> {
+            try {
+                setupNode(no);
+            } finally {
+                latch.countDown();
+            }
+        }));
+
         try {
             latch.await(20, TimeUnit.MINUTES);
             sync.addUser("root", "root");
@@ -89,110 +77,107 @@ public class RabbitMQChaosNode implements QueueNode {
         }
     }
 
-
-    public void setup(String no) {
+    private void setupNode(String no) {
         try {
-            // install erlang and rabbitmq
             installErlang(no);
             installRabbitmq(no);
+
             sync.barrier.await(14, TimeUnit.MINUTES);
-            // sync cookie
             sync.resetBarrier();
             sync.syncCookie(no);
             sync.barrier.await(5, TimeUnit.MINUTES);
-            try {
-                SshUtil.execCommand(no, "rabbitmq-server -detached");
-            } catch (Exception e) {
-                log.error(e.getMessage());
-            }
-            // join cluster
+
+            // Clean start
+            SshUtil.execCommand(no, "killall -q " + PROCESS + " || true");
+            SshUtil.execCommand(no, "rm -rf " + rmqHome + "/var/lib/rabbitmq/mnesia/*");
+            Thread.sleep(2500);
+            SshUtil.execCommand(no, "rabbitmq-server -detached");
+            Thread.sleep(5000);
+
             sync.resetBarrier();
-            if (!Objects.equals(no, sync.getLeader())) {
-                try {
-                    SshUtil.execCommand(no, "rabbitmqctl stop_app");
-                    SshUtil.execCommand(no, "rabbitmqctl reset");
-                    SshUtil.execCommand(no, "rabbitmqctl join_cluster rabbit@" + sync.getLeader());
-                    SshUtil.execCommand(no, "rabbitmqctl start_app");
-                    log.info(no + " join cluster rabbit@" + sync.getLeader() + " finished");
-                } catch (Exception e) {
-                    log.error(e.getMessage());
-                }
+            boolean isLeader = Objects.equals(no, sync.getLeader());
+
+            // App Reset Logic
+            log.info("Resetting RabbitMQ on node: {}", no);
+            SshUtil.execCommand(no, "rabbitmqctl stop_app");
+            Thread.sleep(10000);
+            SshUtil.execCommand(no, "rabbitmqctl reset");
+
+            if (!isLeader) {
+                Thread.sleep(15000); // Wait for leader
+                SshUtil.execCommand(no, "rabbitmqctl join_cluster rabbit@" + sync.getLeader());
             }
-            sync.barrier.await(5, TimeUnit.MINUTES);
-            ClusterStatus clusterStatus = null;
-            sync.resetBarrier();
-            while (clusterStatus == null || clusterStatus.getRunning_nodes().size() != nodes.size()) {
-                String cmd = "rabbitmqctl cluster_status --formatter json";
-                String res = SshUtil.execCommandWithArgsReturnStr(no, cmd);
-                ObjectMapper objectMapper = new ObjectMapper();
-                clusterStatus = objectMapper.readValue(res, ClusterStatus.class);
-            }
-            sync.barrier.await(5, TimeUnit.MINUTES);
+
+            SshUtil.execCommand(no, "rabbitmqctl start_app");
+            Thread.sleep(15000);
+
+            waitForCluster(no);
         } catch (Exception e) {
-            log.error("Node {} setup rabbitmq node failed", no, e);
+            log.error("Setup failed for node {}", no, e);
             throw new RuntimeException(e);
         }
     }
 
-    private void installErlang(String no) throws Exception {
-        try {
-            String erl = SshUtil.execCommandWithArgsReturnStr(no, "which erl");
-            if (!StringUtils.isEmpty(erl)) {
-                return;
-            }
-        } catch (Exception ignored) {
+    private void waitForCluster(String no) throws Exception {
+        sync.barrier.await(5, TimeUnit.MINUTES);
+        sync.resetBarrier();
+        ObjectMapper mapper = new ObjectMapper();
+        while (true) {
+            String res = SshUtil.execCommandWithArgsReturnStr(no, "rabbitmqctl cluster_status --formatter json");
+            ClusterStatus status = mapper.readValue(res, ClusterStatus.class);
+            if (status != null && status.getRunningNodes().size() == nodes.size()) break;
+            Thread.sleep(5000);
         }
-        SshUtil.execCommand(no, "rm -rf /opt/erlang");
-        SshUtil.execCommand(no, "mkdir /opt/erlang");
-        SshUtil.execCommand(no, "yum -y install vim make libtool libtool-ltdl-devel libevent-devel lua-devel openssl-devel flex mysql-devel gcc.x86_64 gcc-c++.x86_64 ncurses-devel wget lrzsz");
-        SshUtil.execCommandInDir(no, "/opt/erlang", "wget https://github.com/rabbitmq/erlang-rpm/releases/download/v23.2.6/erlang-23.2.6-1.el7.x86_64.rpm");
-        SshUtil.execCommandInDir(no, "/opt/erlang", "rpm -ivh erlang-23.2.6-1.el7.x86_64.rpm");
+        sync.barrier.await(5, TimeUnit.MINUTES);
+    }
+
+    private void installErlang(String no) throws Exception {
+        if (StringUtils.isNotBlank(safeExec(no, "which erl"))) {
+            SshUtil.execCommand(no, "pgrep epmd || sudo epmd -daemon");
+            return;
+        }
+        SshUtil.execCommand(no, "apt update && apt install -y erlang vim make libtool libevent-dev lua5.3 libssl-dev flex gcc g++ ncurses-dev wget lrzsz xz-utils");
+        SshUtil.execCommand(no, "pgrep epmd || sudo epmd -daemon");
     }
 
     private void installRabbitmq(String no) throws Exception {
-        try {
-            String rab = SshUtil.execCommandWithArgsReturnStr(no, "which rabbitmq-server");
-            if (!StringUtils.isEmpty(rab)) {
-                return;
-            }
-        } catch (Exception ignored) {
+        if (StringUtils.isNotBlank(safeExec(no, "which rabbitmq-server"))) return;
+
+        String tar = "rabbitmq-server-generic-unix-" + rabbitmqVersion + ".tar";
+        String xz = tar + ".xz";
+
+        if (!StringUtils.contains(safeExec(no, "ls"), tar)) {
+            SshUtil.execCommand(no, "wget https://github.com/rabbitmq/rabbitmq-server/releases/download/v" + rabbitmqVersion + "/" + xz);
+            SshUtil.execCommand(no, "xz -d " + xz);
         }
-        String ls;
-        try {
-            ls = SshUtil.execCommandWithArgsReturnStr(no, "ls | grep rabbitmq-server-generic-unix-3.8.35.tar");
-        } catch (Exception e) {
-            ls = e.getLocalizedMessage();
-        }
-        if (!StringUtils.equals(ls, "rabbitmq-server-generic-unix-3.8.35.tar\n")) {
-            log.info(no + " downloading rabbitmq 3.8.35");
-            SshUtil.execCommand(no, "wget https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.8.35/rabbitmq-server-generic-unix-3.8.35.tar.xz");
-            SshUtil.execCommand(no, "xz -d rabbitmq-server-generic-unix-3.8.35.tar.xz");
-        }
-        SshUtil.execCommand(no, "tar -xvf rabbitmq-server-generic-unix-3.8.35.tar");
-        SshUtil.execCommand(no, "rm -rf /usr/local/rabbitmq-server-3.8.35");
-        SshUtil.execCommand(no, "mv rabbitmq_server-3.8.35 /usr/local/rabbitmq-server-3.8.35");
-        SshUtil.execCommand(no, "echo 'export PATH=$PATH::/usr/local/rabbitmq-server-3.8.35/sbin' >> /etc/profile");
-        SshUtil.execCommand(no, "echo 'export PATH=$PATH::/usr/local/rabbitmq-server-3.8.35/sbin' >> ~/.bashrc");
-        SshUtil.execCommand(no, "source /etc/profile");
-        SshUtil.execCommand(no, "source ~/.bashrc");
+
+        SshUtil.execCommand(no, String.format("tar -xvf %s && rm -rf %s && mv rabbitmq_server-%s %s", tar, rmqHome, rabbitmqVersion, rmqHome));
+
+        String pathCmd = "export PATH=$PATH:" + rmqHome + "/sbin";
+        SshUtil.execCommand(no, String.format("echo '%s' >> /etc/profile && echo '%s' >> ~/.bashrc", pathCmd, pathCmd));
         SshUtil.execCommand(no, "rabbitmq-plugins enable rabbitmq_management");
     }
 
-    @Override
-    public void teardown() {
-        stop();
+    private String safeExec(String no, String cmd) {
+        try {
+            return SshUtil.execCommandWithArgsReturnStr(no, cmd);
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     @Override
     public void start() {
         try {
-            // start broker
-            log.info("Node {} start broker...", node);
-            SshUtil.execCommandInDir(node, installDir, "sbin/rabbitmq-server -detached");
+            SshUtil.execCommand(node, rmqHome + "/sbin/rabbitmq-server -detached");
         } catch (Exception e) {
-            log.error("Node {} start rabbitmq node failed", node, e);
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void teardown() {
+        stop();
     }
 
     @Override
@@ -208,9 +193,8 @@ public class RabbitMQChaosNode implements QueueNode {
     @Override
     public void kill() {
         try {
-            KillProcessUtil.forceKillInErl(node, BROKER_PROCESS_NAME);
+            KillProcessUtil.forceKillInErl(node, PROCESS);
         } catch (Exception e) {
-            log.error("Node {} kill rabbitmq processes failed", node, e);
             throw new RuntimeException(e);
         }
     }
@@ -218,9 +202,8 @@ public class RabbitMQChaosNode implements QueueNode {
     @Override
     public void pause() {
         try {
-            PauseProcessUtil.suspend(node, BROKER_PROCESS_NAME);
+            PauseProcessUtil.suspend(node, PROCESS);
         } catch (Exception e) {
-            log.error("Node {} pause rabbitmq processes failed", node, e);
             throw new RuntimeException(e);
         }
     }
@@ -228,9 +211,8 @@ public class RabbitMQChaosNode implements QueueNode {
     @Override
     public void resume() {
         try {
-            PauseProcessUtil.resumeInErl(node, BROKER_PROCESS_NAME);
+            PauseProcessUtil.resumeInErl(node, PROCESS);
         } catch (Exception e) {
-            log.error("Node {} resume rabbitmq processes failed", node, e);
             throw new RuntimeException(e);
         }
     }

@@ -34,10 +34,11 @@ import io.openchaos.driver.rabbitmq.utils.ChannelPoolFactory;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 public class RabbitMQDriver implements QueueDriver {
@@ -109,11 +110,18 @@ public class RabbitMQDriver implements QueueDriver {
         tmpFac.setHost(nodes.get(0));
         tmpFac.setUsername(user);
         tmpFac.setPassword(password);
+        tmpFac.setRequestedHeartbeat(2);   // heartbeat every 2 seconds
         try {
             Connection tmpCon = tmpFac.newConnection("tmp");
             Channel tmpChan = tmpCon.createChannel();
             tmpChan.queueDelete(queueName);
-            tmpChan.queueDeclare(queueName, false, false, false, null);
+            if (rmqBrokerConfig.haMode.name().equals("quorum")) {
+                Map<String, Object> argsMap = new HashMap<>();
+                argsMap.put("x-queue-type", "quorum");
+                tmpChan.queueDeclare(queueName, true, false, false, argsMap);
+            } else if (rmqBrokerConfig.haMode.name().equals("classic")) {
+                tmpChan.queueDeclare(queueName, false, false, false, null);
+            }
             tmpChan.close();
             tmpCon.close();
         } catch (IOException | TimeoutException e) {
@@ -124,6 +132,7 @@ public class RabbitMQDriver implements QueueDriver {
         factory.setHost(state.getLeader().iterator().next());
         factory.setUsername(user);
         factory.setPassword(password);
+        factory.setRequestedHeartbeat(2);   // heartbeat every 2 seconds
         try {
             GenericObjectPoolConfig<Channel> config = new GenericObjectPoolConfig<>();
             config.setMaxTotal(200);
@@ -202,9 +211,9 @@ public class RabbitMQDriver implements QueueDriver {
         }
         RabbitMQChaosPushConsumer rabbitMQChaosPushConsumer;
         try {
-            DefaultRabbitMQPushConsumer pushConsumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallback, subscriptionName, consumerChannelPool, consumerConnection);
-            rabbitMQChaosPushConsumer = new RabbitMQChaosPushConsumer(pushConsumer,
-                    factory, queueName, subscriptionName, consumerCallback, consumerChannelPool, consumerConnection);
+            boolean durable = rmqBrokerConfig.haMode.name().equals("quorum");
+            DefaultRabbitMQPushConsumer pushConsumer = new DefaultRabbitMQPushConsumer(factory, queueName, consumerCallback, subscriptionName, consumerChannelPool, consumerConnection, durable);
+            rabbitMQChaosPushConsumer = new RabbitMQChaosPushConsumer(pushConsumer, factory, queueName, subscriptionName, consumerCallback, consumerChannelPool, consumerConnection, durable);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
