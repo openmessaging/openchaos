@@ -49,22 +49,21 @@ public class DefaultRabbitMQProducer {
     }
 
     public void sendMessage(String queueName, byte[] message) throws Exception {
-        if (channel == null || !channel.isOpen()) {
-            channel = channelPool.borrowObject();
-        }
+        Channel ch = null;
         try {
-            channel.basicPublish("", queueName, null, message);
-        } catch (ShutdownSignalException sse) {
-            // possibly check if channel was closed
-            // by the time we started action and reasons for
-            // closing it
-            log.warn("connection or channel is shutdown");
+            ch = channelPool.borrowObject();
+            ch.confirmSelect();
+            ch.basicPublish("", queueName, null, message);
+            ch.waitForConfirmsOrDie();
+        } catch (IOException | ShutdownSignalException e) {
+            log.warn("publish failed: {}", e.getMessage());
             getNewConnection();
-        } catch (IOException ioe) {
-            // check why connection was closed
-            log.warn("IO was blocked");
+            throw e;
+        } finally {
+            if (ch != null) {
+                channelPool.returnObject(ch);
+            }
         }
-
     }
 
     public void shutdown() {
@@ -97,4 +96,3 @@ public class DefaultRabbitMQProducer {
         return connection;
     }
 }
-
